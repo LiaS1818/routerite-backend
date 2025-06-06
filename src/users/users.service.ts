@@ -1,13 +1,15 @@
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 import { User } from '../database/models/user.model';
 import { CreateUserDto, UpdateUserDto } from './dto';
-
+import { SupabaseClient } from '@supabase/supabase-js'; // Assuming you have a Supabase client type
 @Injectable()
 export class UsersService {
 	constructor(
 		@InjectModel(User)
 		private userModel: typeof User,
+
+		@Inject('SUPABASE_CLIENT') private readonly supabase: SupabaseClient, // Injecting Supabase client
 	) { }
 
 	async findAll(): Promise<User[]> {
@@ -44,5 +46,16 @@ export class UsersService {
 		return this.userModel.destroy({
 			where: { id },
 		});
+	}
+
+	// Prueba con supabase
+	async getUsersSB(){
+		const { data, error} = await this.supabase
+			.from('users')
+			.select('*');
+		if (error) {
+			throw new Error(`Error fetching users from Supabase: ${error.message}`);
+		}
+		return data;
 	}
 }

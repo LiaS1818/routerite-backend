@@ -11,6 +11,16 @@ export class UsersController {
 	async findAll(): Promise<User[]> {
 		return this.usersService.findAll();
 	}
+	
+	@Get('/all')
+	async findAllUsersSB(): Promise<User[]> {
+		try {
+			return await this.usersService.getUsersSB();
+		}
+		catch (error) {
+			throw new HttpException(`Error fetching users from Supabase: ${error.message}`, HttpStatus.INTERNAL_SERVER_ERROR);
+		}
+	}
 
 	@Get(':id')
 	async findOne(@Param('id') id: string): Promise<User> {
