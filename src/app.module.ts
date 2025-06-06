@@ -9,7 +9,7 @@ import { UsersModule } from './users/users.module';
 @Module({
 	imports: [
 		ConfigModule.forRoot({ isGlobal: true }),
-		DatabaseModule,
+		// DatabaseModule,
 		UsersModule,
 		SupabaseModule
 	],
