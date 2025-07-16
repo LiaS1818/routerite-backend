@@ -5,7 +5,7 @@ export const databaseConfig: SequelizeModuleOptions = {
 	host: process.env.DB_HOST || 'localhost',
 	port: parseInt(process.env.DB_PORT || '5432'),
 	username: process.env.DB_USERNAME || 'postgres',
-	password: process.env.DB_PASSWORD || 'postgres',
+	password: process.env.DB_PASSWORD || '1234',
 	database: process.env.DB_NAME || 'routerite',
 	autoLoadModels: true,
 	synchronize: true, // En entorno de desarrollo, en producción debería ser false
