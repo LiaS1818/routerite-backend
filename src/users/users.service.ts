@@ -20,7 +20,7 @@ export class UsersService {
 		return this.userModel.findByPk(id);
 	}
 
-	async findByEmail(email: string): Promise<User | null> {
+	async checkEmailExists(email: string): Promise<User | null> {
 		return this.userModel.findOne({
 			where: {
 				email,

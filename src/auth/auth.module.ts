@@ -5,7 +5,7 @@ import { AuthController } from './auth.controller';
 import { User } from '../database/models/user.model';
 import { JwtModule } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
-
+import { MailerModule } from '../mailer/mailer.module';
 @Module({
   imports: [
     SequelizeModule.forFeature([User]),
@@ -16,7 +16,8 @@ import { ConfigService } from '@nestjs/config';
         signOptions: { expiresIn: '1h' }
       }),
       inject: [ConfigService],
-    })
+    }),
+    MailerModule,
   ],
   controllers: [AuthController],
   providers: [AuthService],

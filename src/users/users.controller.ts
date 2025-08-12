@@ -1,16 +1,29 @@
-import { Controller, Get, Post, Body, Param, Put, Delete, HttpStatus, HttpException } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Put, Delete, HttpStatus, HttpException, UseGuards, Query } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { CreateUserDto, UpdateUserDto } from './dto';
 import { User } from '../database/models/user.model';
+import { ApiKeyGuard } from 'src/auth/guards/api-key.guards';
+import e from 'express';
+
+//@UseGuards(ApiKeyGuard) 
 
 @Controller('users')
 export class UsersController {
 	constructor(private readonly usersService: UsersService) { }
 
-	@Get()
+	@Get('/all')
 	async findAll(): Promise<User[]> {
 		return this.usersService.findAll();
 	}
+
+	@Get('/check-email') // email enviado en la url
+	async checkEmail(@Query('email') email: string): Promise<{ exists: boolean }> {
+		var exists = await this.usersService.checkEmailExists(email);
+		console.log('Email check:', email, 'Exists:', exists);
+
+		return { exists: !!exists} // Convierte a booleano
+	}
+
 
 	// @Get('/all')
 	// async findAllUsersSB(): Promise<User[]> {

@@ -35,5 +35,19 @@ export class User extends Model {
 		type: DataType.BOOLEAN,
 		defaultValue: true,
 	})
-	declare isActive: boolean;
+	declare isActive: boolean; //
+
+	@Column({
+		type: DataType.BOOLEAN,
+		defaultValue: false,
+	})
+	declare isEmailVerified: boolean;
+
+	@Column({
+		type: DataType.BOOLEAN,
+		allowNull: false,
+		defaultValue: false,
+	})
+	declare isPremium: boolean;
+
 }
