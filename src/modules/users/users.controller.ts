@@ -27,7 +27,7 @@ export class UsersController {
 		return this.usersService.findAll();
 	}
 
-	@Get('/check-correo')
+	@Get('/check-email')
 	async checkCorreo(
 		@Query('correo') correo: string
 	): Promise<{ exists: boolean }> {
