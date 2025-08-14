@@ -6,6 +6,7 @@ import { DatabaseModule } from './database/database.module';
 //import { SupabaseModule } from './supabase/supabase.module';
 import { UsersModule } from './users/users.module';
 import { AuthModule } from './auth/auth.module';
+import { ItinerariesModule } from './itineraries/itineraries.module';
 
 @Module({
 	imports: [
@@ -15,6 +16,7 @@ import { AuthModule } from './auth/auth.module';
 		DatabaseModule,
 		UsersModule,
 		AuthModule,
+		ItinerariesModule,
 		// SupabaseModule
 		// Another way with regiterAsync: this enables you to use async configuration
 		// JwtModule.registerAsync({

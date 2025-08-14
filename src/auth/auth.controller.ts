@@ -57,4 +57,6 @@ export class AuthController {
     await this.authService.sendPasswordResetEmail(user);
     return { message: 'Password reset email sent' };
   }
+
+
 }

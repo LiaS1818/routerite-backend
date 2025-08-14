@@ -95,4 +95,12 @@ export class UsersController {
 			throw new HttpException('User not found', HttpStatus.NOT_FOUND);
 		}
 	}
+
+  @Get('trips/home')
+  
+  async getHomeTrips(): Promise<{ currentTrip: string }> {
+	console.log("si")
+	// debo retornar un json con: $.currentTrip
+	return { currentTrip: 'juashabos' };
+  }
 }
