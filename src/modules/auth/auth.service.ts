@@ -5,9 +5,9 @@ import {
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { UsersService } from '../users/users.service';
-import { SignupDto, LoginDto } from './dtos/singup.dto';
-import { ForgotPasswordDto } from './dtos/forgot-password.dto';
-import { ResetPasswordDto } from './dtos/resert-password.dto';
+import { SignupDto, LoginDto } from './dto/singup.dto';
+import { ForgotPasswordDto } from './dto/forgot-password.dto';
+import { ResetPasswordDto } from './dto/resert-password.dto';
 import * as bcrypt from 'bcrypt';
 
 @Injectable()

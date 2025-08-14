@@ -7,17 +7,17 @@ import {
 import { InjectModel } from '@nestjs/sequelize';
 import { ConfigService } from '@nestjs/config';
 import { Op, Transaction, FindOptions } from 'sequelize';
-import { Viaje } from '../database/models/viaje.model';
-import { User } from '../database/models/user.model';
+import { Viaje } from '../../database/models/viaje.model';
+import { User } from '../../database/models/user.model';
 import {
 	ViajeFiltersInterface,
 	ViajeStatsInterface,
 	PaginatedResult,
-} from '../interfaces/viaje.interfaces';
+} from './viaje.interfaces';
 
 @Injectable()
-export class ViajesRepository {
-	private readonly logger = new Logger(ViajesRepository.name);
+export class ViajesService {
+	private readonly logger = new Logger(ViajesService.name);
 
 	constructor(
 		@InjectModel(Viaje)
