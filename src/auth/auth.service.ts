@@ -1,99 +1,142 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
-import { InjectModel } from '@nestjs/sequelize';
-import { User } from '../database/models/user.model';
-import { SignupDto } from './dtos/singup.dto';
-import { hash, compare } from 'bcrypt'; // Use bcrypt for password hashing
+import {
+	Injectable,
+	UnauthorizedException,
+	ConflictException,
+} from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { UsersService } from 'src/users/users.service';
-import { MailerService } from 'src/mailer/mailer.service';
-import { ConfigService } from '@nestjs/config';
+import { UsersService } from '../users/users.service';
+import { SignupDto, LoginDto } from './dtos/singup.dto';
+import { ForgotPasswordDto } from './dtos/forgot-password.dto';
+import { ResetPasswordDto } from './dtos/resert-password.dto';
+import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class AuthService {
-        constructor(
-        @InjectModel(User) 
-        private userModel: typeof User, 
-        private jwtService: JwtService,
-        private readonly mailer: MailerService,
-        private readonly config: ConfigService
-    ){}
+	constructor(
+		private usersService: UsersService,
+		private jwtService: JwtService
+	) {}
 
-    async sendVerificationEmail(email: string, name: string): Promise<void> {
-        const token = this.jwtService.sign({ email }, { expiresIn: '1h' }); 
-        await this.mailer.sendEmailVerification(email, token);
+	async signup(signupDto: SignupDto) {
+		try {
+			const user = await this.usersService.create(signupDto);
 
-    }
+			const payload = { correo: user.correo, sub: user.id };
+			const access_token = this.jwtService.sign(payload);
 
-    async signup(signupData: SignupDto): Promise<User> {
-        const { name, email, password } = signupData;
-        // Check if the email is in use
-        const existingUser = await this.userModel.findOne({
-            where: { email: email },
-        })
-        if (existingUser) {
-            throw new BadRequestException('Email is already in use');
-        }
-        // TODO: Hash password before saving
-        const hashedPassword = await hash(password, 10);
+			return {
+				access_token,
+				user: {
+					id: user.id,
+					nombre: user.nombre,
+					correo: user.correo,
+					verificado: user.verificado,
+				},
+			};
+		} catch (error) {
+			if (error instanceof ConflictException) {
+				throw error;
+			}
+			throw new Error('Error al crear la cuenta');
+		}
+	}
 
-        // Create the new user
-        const newUser = await this.userModel.create({
-            name: name,
-            email: email,
-            password: hashedPassword,
+	async login(loginDto: LoginDto) {
+		const user = await this.usersService.validatePassword(
+			loginDto.correo,
+			loginDto.contrasena
+		);
 
-        });
+		if (!user) {
+			throw new UnauthorizedException('Credenciales inválidas');
+		}
 
-        // Send verification email
-        await this.sendVerificationEmail(newUser.email, newUser.name);
-        return newUser;
-    }
+		if (!user.activo) {
+			throw new UnauthorizedException('Cuenta desactivada');
+		}
 
-    async validateUser(loginData: { email: string; password: string }): Promise<{ user: User; token: string }> {
-        const { email, password } = loginData;
-        // Find the user by email and password
-        const user = await this.userModel.findOne({
-            where: { email }
-        });
+		const payload = { correo: user.correo, sub: user.id };
+		const access_token = this.jwtService.sign(payload);
 
-        if (!user || !(await compare(password, user.password))) {
-            throw new BadRequestException('Invalid email or password');
-        }
+		return {
+			access_token,
+			user: {
+				id: user.id,
+				nombre: user.nombre,
+				correo: user.correo,
+				verificado: user.verificado,
+			},
+		};
+	}
 
-        //TODO: Generate and return JWT token
-        const token = this.generateJwtToken(user);
-        return { user, token };
-    }
+	async forgotPassword(forgotPasswordDto: ForgotPasswordDto) {
+		const user = await this.usersService.findByCorreo(
+			forgotPasswordDto.correo
+		);
 
-    async findUserByEmail(email: string): Promise<User | null> {
-        return this.userModel.findOne({ where: { email } });
-    }
+		if (!user) {
+			// Por seguridad, no revelamos si el correo existe o no
+			return {
+				message:
+					'Si el correo existe, recibirás instrucciones para recuperar tu contraseña',
+			};
+		}
 
-    async sendPasswordResetEmail(user: User): Promise<void> {
-        const token = this.jwtService.sign({ email: user.email }, { expiresIn: '1h' });
-        await this.mailer.sendPasswordResetEmail(user.email, token);
-    }
+		// Generar token de recuperación (válido por 1 hora)
+		const resetToken = this.jwtService.sign(
+			{ correo: user.correo, sub: user.id, type: 'password-reset' },
+			{ expiresIn: '1h' }
+		);
 
-    private generateJwtToken(user: User): string {
-        const { password, ...findUser } = user; // Exclude password from the token payload
-        return this.jwtService.sign(findUser);
-    }
+		// TODO: Enviar email con el token de recuperación
+		// await this.mailerService.sendPasswordResetEmail(user.correo, resetToken);
 
-    // Verify email token and activate user account
-    async verifyEmailToken(token: string): Promise<boolean> {
-        try {
-            const decoded = this.jwtService.verify(token);
-            const user = await this.userModel.findOne({ where: { email: decoded.email } });
-            if (!user) {
-                throw new NotFoundException('User not found');
-            }
-            // Activate user account
-            user.isEmailVerified = true; // Assuming you have an isActive field in your User model
-            await user.save();
-            return true;
-        } catch (error) {
-            console.error('Error verifying email token:', error);
-            return false;
-        }
-    }
+		return {
+			message:
+				'Si el correo existe, recibirás instrucciones para recuperar tu contraseña',
+		};
+	}
+
+	async resetPassword(resetPasswordDto: ResetPasswordDto) {
+		try {
+			const decoded = this.jwtService.verify(resetPasswordDto.token);
+
+			if (decoded.type !== 'password-reset') {
+				throw new UnauthorizedException('Token inválido');
+			}
+
+			const user = await this.usersService.findByCorreo(decoded.correo);
+
+			if (!user) {
+				throw new UnauthorizedException('Usuario no encontrado');
+			}
+
+			// Hashear la nueva contraseña
+			const hashedPassword = await bcrypt.hash(
+				resetPasswordDto.nueva_contrasena,
+				10
+			);
+
+			await user.update({ contrasena: hashedPassword });
+
+			return { message: 'Contraseña actualizada exitosamente' };
+		} catch (error) {
+			throw new UnauthorizedException('Token inválido o expirado');
+		}
+	}
+
+	async validateUser(correo: string, contrasena: string) {
+		const user = await this.usersService.validatePassword(
+			correo,
+			contrasena
+		);
+
+		if (user) {
+			// eslint-disable-next-line @typescript-eslint/no-unused-vars
+			const { contrasena: _, ...result } = user.toJSON();
+			return result;
+		}
+
+		return null;
+	}
 }

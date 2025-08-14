@@ -1,59 +1,57 @@
-import { Controller, Get, Query, Post, Body, BadRequestException, NotFoundException, HttpStatus, HttpException, HttpCode } from '@nestjs/common';
+import {
+	Controller,
+	Post,
+	Body,
+	HttpCode,
+	HttpStatus,
+	UseGuards,
+	Request,
+} from '@nestjs/common';
 import { AuthService } from './auth.service';
-import { SignupDto } from './dtos/singup.dto';
-import { ok } from 'node:assert';
+import { SignupDto, LoginDto } from './dtos/singup.dto';
+import { ForgotPasswordDto } from './dtos/forgot-password.dto';
+import { ResetPasswordDto } from './dtos/resert-password.dto';
+import { JwtAuthGuard } from './guards/jwt-auth.guard';
 
 @Controller('auth')
 export class AuthController {
-  constructor(private readonly authService: AuthService) {}
+	constructor(private readonly authService: AuthService) {}
 
-  //TDO: POST signup
-  @Post('signup') //auth/signup
-  async signUp(@Body() signupData: SignupDto){
-    return this.authService.signup(signupData);
-  }
+	@Post('signup')
+	@HttpCode(HttpStatus.CREATED)
+	async signup(@Body() signupDto: SignupDto) {
+		return this.authService.signup(signupDto);
+	}
 
-  // POST signup de prueba sin DTO
-  @Post('signup-test') //auth/signup-test
-  async signUpTest(@Body() signupData: { name: string; email: string; password: string }) {
-    if (!signupData.name || !signupData.email || !signupData.password) {
-      // imprimir los datos recibidos
-      console.log('Received data:', signupData);
-      throw new BadRequestException('Name, email, and password are required');
-    }else {
-      // Todos los datos correctos, llamar al servicio de autenticación
-      console.log('All data is valid. Calling auth service...');
-    }
-  }
+	@Post('login')
+	@HttpCode(HttpStatus.OK)
+	async login(@Body() loginDto: LoginDto) {
+		return this.authService.login(loginDto);
+	}
 
-  @Post('login') //auth/login
-  async login(@Body() loginData: { email: string; password: string }) {
-    const { user, token } = await this.authService.validateUser(loginData);
-    return { user, token };
-  }
-//
-  @Get('verify')//auth/verify?token=someToken
-  async verifyEmail(@Query('token') token: string) {
-    // Verificar el token y activar la cuenta del usuario
-    if (!token) {
-      throw new BadRequestException('Token is required for email verification');
-    }
+	@Post('forgot-password')
+	@HttpCode(HttpStatus.OK)
+	async forgotPassword(@Body() forgotPasswordDto: ForgotPasswordDto) {
+		return this.authService.forgotPassword(forgotPasswordDto);
+	}
 
-    // Activar usuario
-    const isValid = await this.authService.verifyEmailToken(token);
-    if (!isValid) {
-      throw new HttpException('Invalid or expired token', HttpStatus.BAD_REQUEST);
-    }
-  }
+	@Post('reset-password')
+	@HttpCode(HttpStatus.OK)
+	async resetPassword(@Body() resetPasswordDto: ResetPasswordDto) {
+		return this.authService.resetPassword(resetPasswordDto);
+	}
 
-  @Post('forgot-password') // auth/forgot-password
-  async forgotPassword(@Body('email') email: string) {
-    const user = await this.authService.findUserByEmail(email);
-    if (!user) {
-      throw new NotFoundException('User not found');
-    }
-    // TODO: Generate and send password reset token
-    await this.authService.sendPasswordResetEmail(user);
-    return { message: 'Password reset email sent' };
-  }
+	@Post('validate-token')
+	@UseGuards(JwtAuthGuard)
+	@HttpCode(HttpStatus.OK)
+	async validateToken(@Request() req) {
+		return {
+			valid: true,
+			user: {
+				id: req.user.id,
+				correo: req.user.correo,
+				nombre: req.user.nombre,
+			},
+		};
+	}
 }

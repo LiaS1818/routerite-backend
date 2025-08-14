@@ -1,18 +1,42 @@
-import { IsEmail, IsString, MinLength, IsOptional, IsBoolean } from 'class-validator';
+import {
+	IsString,
+	IsEmail,
+	IsOptional,
+	IsBoolean,
+	MinLength,
+	MaxLength,
+} from 'class-validator';
 
 export class CreateUserDto {
 	@IsString()
-	@MinLength(2, { message: 'Name must have at least 2 characters' })
-	readonly name: string;
+	@MinLength(2)
+	@MaxLength(100)
+	nombre: string;
 
-	@IsEmail({}, { message: 'Please provide a valid email' })
-	readonly email: string;
+	@IsEmail()
+	@MaxLength(255)
+	correo: string;
 
 	@IsString()
-	@MinLength(6, { message: 'Password must have at least 6 characters' })
-	readonly password: string;
+	@MinLength(6)
+	@MaxLength(255)
+	contrasena: string;
+
+	@IsOptional()
+	@IsString()
+	@MaxLength(100)
+	pais?: string;
+
+	@IsOptional()
+	@IsString()
+	@MaxLength(100)
+	ciudad?: string;
 
 	@IsOptional()
 	@IsBoolean()
-	readonly isActive?: boolean;
+	verificado?: boolean;
+
+	@IsOptional()
+	@IsBoolean()
+	activo?: boolean;
 }

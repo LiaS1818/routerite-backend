@@ -5,134 +5,70 @@ module.exports = {
   async up(queryInterface, Sequelize) {
     await queryInterface.createTable('users', {
       id: {
-        type: Sequelize.UUID,
-        defaultValue: Sequelize.UUIDV4,
+        allowNull: false,
+        autoIncrement: true,
         primaryKey: true,
-        allowNull: false,
-        comment: 'Primary key - UUID for user identification',
+        type: Sequelize.INTEGER
       },
-      name: {
+      nombre: {
         type: Sequelize.STRING(100),
-        allowNull: false,
-        comment: 'User full name',
+        allowNull: false
       },
-      email: {
-        type: Sequelize.STRING,
-        unique: true,
+      correo: {
+        type: Sequelize.STRING(255),
         allowNull: false,
-        comment: 'User email address - must be unique',
+        unique: true
       },
-      password: {
-        type: Sequelize.STRING,
-        allowNull: false,
-        comment: 'User password (hashed)',
+      contrasena: {
+        type: Sequelize.STRING(255),
+        allowNull: false
       },
-      is_active: {
+      pais: {
+        type: Sequelize.STRING(100),
+        allowNull: true
+      },
+      ciudad: {
+        type: Sequelize.STRING(100),
+        allowNull: true
+      },
+      verificado: {
         type: Sequelize.BOOLEAN,
-        defaultValue: true,
         allowNull: false,
-        comment: 'Whether the user account is active',
+        defaultValue: false
       },
-      is_email_verified: {
+      activo: {
         type: Sequelize.BOOLEAN,
-        defaultValue: false,
         allowNull: false,
-        comment: 'Whether the user email has been verified',
-      },
-      is_premium: {
-        type: Sequelize.BOOLEAN,
-        defaultValue: false,
-        allowNull: false,
-        comment: 'Whether the user has premium subscription',
+        defaultValue: true
       },
       created_at: {
-        type: Sequelize.DATE,
         allowNull: false,
-        defaultValue: Sequelize.literal('CURRENT_TIMESTAMP'),
+        type: Sequelize.DATE,
+        defaultValue: Sequelize.literal('CURRENT_TIMESTAMP')
       },
       updated_at: {
-        type: Sequelize.DATE,
         allowNull: false,
-        defaultValue: Sequelize.literal('CURRENT_TIMESTAMP'),
+        type: Sequelize.DATE,
+        defaultValue: Sequelize.literal('CURRENT_TIMESTAMP')
       },
+      deleted_at: {
+        type: Sequelize.DATE,
+        allowNull: true
+      }
     });
 
-    // Crear índices para optimizar consultas
-    await queryInterface.addIndex('users', ['email'], {
-      name: 'idx_users_email_unique',
+    // Agregar índices
+    await queryInterface.addIndex('users', ['correo'], {
       unique: true,
+      name: 'users_correo_unique'
     });
 
-    await queryInterface.addIndex('users', ['is_active'], {
-      name: 'idx_users_is_active',
-    });
-
-    await queryInterface.addIndex('users', ['is_email_verified'], {
-      name: 'idx_users_is_email_verified',
-    });
-
-    await queryInterface.addIndex('users', ['created_at'], {
-      name: 'idx_users_created_at',
-    });
-
-    // Agregar constraints de validación
-    await queryInterface.addConstraint('users', {
-      fields: ['name'],
-      type: 'check',
-      name: 'check_name_length',
-      where: {
-        [Sequelize.sequelize.Op.and]: [
-          Sequelize.where(Sequelize.fn('LENGTH', Sequelize.col('name')), {
-            [Sequelize.sequelize.Op.gte]: 2
-          }),
-          Sequelize.where(Sequelize.fn('LENGTH', Sequelize.col('name')), {
-            [Sequelize.Sequelize.sequelize.Op.lte]: 100
-          })
-        ]
-      }
-    });
-
-    await queryInterface.addConstraint('users', {
-      fields: ['email'],
-      type: 'check',
-      name: 'check_email_format',
-      where: {
-        email: {
-          [Sequelize.Sequelize.sequelize.Op.regexp]: '^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$',
-        }
-      }
-    });
-
-    await queryInterface.addConstraint('users', {
-      fields: ['password'],
-      type: 'check',
-      name: 'check_password_length',
-      where: {
-        [Sequelize.sequelize.Op.and]: [
-          Sequelize.where(Sequelize.fn('LENGTH', Sequelize.col('password')), {
-            [Sequelize.sequelize.Op.gte]: 6
-          }),
-          Sequelize.where(Sequelize.fn('LENGTH', Sequelize.col('password')), {
-            [Sequelize.sequelize.Op.lte]: 255
-          })
-        ]
-      }
+    await queryInterface.addIndex('users', ['activo'], {
+      name: 'users_activo_index'
     });
   },
 
   async down(queryInterface, Sequelize) {
-    // Eliminar constraints
-    await queryInterface.removeConstraint('users', 'check_name_length');
-    await queryInterface.removeConstraint('users', 'check_email_format');
-    await queryInterface.removeConstraint('users', 'check_password_length');
-
-    // Eliminar índices
-    await queryInterface.removeIndex('users', 'idx_users_email_unique');
-    await queryInterface.removeIndex('users', 'idx_users_is_active');
-    await queryInterface.removeIndex('users', 'idx_users_is_email_verified');
-    await queryInterface.removeIndex('users', 'idx_users_created_at');
-
-    // Eliminar tabla
     await queryInterface.dropTable('users');
   }
 };

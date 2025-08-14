@@ -1,30 +1,51 @@
 import {
+	Table,
 	Column,
 	Model,
-	Table,
 	DataType,
+	PrimaryKey,
+	AutoIncrement,
+	AllowNull,
+	Default,
+	CreatedAt,
+	UpdatedAt,
+	DeletedAt,
 	BeforeCreate,
 	BeforeUpdate,
 	AfterCreate,
-	Index,
 } from 'sequelize-typescript';
-import { Op } from 'sequelize';
+import sequelize, { Op, Optional } from 'sequelize';
+import { User } from './user.model';
 
-export enum TipoExperiencia {
-	CULTURA = 'cultura',
-	AVENTURA = 'aventura',
-	GASTRONOMIA = 'gastronomia',
-	PLAYA = 'playa',
-	NATURALEZA = 'naturaleza',
+export interface ViajeAttributes {
+	id: number;
+	usuario_id: number;
+	destino: string;
+	fecha_inicio: Date;
+	fecha_fin: Date;
+	n_viajeros: number;
+	presupuesto_total: number;
+	tipo_experiencia:
+		| 'cultura'
+		| 'aventura'
+		| 'gastronomia'
+		| 'playa'
+		| 'naturaleza';
+	acompanamiento: boolean;
+	portada?: string;
+	status: 'draft' | 'planned' | 'active' | 'completed' | 'cancelled';
+	notas?: string;
+	ubicacion_inicio?: string;
+	created_at: Date;
+	updated_at: Date;
+	deleted_at?: Date;
 }
 
-export enum StatusViaje {
-	DRAFT = 'draft',
-	PLANNED = 'planned',
-	ACTIVE = 'active',
-	COMPLETED = 'completed',
-	CANCELLED = 'cancelled',
-}
+export interface ViajeCreationAttributes
+	extends Optional<
+		ViajeAttributes,
+		'id' | 'created_at' | 'updated_at' | 'deleted_at'
+	> {}
 
 @Table({
 	tableName: 'viajes',
@@ -35,208 +56,115 @@ export enum StatusViaje {
 	createdAt: 'created_at',
 	updatedAt: 'updated_at',
 	deletedAt: 'deleted_at',
-	scopes: {
-		withUser: {
-			include: [
-				{
-					association: 'usuario',
-					attributes: ['id', 'name', 'email'],
-				},
-			],
-		},
-		active: {
-			where: {
-				status: {
-					[Op.notIn]: [StatusViaje.CANCELLED],
-				},
-			},
-		},
-		upcoming: {
-			where: {
-				fecha_inicio: {
-					[Op.gte]: new Date(),
-				},
-			},
-		},
-		byExperience: (tipoExperiencia: TipoExperiencia) => ({
-			where: {
-				tipo_experiencia: tipoExperiencia,
-			},
-		}),
-	},
 })
-export class Viaje extends Model {
-	@Column({
-		primaryKey: true,
-		type: DataType.INTEGER,
-		autoIncrement: true,
-		allowNull: false,
-	})
+export class Viaje extends Model<ViajeAttributes, ViajeCreationAttributes> {
+	@PrimaryKey
+	@AutoIncrement
+	@Column(DataType.INTEGER)
 	declare id: number;
 
-	@Column({
-		type: DataType.UUID,
-		allowNull: false,
-		validate: {
-			notNull: true,
-		},
-		comment: 'Foreign key referencing users.id',
-	})
-	declare usuario_id: string;
+	@AllowNull(false)
+	@Column(DataType.INTEGER)
+	usuario_id!: number;
 
-	// Declaración de tipos para las relaciones (sin decoradores)
-	declare usuario?: any;
+	@AllowNull(false)
+	@Column(DataType.STRING(255))
+	destino!: string;
 
-	@Column({
-		type: DataType.STRING(255),
-		allowNull: false,
-		validate: {
-			notEmpty: true,
-			len: [2, 255],
-			isValidDestino(value: string) {
-				if (!/^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s,.-]+$/.test(value)) {
-					throw new Error('El destino solo puede contener letras, espacios, comas, puntos y guiones');
-				}
-			},
-		},
-	})
-	declare destino: string;
+	@AllowNull(false)
+	@Column(DataType.DATEONLY)
+	fecha_inicio!: Date;
 
-	@Index
-	@Column({
-		type: DataType.DATEONLY,
-		allowNull: false,
-		validate: {
-			notNull: true,
-			isDate: true,
-			isFutureOrToday(value: string) {
-				const today = new Date();
-				today.setHours(0, 0, 0, 0);
-				const inputDate = new Date(value);
-				if (inputDate < today) {
-					throw new Error('La fecha de inicio debe ser presente o futura');
-				}
-			},
-		},
-	})
-	declare fecha_inicio: Date;
+	@AllowNull(false)
+	@Column(DataType.DATEONLY)
+	fecha_fin!: Date;
 
-	@Column({
-		type: DataType.DATEONLY,
-		allowNull: false,
-		validate: {
-			notNull: true,
-			isDate: true,
-		},
-	})
-	declare fecha_fin: Date;
+	@AllowNull(false)
+	@Default(1)
+	@Column(DataType.SMALLINT)
+	n_viajeros!: number;
 
-	@Column({
-		type: DataType.SMALLINT,
-		allowNull: false,
-		defaultValue: 1,
-		validate: {
-			notNull: true,
-			isInt: true,
-			min: 1,
-			max: 20,
-		},
-	})
-	declare n_viajeros: number;
+	@AllowNull(false)
+	@Column(DataType.DECIMAL(10, 2))
+	presupuesto_total!: number;
 
-	@Column({
-		type: DataType.DECIMAL(10, 2),
-		allowNull: false,
-		validate: {
-			notNull: true,
-			isDecimal: true,
-			min: 0.01,
-		},
-	})
-	declare presupuesto_total: number;
+	@AllowNull(false)
+	@Column(
+		DataType.ENUM(
+			'cultura',
+			'aventura',
+			'gastronomia',
+			'playa',
+			'naturaleza'
+		)
+	)
+	tipo_experiencia!:
+		| 'cultura'
+		| 'aventura'
+		| 'gastronomia'
+		| 'playa'
+		| 'naturaleza';
 
-	@Column({
-		type: DataType.ENUM(...Object.values(TipoExperiencia)),
-		allowNull: false,
-		validate: {
-			isIn: [Object.values(TipoExperiencia)],
-		},
-	})
-	declare tipo_experiencia: TipoExperiencia;
+	@AllowNull(false)
+	@Default(false)
+	@Column(DataType.BOOLEAN)
+	acompanamiento!: boolean;
 
-	@Column({
-		type: DataType.BOOLEAN,
-		allowNull: false,
-		defaultValue: false,
-		validate: {
-			isBoolean: true,
-		},
-	})
-	declare acompanamiento: boolean;
+	@Column(DataType.STRING(500))
+	portada?: string;
 
-	@Column({
-		type: DataType.STRING(500),
-		allowNull: true,
-		validate: {
-			isUrl: {
-				msg: 'La portada debe ser una URL válida',
-			},
-			len: [0, 500],
-		},
-	})
-	declare portada?: string;
+	@AllowNull(false)
+	@Default('draft')
+	@Column(
+		DataType.ENUM('draft', 'planned', 'active', 'completed', 'cancelled')
+	)
+	status!: 'draft' | 'planned' | 'active' | 'completed' | 'cancelled';
 
-	@Column({
-		type: DataType.ENUM(...Object.values(StatusViaje)),
-		allowNull: false,
-		defaultValue: StatusViaje.DRAFT,
-		validate: {
-			isIn: [Object.values(StatusViaje)],
-		},
-	})
-	declare status: StatusViaje;
+	@Column(DataType.TEXT)
+	notas?: string;
 
-	@Column({
-		type: DataType.TEXT,
-		allowNull: true,
-	})
-	declare notas?: string;
+	@Column(DataType.STRING(255))
+	ubicacion_inicio?: string;
 
-	@Column({
-		type: DataType.STRING(255),
-		allowNull: true,
-		validate: {
-			len: [0, 255],
-		},
-	})
-	declare ubicacion_inicio?: string;
+	@CreatedAt
+	created_at!: Date;
+
+	@UpdatedAt
+	updated_at!: Date;
+
+	@DeletedAt
+	deleted_at?: Date;
 
 	// Hooks
 	@BeforeCreate
-	static validateDatesOnCreate(instance: Viaje) {
+	static validateBeforeCreate(instance: Viaje) {
 		if (instance.fecha_fin < instance.fecha_inicio) {
-			throw new Error('La fecha de fin debe ser mayor o igual a la fecha de inicio');
+			throw new Error(
+				'La fecha de fin debe ser mayor o igual a la fecha de inicio'
+			);
 		}
 	}
 
 	@BeforeUpdate
-	static validateDatesOnUpdate(instance: Viaje) {
+	static validateBeforeUpdate(instance: Viaje) {
 		if (instance.fecha_fin < instance.fecha_inicio) {
-			throw new Error('La fecha de fin debe ser mayor o igual a la fecha de inicio');
+			throw new Error(
+				'La fecha de fin debe ser mayor o igual a la fecha de inicio'
+			);
 		}
 	}
 
 	@AfterCreate
 	static logCreation(instance: Viaje) {
-		console.log(`Viaje creado: ID ${instance.id} para usuario ${instance.usuario_id}`);
+		console.log(
+			`Nuevo viaje creado: ${instance.id} para usuario ${instance.usuario_id}`
+		);
 	}
 
 	// Métodos de instancia
 	calculateDuration(): number {
-		const inicio = new Date(this.fecha_inicio);
-		const fin = new Date(this.fecha_fin);
-		const diffTime = Math.abs(fin.getTime() - inicio.getTime());
-		return Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1; // +1 para incluir el día de inicio
+		const timeDiff = this.fecha_fin.getTime() - this.fecha_inicio.getTime();
+		return Math.ceil(timeDiff / (1000 * 3600 * 24)) + 1; // +1 para incluir ambos días
 	}
 
 	getBudgetPerDay(): number {
@@ -247,38 +175,34 @@ export class Viaje extends Model {
 	isActive(): boolean {
 		const today = new Date();
 		today.setHours(0, 0, 0, 0);
+
 		const inicio = new Date(this.fecha_inicio);
+		inicio.setHours(0, 0, 0, 0);
+
 		const fin = new Date(this.fecha_fin);
 		fin.setHours(23, 59, 59, 999);
-		return today >= inicio && today <= fin;
+
+		return today >= inicio && today <= fin && this.status === 'active';
 	}
 
 	// Métodos estáticos
-	static async findByUser(
-		userId: string,
-		options: { page?: number; limit?: number } = {},
-	): Promise<{ viajes: Viaje[]; total: number }> {
-		const { page = 1, limit = 10 } = options;
-		const offset = (page - 1) * limit;
-
-		const { count, rows } = await Viaje.findAndCountAll({
+	static async findByUser(userId: number, options: any = {}) {
+		return await Viaje.findAll({
 			where: { usuario_id: userId },
 			order: [['fecha_inicio', 'DESC']],
-			limit,
-			offset,
-			include: ['usuario'],
+			include: [
+				{
+					model: User,
+					as: 'usuario',
+					attributes: ['id', 'nombre', 'correo'],
+				},
+			],
+			...options,
 		});
-
-		return {
-			viajes: rows,
-			total: count,
-		};
 	}
 
-	static async findUpcoming(userId: string): Promise<Viaje[]> {
+	static async findUpcoming(userId: number) {
 		const today = new Date();
-		today.setHours(0, 0, 0, 0);
-
 		return await Viaje.findAll({
 			where: {
 				usuario_id: userId,
@@ -287,68 +211,48 @@ export class Viaje extends Model {
 				},
 			},
 			order: [['fecha_inicio', 'ASC']],
-			include: ['usuario'],
+			limit: 10,
 		});
 	}
 
 	static async findByDateRange(
-		userId: string,
+		userId: number,
 		startDate: Date,
-		endDate: Date,
-	): Promise<Viaje[]> {
+		endDate: Date
+	) {
 		return await Viaje.findAll({
 			where: {
 				usuario_id: userId,
-				fecha_inicio: {
-					[Op.between]: [startDate, endDate],
-				},
+				[Op.or]: [
+					{
+						fecha_inicio: {
+							[Op.between]: [startDate, endDate],
+						},
+					},
+					{
+						fecha_fin: {
+							[Op.between]: [startDate, endDate],
+						},
+					},
+					{
+						[Op.and]: [
+							{ fecha_inicio: { [Op.lte]: startDate } },
+							{ fecha_fin: { [Op.gte]: endDate } },
+						],
+					},
+				],
 			},
-			order: [['fecha_inicio', 'ASC']],
-			include: ['usuario'],
+			attributes: ['id', 'fecha_inicio', 'fecha_fin', 'destino'],
 		});
 	}
 
-	// Métodos estáticos para usar scopes de manera OOP
-	static withUser() {
-		return this.scope('withUser');
-	}
-
-	static active() {
-		return this.scope('active');
-	}
-
-	static upcoming() {
-		return this.scope('upcoming');
-	}
-
-	static byExperience(tipoExperiencia: TipoExperiencia) {
-		return this.scope({
-			method: ['byExperience', tipoExperiencia],
-		});
-	}
-
-	// Métodos combinados usando scopes
-	static getActiveWithUser() {
-		return this.scope(['active', 'withUser']);
-	}
-
-	static getUpcomingWithUser() {
-		return this.scope(['upcoming', 'withUser']);
-	}
-
-	static getByExperienceWithUser(tipoExperiencia: TipoExperiencia) {
-		return this.scope(['withUser', { method: ['byExperience', tipoExperiencia] }]);
-	}
-
-	/**
-	 * Método estático para definir asociaciones
-	 */
-	static associate(models: any) {
+	// Método estático para definir asociaciones
+	static associate(models: {
+		User: sequelize.ModelStatic<sequelize.Model<any, any>>;
+	}) {
 		Viaje.belongsTo(models.User, {
 			foreignKey: 'usuario_id',
 			as: 'usuario',
-			onDelete: 'RESTRICT',
-			onUpdate: 'CASCADE',
 		});
 	}
 }

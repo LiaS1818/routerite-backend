@@ -1,98 +1,77 @@
-import { Controller, Get, Post, Body, Param, Put, Delete, HttpStatus, HttpException, UseGuards, Query } from '@nestjs/common';
+import {
+	Controller,
+	Get,
+	Post,
+	Body,
+	Patch,
+	Param,
+	Delete,
+	ParseIntPipe,
+	UseGuards,
+	Request,
+	HttpException,
+	HttpStatus,
+	Query,
+} from '@nestjs/common';
 import { UsersService } from './users.service';
-import { CreateUserDto, UpdateUserDto } from './dto';
-import { User } from '../database/models/user.model';
-import { ApiKeyGuard } from 'src/auth/guards/api-key.guards';
-import e from 'express';
-
-//@UseGuards(ApiKeyGuard) 
+import { CreateUserDto } from './dto/create-user.dto';
+import { UpdateUserDto } from './dto/update-user.dto';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 
 @Controller('users')
 export class UsersController {
-	constructor(private readonly usersService: UsersService) { }
+	constructor(private readonly usersService: UsersService) {}
 
 	@Get('/all')
-	async findAll(): Promise<User[]> {
+	async findAll() {
 		return this.usersService.findAll();
 	}
 
-	@Get('/check-email') // email enviado en la url
-	async checkEmail(@Query('email') email: string): Promise<{ exists: boolean }> {
-		var exists = await this.usersService.checkEmailExists(email);
-		console.log('Email check:', email, 'Exists:', exists);
-
-		return { exists: !!exists} // Convierte a booleano
+	@Get('/check-correo')
+	async checkCorreo(
+		@Query('correo') correo: string
+	): Promise<{ exists: boolean }> {
+		const user = await this.usersService.findByCorreo(correo);
+		return { exists: !!user };
 	}
 
-
-	// @Get('/all')
-	// async findAllUsersSB(): Promise<User[]> {
-	// 	try {
-
-	// 		//from Supabase
-	// 		const users = await this.usersService.getUsersSB();
-	// 		if (!users) {
-	// 			throw new HttpException('No users found', HttpStatus.NOT_FOUND);
-	// 		}
-	// 		console.log(users);
-	// 		return users as User[];
-	// 	}
-	// 	catch (error) {
-	// 		throw new HttpException(`Error fetching users from Supabase: ${error.message}`, HttpStatus.INTERNAL_SERVER_ERROR);
-	// 	}
-	// }
-
-	// @Post()
-	// async createUserSB(@Body() createUserDto: CreateUserDto): Promise<User> {
-	// 	try {
-			
-	// 		const { data, error } = await this.usersService.createUserSB(createUserDto);
-	// 		if (error) {
-	// 			throw new HttpException(`Error creating user in Supabase: ${error.message}`, HttpStatus.BAD_REQUEST);
-	// 		}
-
-	// 		return data as User;
-	// 	}
-	// 	catch (error) {
-	// 		throw new HttpException(`Error creating user: ${error.message}`, HttpStatus.INTERNAL_SERVER_ERROR);
-	// 	}
-	// }
-
 	@Get(':id')
-	async findOne(@Param('id') id: string): Promise<User> {
-		const user = await this.usersService.findOne(id);
-		if (!user) {
-			throw new HttpException('User not found', HttpStatus.NOT_FOUND);
-		}
-		return user;
+	async findOne(@Param('id', ParseIntPipe) id: number) {
+		return this.usersService.findOne(id);
 	}
 
 	@Post()
-	async create(@Body() createUserDto: CreateUserDto): Promise<User> {
-		try {
-			return await this.usersService.create(createUserDto);
-		} catch (error) {
-			if (error.name === 'SequelizeUniqueConstraintError') {
-				throw new HttpException('Email already exists', HttpStatus.BAD_REQUEST);
-			}
-			throw new HttpException('Something went wrong', HttpStatus.INTERNAL_SERVER_ERROR);
-		}
+	async create(@Body() createUserDto: CreateUserDto) {
+		return this.usersService.create(createUserDto);
 	}
 
-	@Put(':id')
-	async update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto): Promise<User> {
-		const [affected, [updatedUser]] = await this.usersService.update(id, updateUserDto);
-		if (affected === 0) {
-			throw new HttpException('User not found', HttpStatus.NOT_FOUND);
+	@Patch(':id')
+	@UseGuards(JwtAuthGuard)
+	async update(
+		@Param('id', ParseIntPipe) id: number,
+		@Body() updateUserDto: UpdateUserDto,
+		@Request() req
+	) {
+		// Solo permitir que los usuarios actualicen su propio perfil
+		if (req.user.id !== id) {
+			throw new HttpException(
+				'No autorizado para actualizar este perfil',
+				HttpStatus.FORBIDDEN
+			);
 		}
-		return updatedUser;
+		return this.usersService.update(id, updateUserDto);
 	}
 
 	@Delete(':id')
-	async remove(@Param('id') id: string): Promise<void> {
-		const deleted = await this.usersService.remove(id);
-		if (deleted === 0) {
-			throw new HttpException('User not found', HttpStatus.NOT_FOUND);
+	@UseGuards(JwtAuthGuard)
+	async remove(@Param('id', ParseIntPipe) id: number, @Request() req) {
+		// Solo permitir que los usuarios eliminen su propio perfil
+		if (req.user.id !== id) {
+			throw new HttpException(
+				'No autorizado para eliminar este perfil',
+				HttpStatus.FORBIDDEN
+			);
 		}
+		return this.usersService.remove(id);
 	}
 }
