@@ -106,7 +106,7 @@ module.exports = {
       type: 'check',
       name: 'check_fechas_validas',
       where: {
-        [Sequelize.Op.and]: [
+        [Sequelize.sequelize.Op.and]: [
           Sequelize.literal('fecha_fin >= fecha_inicio')
         ]
       }
@@ -119,7 +119,7 @@ module.exports = {
       name: 'check_presupuesto_positivo',
       where: {
         presupuesto_total: {
-          [Sequelize.Op.gt]: 0
+          [Sequelize.sequelize.Op.gt]: 0
         }
       }
     });
@@ -130,9 +130,9 @@ module.exports = {
       type: 'check',
       name: 'check_n_viajeros_valido',
       where: {
-        [Sequelize.Op.and]: [
-          { n_viajeros: { [Sequelize.Op.gte]: 1 } },
-          { n_viajeros: { [Sequelize.Op.lte]: 20 } }
+        [Sequelize.sequelize.Op.and]: [
+          { n_viajeros: { [Sequelize.sequelize.Op.gte]: 1 } },
+          { n_viajeros: { [Sequelize.sequelize.Op.lte]: 20 } }
         ]
       }
     });
