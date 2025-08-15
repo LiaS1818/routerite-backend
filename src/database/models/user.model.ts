@@ -57,41 +57,41 @@ export class User extends Model<UserAttributes, UserCreationAttributes> {
 
 	@AllowNull(false)
 	@Column(DataType.STRING(100))
-	name!: string;
+	declare name: string;
 
 	@AllowNull(false)
 	@Unique
 	@Column(DataType.STRING(255))
-	email!: string;
+	declare email: string;
 
 	@AllowNull(false)
 	@Column(DataType.STRING(255))
-	password!: string;
+	declare password: string;
 
 	@Column(DataType.STRING(100))
-	country?: string;
+	declare country?: string;
 
 	@Column(DataType.STRING(100))
-	city?: string;
+	declare city?: string;
 
 	@AllowNull(false)
 	@Default(false)
 	@Column(DataType.BOOLEAN)
-	verified!: boolean;
+	declare verified: boolean;
 
 	@AllowNull(false)
 	@Default(true)
 	@Column(DataType.BOOLEAN)
-	active!: boolean;
+	declare active: boolean;
 
 	@CreatedAt
-	created_at!: Date;
+	declare created_at: Date;
 
 	@UpdatedAt
-	updated_at!: Date;
+	declare updated_at: Date;
 
 	@DeletedAt
-	deleted_at?: Date;
+	declare deleted_at?: Date;
 
 	// Static method to define associations
 	static associate(models: Record<string, any>) {

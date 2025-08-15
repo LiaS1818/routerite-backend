@@ -66,31 +66,31 @@ export class Trip extends Model<TripAttributes, TripCreationAttributes> {
 
 	@AllowNull(false)
 	@Column(DataType.INTEGER)
-	user_id!: number;
+	declare user_id: number;
 
 	@AllowNull(false)
 	@Column(DataType.STRING(255))
-	destination!: string;
+	declare destination: string;
 
 	@AllowNull(false)
 	@Column(DataType.DATEONLY)
-	start_date!: Date;
+	declare start_date: Date;
 
 	@AllowNull(false)
 	@Column(DataType.DATEONLY)
-	end_date!: Date;
+	declare end_date: Date;
 
 	@AllowNull(false)
 	@Default(1)
 	@Column(DataType.SMALLINT)
-	travelers_count!: number;
+	declare travelers_count: number;
 
 	@AllowNull(false)
 	@Column(DataType.DECIMAL(10, 2))
-	total_budget!: number;
+	declare total_budget: number;
 
 	@Column(DataType.TEXT)
-	cover_image?: string;
+	declare cover_image?: string;
 
 	@AllowNull(false)
 	@Default('draft')
@@ -103,16 +103,16 @@ export class Trip extends Model<TripAttributes, TripCreationAttributes> {
 			'cancelled'
 		)
 	)
-	status!: 'draft' | 'planned' | 'active' | 'completed' | 'cancelled';
+	declare status: 'draft' | 'planned' | 'active' | 'completed' | 'cancelled';
 
 	@CreatedAt
-	created_at!: Date;
+	declare created_at: Date;
 
 	@UpdatedAt
-	updated_at!: Date;
+	declare updated_at: Date;
 
 	@DeletedAt
-	deleted_at?: Date;
+	declare deleted_at?: Date;
 
 	// Static method to define associations
 	static associate(models: Record<string, any>) {
