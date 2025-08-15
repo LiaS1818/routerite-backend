@@ -1,14 +1,14 @@
 import { User } from './user.model';
-import { Viaje } from './viaje.model';
+import { Trip } from './trip.model';
 
 // Exportar modelos
-export { User, Viaje };
+export { User, Trip };
 
 // Función para inicializar asociaciones después de que Sequelize esté configurado
 export function initializeAssociations() {
 	const models = {
 		User,
-		Viaje,
+		Trip
 	};
 
 	// Ejecutar las asociaciones de cada modelo

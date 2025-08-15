@@ -10,33 +10,33 @@ export class SignupDto {
 	@IsString()
 	@MinLength(2)
 	@MaxLength(100)
-	nombre: string;
+	name: string;
 
 	@IsEmail()
 	@MaxLength(255)
-	correo: string;
+	email: string;
 
 	@IsString()
 	@MinLength(6)
 	@MaxLength(255)
-	contrasena: string;
+	password: string;
 
 	@IsOptional()
 	@IsString()
 	@MaxLength(100)
-	pais?: string;
+	country?: string;
 
 	@IsOptional()
 	@IsString()
 	@MaxLength(100)
-	ciudad?: string;
+	city?: string;
 }
 
 export class LoginDto {
 	@IsEmail()
-	correo: string;
+	email: string;
 
 	@IsString()
 	@MinLength(6)
-	contrasena: string;
+	password: string;
 }

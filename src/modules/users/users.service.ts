@@ -18,54 +18,54 @@ export class UsersService {
 	) {}
 
 	async create(createUserDto: CreateUserDto): Promise<User> {
-		// Verificar si el correo ya existe
+		// Check if email already exists
 		const existingUser = await this.userModel.findOne({
-			where: { correo: createUserDto.correo },
+			where: { email: createUserDto.email },
 		});
 
 		if (existingUser) {
 			throw new ConflictException(
-				'El correo electrónico ya está registrado'
+				'Email is already registered'
 			);
 		}
 
-		// Hashear la contraseña
-		const hashedPassword = await bcrypt.hash(createUserDto.contrasena, 10);
+		// Hash the password
+		const hashedPassword = await bcrypt.hash(createUserDto.password, 10);
 
-		// Crear el usuario
+		// Create the user
 		const user = await this.userModel.create({
 			...createUserDto,
-			contrasena: hashedPassword,
+			password: hashedPassword,
 		});
 
-		// Recargar sin la contraseña
+		// Reload without password
 		return this.userModel.findByPk(user.id, {
-			attributes: { exclude: ['contrasena'] },
+			attributes: { exclude: ['password'] },
 		}) as Promise<User>;
 	}
 
 	async findAll(): Promise<User[]> {
 		return this.userModel.findAll({
-			attributes: { exclude: ['contrasena'] },
-			where: { activo: true },
+			attributes: { exclude: ['password'] },
+			where: { active: true },
 		});
 	}
 
 	async findOne(id: number): Promise<User> {
 		const user = await this.userModel.findByPk(id, {
-			attributes: { exclude: ['contrasena'] },
+			attributes: { exclude: ['password'] },
 		});
 
 		if (!user) {
-			throw new NotFoundException(`Usuario con ID ${id} no encontrado`);
+			throw new NotFoundException(`User with ID ${id} not found`);
 		}
 
 		return user;
 	}
 
-	async findByCorreo(correo: string): Promise<User | null> {
+	async findByEmail(email: string): Promise<User | null> {
 		return this.userModel.findOne({
-			where: { correo },
+			where: { email },
 		});
 	}
 
@@ -73,80 +73,86 @@ export class UsersService {
 		const user = await this.userModel.findByPk(id);
 
 		if (!user) {
-			throw new NotFoundException(`Usuario con ID ${id} no encontrado`);
+			throw new NotFoundException(`User with ID ${id} not found`);
 		}
 
-		// Si se va a cambiar la contraseña, verificar la actual
-		const updateData: UpdateUserDto = { ...updateUserDto };
+		// If changing password, verify current password
+		const updateData: any = { ...updateUserDto };
 
-		if (updateUserDto.nueva_contrasena) {
-			if (!updateUserDto.contrasena_actual) {
+		if (updateUserDto.new_password) {
+			if (!updateUserDto.current_password) {
 				throw new BadRequestException(
-					'Se requiere la contraseña actual para cambiarla'
+					'Current password is required to change it'
 				);
 			}
 
 			const isCurrentPasswordValid = await bcrypt.compare(
-				updateUserDto.contrasena_actual,
-				user.contrasena
+				updateUserDto.current_password,
+				user.password
 			);
 
 			if (!isCurrentPasswordValid) {
 				throw new BadRequestException(
-					'La contraseña actual es incorrecta'
+					'Current password is incorrect'
 				);
 			}
 
-			// Hashear la nueva contraseña
-			updateData.contrasena = await bcrypt.hash(
-				updateUserDto.nueva_contrasena,
-				10
-			);
-			delete updateData.nueva_contrasena;
-			delete updateData.contrasena_actual;
-		}
+			// Hash the new password
+			updateData.password = await bcrypt.hash(updateUserDto.new_password, 10);
 
-		// Verificar si el nuevo correo ya existe (si se está cambiando)
-		if (updateUserDto.correo && updateUserDto.correo !== user.correo) {
-			const existingUser = await this.userModel.findOne({
-				where: { correo: updateUserDto.correo },
-			});
-
-			if (existingUser) {
-				throw new ConflictException(
-					'El correo electrónico ya está registrado'
-				);
-			}
+			// Remove these fields as they're not part of the model
+			delete updateData.new_password;
+			delete updateData.current_password;
 		}
 
 		await user.update(updateData);
 
-		// Retornar usuario actualizado sin contraseña
-		return this.userModel.findByPk(user.id, {
-			attributes: { exclude: ['contrasena'] },
+		// Return user without password
+		return this.userModel.findByPk(id, {
+			attributes: { exclude: ['password'] },
 		}) as Promise<User>;
 	}
 
-	async remove(id: number): Promise<void> {
+	async remove(id: number): Promise<{ success: boolean }> {
 		const user = await this.userModel.findByPk(id);
 
 		if (!user) {
-			throw new NotFoundException(`Usuario con ID ${id} no encontrado`);
+			throw new NotFoundException(`User with ID ${id} not found`);
 		}
 
-		await user.update({ activo: false });
+		// Soft delete
+		await user.update({ active: false });
+		await user.destroy();
+
+		return { success: true };
 	}
 
-	async validatePassword(
-		correo: string,
-		contrasena: string
-	): Promise<User | null> {
-		const user = await this.findByCorreo(correo);
+	/**
+	 * Validate user password for authentication
+	 * @param email User email
+	 * @param password Password to validate
+	 * @returns User object if credentials are valid, null otherwise
+	 */
+	async validatePassword(email: string, password: string): Promise<User | null> {
+		// Find user with email including password field
+		const user = await this.userModel.findOne({
+			where: { email },
+		});
 
-		if (user && (await bcrypt.compare(contrasena, user.contrasena))) {
-			return user;
+		// If user doesn't exist, return null
+		if (!user) {
+			return null;
 		}
 
-		return null;
+		// Verify password
+		const isPasswordValid = await bcrypt.compare(password, user.password);
+
+		// If password is not valid, return null
+		if (!isPasswordValid) {
+			return null;
+		}
+
+		// Return user
+		return user;
 	}
 }

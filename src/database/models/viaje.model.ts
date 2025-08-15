@@ -194,7 +194,7 @@ export class Viaje extends Model<ViajeAttributes, ViajeCreationAttributes> {
 				{
 					model: User,
 					as: 'usuario',
-					attributes: ['id', 'nombre', 'correo'],
+					attributes: ['id', 'name', 'email'],
 				},
 			],
 			...options,

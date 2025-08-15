@@ -1,3 +1,4 @@
+// filepath: /home/cardonapablo/Documentos/Proyectos/RouteRite/routerite-backend/src/modules/trips/dto/create-trip.dto.ts
 import {
 	IsString,
 	IsNotEmpty,
@@ -12,52 +13,35 @@ import {
 } from 'class-validator';
 import { Transform } from 'class-transformer';
 
-export class CreateViajeDto {
+export class CreateTripDto {
 	@IsString()
 	@IsNotEmpty()
 	@MaxLength(255)
-	destino: string;
+	destination: string;
 
 	@IsDateString()
 	@IsNotEmpty()
 	@Transform(({ value }) => new Date(value))
-	fecha_inicio: Date;
+	start_date: Date;
 
 	@IsDateString()
 	@IsNotEmpty()
 	@Transform(({ value }) => new Date(value))
-	fecha_fin: Date;
+	end_date: Date;
 
 	@IsNumber()
 	@Min(1)
 	@Max(20)
 	@Transform(({ value }) => parseInt(value))
-	n_viajeros: number;
+	travelers_count: number;
 
 	@IsNumber()
 	@Min(0)
 	@Transform(({ value }) => parseFloat(value))
-	presupuesto_total: number;
-
-	@IsEnum(['cultura', 'aventura', 'gastronomia', 'playa', 'naturaleza'])
-	@IsNotEmpty()
-	tipo_experiencia: 'cultura' | 'aventura' | 'gastronomia' | 'playa' | 'naturaleza';
-
-	@IsBoolean()
-	@Transform(({ value }) => value === 'true' || value === true)
-	acompanamiento: boolean;
+	total_budget: number;
 
 	@IsOptional()
 	@IsString()
 	@MaxLength(500)
-	portada?: string;
-
-	@IsOptional()
-	@IsString()
-	notas?: string;
-
-	@IsOptional()
-	@IsString()
-	@MaxLength(255)
-	ubicacion_inicio?: string;
+	cover_image?: string;
 }

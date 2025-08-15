@@ -28,10 +28,10 @@ export class UsersController {
 	}
 
 	@Get('/check-email')
-	async checkCorreo(
-		@Query('correo') correo: string
+	async checkEmail(
+		@Query('email') email: string
 	): Promise<{ exists: boolean }> {
-		const user = await this.usersService.findByCorreo(correo);
+		const user = await this.usersService.findByEmail(email);
 		return { exists: !!user };
 	}
 
@@ -52,10 +52,10 @@ export class UsersController {
 		@Body() updateUserDto: UpdateUserDto,
 		@Request() req
 	) {
-		// Solo permitir que los usuarios actualicen su propio perfil
+		// Only allow users to update their own profile
 		if (req.user.id !== id) {
 			throw new HttpException(
-				'No autorizado para actualizar este perfil',
+				'Not authorized to update this profile',
 				HttpStatus.FORBIDDEN
 			);
 		}
@@ -65,10 +65,10 @@ export class UsersController {
 	@Delete(':id')
 	@UseGuards(JwtAuthGuard)
 	async remove(@Param('id', ParseIntPipe) id: number, @Request() req) {
-		// Solo permitir que los usuarios eliminen su propio perfil
+		// Only allow users to delete their own profile
 		if (req.user.id !== id) {
 			throw new HttpException(
-				'No autorizado para eliminar este perfil',
+				'Not authorized to delete this profile',
 				HttpStatus.FORBIDDEN
 			);
 		}
