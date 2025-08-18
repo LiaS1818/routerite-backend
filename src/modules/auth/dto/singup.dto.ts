@@ -7,15 +7,18 @@ import {
 } from 'class-validator';
 
 export class SignupDto {
+	@IsOptional()
 	@IsString()
 	@MinLength(2)
 	@MaxLength(100)
 	nombre: string;
 
+	@IsOptional()
 	@IsEmail()
 	@MaxLength(255)
 	correo: string;
 
+	@IsOptional()
 	@IsString()
 	@MinLength(6)
 	@MaxLength(255)

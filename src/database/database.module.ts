@@ -18,7 +18,7 @@ import { initializeAssociations } from './models';
 				database: configService.get('DB_NAME') || 'routerite',
 				models: [User, Viaje],
 				autoLoadModels: true,
-				synchronize: false, // Usar migraciones en su lugar
+				synchronize: true, // Usar migraciones en su lugar
 				logging:
 					configService.get('NODE_ENV') === 'development'
 						? console.log

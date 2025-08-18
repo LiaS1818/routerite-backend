@@ -9,6 +9,7 @@ export class Activity extends Model {
     transportationMode!: string; // Modo de transporte asociado a la actividad
     imgUrl!: string; // URL de la imagen representativa de la actividad
     itineraryId!: string; // ID del itinerario asociado
+    tripId!: string; // ID del viaje asociado
 }
 
 

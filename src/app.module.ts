@@ -6,7 +6,7 @@ import { DatabaseModule } from './database/database.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { UsersModule } from './modules/users/users.module';
 import { ViajesModule } from './modules/viajes/viajes.module';
-import { ItinerariesModule } from './itineraries/itineraries.module';
+import { ItinerariesModule } from './modules/itineraries/itineraries.module';
 
 @Module({
 	imports: [
