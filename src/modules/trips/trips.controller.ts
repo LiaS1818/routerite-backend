@@ -52,6 +52,8 @@ export class TripsController {
 
 		const tripData = {
 			...createTripDto,
+
+			destination: `${createTripDto.location.city}, ${createTripDto.location.state} - ${createTripDto.location.country}`,
 			user_id: req.user.id,
 			start_date: startDate,
 			end_date: endDate,

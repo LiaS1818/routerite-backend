@@ -10,6 +10,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
 		private configService: ConfigService,
 		private usersService: UsersService
 	) {
+		console.log('JWT_SECRET:', configService.get('JWT_SECRET'));
 		super({
 			jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
 			ignoreExpiration: false,
@@ -18,7 +19,8 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
 	}
 
 	async validate(payload: any) {
-		const user = await this.usersService.findByEmail(payload.email);
+		console.log('Validating JWT payload:', payload);
+		const user = await this.usersService.findOne(payload.id);
 
 		if (!user || !user.active) {
 			return null;

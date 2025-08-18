@@ -10,21 +10,51 @@ import {
 	Min,
 	Max,
 	MaxLength,
+	ValidateNested,
 } from 'class-validator';
-import { Transform } from 'class-transformer';
+import { Transform, Type } from 'class-transformer';
+import { LocationInterface } from '../trip.interfaces';
 
-export class CreateTripDto {
+export class LocationDto implements LocationInterface {
 	@IsString()
 	@IsNotEmpty()
-	@MaxLength(255)
-	destination: string;
+	latLng: string;
 
-	@IsDateString()
+	@IsString()
+	@IsNotEmpty()
+	name: string;
+
+	@IsString()
+	@IsNotEmpty()
+	address: string;
+
+	@IsString()
+	@IsNotEmpty()
+	city: string;
+
+	@IsString()
+	@IsNotEmpty()
+	state: string;
+
+	@IsString()
+	@IsNotEmpty()
+	country: string;
+
+	@IsString()
+	@IsNotEmpty()
+	zipCode: string;
+}
+
+export class CreateTripDto {
+	@ValidateNested()
+	@Type(() => LocationDto)
+	@IsOptional()
+	location: LocationInterface;
+
 	@IsNotEmpty()
 	@Transform(({ value }) => new Date(value))
 	start_date: Date;
 
-	@IsDateString()
 	@IsNotEmpty()
 	@Transform(({ value }) => new Date(value))
 	end_date: Date;

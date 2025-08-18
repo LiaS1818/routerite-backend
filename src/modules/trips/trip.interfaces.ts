@@ -17,3 +17,13 @@ export interface PaginatedResult {
   limit: number;
   totalPages: number;
 }
+
+export interface LocationInterface {
+  latLng: string;
+  name: string;
+  address: string;
+  city: string;
+  state: string;
+  country: string;
+  zipCode: string;
+}

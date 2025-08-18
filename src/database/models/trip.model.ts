@@ -17,6 +17,7 @@ import {
 } from 'sequelize-typescript';
 import sequelize, { Op, Optional } from 'sequelize';
 import { User } from './user.model';
+import { LocationInterface } from '../../modules/trips/trip.interfaces';
 
 export interface TripAttributes {
 	id: number;
@@ -35,8 +36,7 @@ export interface TripAttributes {
 	guided: boolean;
 	cover_image?: string;
 	status: 'draft' | 'planned' | 'active' | 'completed' | 'cancelled';
-	notes?: string;
-	starting_location?: string;
+	location: any; // Representa la interfaz LocationInterface como JSON
 	created_at: Date;
 	updated_at: Date;
 	deleted_at?: Date;
@@ -104,6 +104,9 @@ export class Trip extends Model<TripAttributes, TripCreationAttributes> {
 		)
 	)
 	declare status: 'draft' | 'planned' | 'active' | 'completed' | 'cancelled';
+
+	@Column(DataType.JSON)
+	declare location: LocationInterface;
 
 	@CreatedAt
 	declare created_at: Date;
