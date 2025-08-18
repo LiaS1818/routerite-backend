@@ -10,11 +10,11 @@ module.exports = {
         primaryKey: true,
         type: Sequelize.INTEGER
       },
-      nombre: {
+      name: {
         type: Sequelize.STRING(100),
         allowNull: false
       },
-      correo: {
+      email: {
         type: Sequelize.STRING(255),
         allowNull: false,
         unique: true
@@ -58,7 +58,7 @@ module.exports = {
     });
 
     // Agregar índices
-    await queryInterface.addIndex('users', ['correo'], {
+    await queryInterface.addIndex('users', ['email'], {
       unique: true,
       name: 'users_correo_unique'
     });

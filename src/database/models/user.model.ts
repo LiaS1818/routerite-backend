@@ -16,13 +16,13 @@ import { Optional } from 'sequelize';
 
 export interface UserAttributes {
 	id: number;
-	nombre: string;
-	correo: string;
-	contrasena: string;
-	pais?: string;
-	ciudad?: string;
-	verificado: boolean;
-	activo: boolean;
+	name: string;
+	email: string;
+	password: string;
+	country?: string;
+	city?: string;
+	verified: boolean;
+	active: boolean;
 	created_at: Date;
 	updated_at: Date;
 	deleted_at?: Date;
@@ -32,8 +32,8 @@ export interface UserCreationAttributes
 	extends Optional<
 		UserAttributes,
 		| 'id'
-		| 'verificado'
-		| 'activo'
+		| 'verified'
+		| 'active'
 		| 'created_at'
 		| 'updated_at'
 		| 'deleted_at'
@@ -57,47 +57,47 @@ export class User extends Model<UserAttributes, UserCreationAttributes> {
 
 	@AllowNull(false)
 	@Column(DataType.STRING(100))
-	nombre!: string;
+	declare name: string;
 
 	@AllowNull(false)
 	@Unique
 	@Column(DataType.STRING(255))
-	correo!: string;
+	declare email: string;
 
 	@AllowNull(false)
 	@Column(DataType.STRING(255))
-	contrasena!: string;
+	declare password: string;
 
 	@Column(DataType.STRING(100))
-	pais?: string;
+	declare country?: string;
 
 	@Column(DataType.STRING(100))
-	ciudad?: string;
+	declare city?: string;
 
 	@AllowNull(false)
 	@Default(false)
 	@Column(DataType.BOOLEAN)
-	verificado!: boolean;
+	declare verified: boolean;
 
 	@AllowNull(false)
 	@Default(true)
 	@Column(DataType.BOOLEAN)
-	activo!: boolean;
+	declare active: boolean;
 
 	@CreatedAt
-	created_at!: Date;
+	declare created_at: Date;
 
 	@UpdatedAt
-	updated_at!: Date;
+	declare updated_at: Date;
 
 	@DeletedAt
-	deleted_at?: Date;
+	declare deleted_at?: Date;
 
-	// Método estático para definir asociaciones
+	// Static method to define associations
 	static associate(models: Record<string, any>) {
-		User.hasMany(models.Viaje, {
-			foreignKey: 'usuario_id',
-			as: 'viajes',
+		User.hasMany(models.Trip, {
+			foreignKey: 'user_id',
+			as: 'trips',
 		});
 	}
 }

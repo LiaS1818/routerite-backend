@@ -7,9 +7,9 @@ export class UpdateUserDto extends PartialType(CreateUserDto) {
 	@IsString()
 	@MinLength(6)
 	@MaxLength(255)
-	nueva_contrasena?: string;
+	new_password?: string;
 
 	@IsOptional()
 	@IsString()
-	contrasena_actual?: string;
+	current_password?: string;
 }

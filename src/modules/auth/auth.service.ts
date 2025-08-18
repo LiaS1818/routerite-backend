@@ -21,122 +21,115 @@ export class AuthService {
 		try {
 			const user = await this.usersService.create(signupDto);
 
-			const payload = { correo: user.correo, sub: user.id };
+			const payload = { email: user.email, sub: user.id };
 			const access_token = this.jwtService.sign(payload);
 
 			return {
 				access_token,
 				user: {
 					id: user.id,
-					nombre: user.nombre,
-					correo: user.correo,
-					verificado: user.verificado,
+					name: user.name,
+					email: user.email,
+					verified: user.verified,
 				},
 			};
 		} catch (error) {
 			if (error instanceof ConflictException) {
 				throw error;
 			}
-			throw new Error('Error al crear la cuenta');
+			throw new Error('Error creating account');
 		}
 	}
 
 	async login(loginDto: LoginDto) {
 		const user = await this.usersService.validatePassword(
-			loginDto.correo,
-			loginDto.contrasena
+			loginDto.email,
+			loginDto.password
 		);
 
 		if (!user) {
-			throw new UnauthorizedException('Credenciales inválidas');
+			throw new UnauthorizedException('Invalid credentials');
 		}
 
-		if (!user.activo) {
-			throw new UnauthorizedException('Cuenta desactivada');
+		if (!user.active) {
+			throw new UnauthorizedException('Account disabled');
 		}
 
-		const payload = { correo: user.correo, sub: user.id };
+		const payload = {  id: user.id };
 		const access_token = this.jwtService.sign(payload);
 
 		return {
 			access_token,
 			user: {
 				id: user.id,
-				nombre: user.nombre,
-				correo: user.correo,
-				verificado: user.verificado,
+				name: user.name,
+				email: user.email,
+				verified: user.verified,
 			},
 		};
 	}
 
 	async forgotPassword(forgotPasswordDto: ForgotPasswordDto) {
-		const user = await this.usersService.findByCorreo(
-			forgotPasswordDto.correo
+		const user = await this.usersService.findByEmail(
+			forgotPasswordDto.email
 		);
 
 		if (!user) {
-			// Por seguridad, no revelamos si el correo existe o no
+			// For security, we don't reveal if the email exists or not
 			return {
 				message:
-					'Si el correo existe, recibirás instrucciones para recuperar tu contraseña',
+					'If the email exists, you will receive instructions to recover your password',
 			};
 		}
 
-		// Generar token de recuperación (válido por 1 hora)
+		// Generate recovery token (valid for 1 hour)
 		const resetToken = this.jwtService.sign(
-			{ correo: user.correo, sub: user.id, type: 'password-reset' },
+			{ email: user.email, sub: user.id, type: 'password-reset' },
 			{ expiresIn: '1h' }
 		);
 
-		// TODO: Enviar email con el token de recuperación
-		// await this.mailerService.sendPasswordResetEmail(user.correo, resetToken);
+		// TODO: Send email with recovery token
+		// await this.mailerService.sendPasswordResetEmail(user.email, resetToken);
 
 		return {
 			message:
-				'Si el correo existe, recibirás instrucciones para recuperar tu contraseña',
+				'If the email exists, you will receive instructions to recover your password',
 		};
 	}
 
 	async resetPassword(resetPasswordDto: ResetPasswordDto) {
 		try {
-			const decoded = this.jwtService.verify(resetPasswordDto.token);
+			// Verify token
+			const payload = this.jwtService.verify(resetPasswordDto.token);
 
-			if (decoded.type !== 'password-reset') {
-				throw new UnauthorizedException('Token inválido');
+			// Check if it's a password reset token
+			if (payload.type !== 'password-reset') {
+				throw new UnauthorizedException('Invalid token');
 			}
 
-			const user = await this.usersService.findByCorreo(decoded.correo);
+			// Find user
+			const user = await this.usersService.findByEmail(payload.email);
 
 			if (!user) {
-				throw new UnauthorizedException('Usuario no encontrado');
+				throw new UnauthorizedException('Invalid token');
 			}
 
-			// Hashear la nueva contraseña
-			const hashedPassword = await bcrypt.hash(
-				resetPasswordDto.nueva_contrasena,
-				10
-			);
+			// Hash new password
+			const hashedPassword = await bcrypt.hash(resetPasswordDto.new_password, 10);
 
-			await user.update({ contrasena: hashedPassword });
+			// Update password
+			await this.usersService.update(user.id, {
+				password: hashedPassword,
+			});
 
-			return { message: 'Contraseña actualizada exitosamente' };
+			return {
+				message: 'Password updated successfully',
+			};
 		} catch (error) {
-			throw new UnauthorizedException('Token inválido o expirado');
+			if (error.name === 'JsonWebTokenError' || error.name === 'TokenExpiredError') {
+				throw new UnauthorizedException('Invalid or expired token');
+			}
+			throw error;
 		}
-	}
-
-	async validateUser(correo: string, contrasena: string) {
-		const user = await this.usersService.validatePassword(
-			correo,
-			contrasena
-		);
-
-		if (user) {
-			// eslint-disable-next-line @typescript-eslint/no-unused-vars
-			const { contrasena: _, ...result } = user.toJSON();
-			return result;
-		}
-
-		return null;
 	}
 }

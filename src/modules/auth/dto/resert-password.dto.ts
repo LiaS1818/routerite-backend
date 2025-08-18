@@ -7,5 +7,5 @@ export class ResetPasswordDto {
 	@IsString()
 	@MinLength(6)
 	@MaxLength(255)
-	nueva_contrasena: string;
+	new_password: string;
 }

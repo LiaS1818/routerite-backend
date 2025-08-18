@@ -5,7 +5,7 @@ import { AppService } from './app.service';
 import { DatabaseModule } from './database/database.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { UsersModule } from './modules/users/users.module';
-import { ViajesModule } from './modules/viajes/viajes.module';
+import { TripsModule } from './modules/trips/trips.module';
 import { ItinerariesModule } from './modules/itineraries/itineraries.module';
 
 @Module({
@@ -17,7 +17,7 @@ import { ItinerariesModule } from './modules/itineraries/itineraries.module';
 		DatabaseModule,
 		AuthModule,
 		UsersModule,
-		ViajesModule,
+		TripsModule
 	],
 	controllers: [AppController],
 	providers: [AppService],

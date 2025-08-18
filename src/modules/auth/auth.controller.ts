@@ -49,8 +49,8 @@ export class AuthController {
 			valid: true,
 			user: {
 				id: req.user.id,
-				correo: req.user.correo,
-				nombre: req.user.nombre,
+				email: req.user.email,
+				name: req.user.name,
 			},
 		};
 	}

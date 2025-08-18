@@ -11,32 +11,32 @@ export class CreateUserDto {
 	@IsString()
 	@MinLength(2)
 	@MaxLength(100)
-	nombre: string;
+	name: string;
 
 	//@IsEmail()
 	@MaxLength(255)
-	correo: string;
+	email: string;
 
 	@IsString()
 	@MinLength(6)
 	@MaxLength(255)
-	contrasena: string;
+	password: string;
 
 	@IsOptional()
 	@IsString()
 	@MaxLength(100)
-	pais?: string;
+	country?: string;
 
 	@IsOptional()
 	@IsString()
 	@MaxLength(100)
-	ciudad?: string;
+	city?: string;
 
 	@IsOptional()
 	@IsBoolean()
-	verificado?: boolean;
+	verified?: boolean;
 
 	@IsOptional()
 	@IsBoolean()
-	activo?: boolean;
+	active?: boolean;
 }
