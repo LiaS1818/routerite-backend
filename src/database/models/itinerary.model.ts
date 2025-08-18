@@ -59,36 +59,36 @@ export class Itinerary extends Model<ItineraryAttributes, ItineraryCreationAttri
 
 	@AllowNull(false)
 	@Column(DataType.DATEONLY)
-	date!: Date;
+	declare date: Date;
 
 	@AllowNull(false)
 	@Column(DataType.TIME)
-	start_time!: Date;
+	declare start_time: Date;
 
 	@AllowNull(false)
 	@Column(DataType.TIME)
-	end_time!: Date;
+	declare end_time: Date;
 
 	@AllowNull(false)
 	@Column(DataType.STRING(255))
-	start_location!: string;
+	declare start_location: string;
 
 	@AllowNull(false)
 	@Column(DataType.DECIMAL(10, 2))
-	budget!: number;
+	declare budget: number;
 
 	@AllowNull(false)
 	@Column(DataType.STRING(100))
-	experience_type!: string;
+	declare experience_type: string;
 
 	@CreatedAt
-	created_at!: Date;
+	declare created_at: Date;
 
 	@UpdatedAt
-	updated_at!: Date;
+	declare updated_at: Date;
 
 	@DeletedAt
-	deleted_at?: Date;
+	declare deleted_at: Date;
 
 	// // Relaciones
 	// @BelongsTo(() => Trip)
