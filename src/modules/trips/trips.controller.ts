@@ -27,6 +27,7 @@ export class TripsController {
 
 	@Post()
 	async create(@Body() createTripDto: CreateTripDto, @Request() req) {
+		console.log("User", req.user)
 		// Validate that dates are coherent
 		const startDate = new Date(createTripDto.start_date);
 		const endDate = new Date(createTripDto.end_date);

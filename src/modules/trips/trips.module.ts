@@ -5,9 +5,10 @@ import { TripsController } from './trips.controller';
 import { TripsService } from './trips.service';
 import { Trip } from '../../database/models/trip.model';
 import { User } from '../../database/models/user.model';
+import { Itinerary } from 'src/database/models';
 
 @Module({
-  imports: [SequelizeModule.forFeature([Trip, User])],
+  imports: [SequelizeModule.forFeature([Trip, User, Itinerary])],
   controllers: [TripsController],
   providers: [TripsService],
   exports: [TripsService]

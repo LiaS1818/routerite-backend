@@ -11,7 +11,7 @@ import { User } from '../../database/models';
 
 @Injectable()
 export class TripsService {
-	private readonly logger = new Logger(TripsService.name);
+	private readonly logger = new Logger(TripsService.name); 
 
 	constructor(
 		@InjectModel(Trip)

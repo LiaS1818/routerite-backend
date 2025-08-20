@@ -17,7 +17,8 @@ import { ItinerariesModule } from './modules/itineraries/itineraries.module';
 		DatabaseModule,
 		AuthModule,
 		UsersModule,
-		TripsModule
+		TripsModule,
+		ItinerariesModule
 	],
 	controllers: [AppController],
 	providers: [AppService],

@@ -53,9 +53,9 @@ export class Itinerary extends Model<ItineraryAttributes, ItineraryCreationAttri
 	@Column(DataType.UUID)
 	declare id: string;
 
-	// @ForeignKey(() => Trip)
-	// @Column(DataType.UUID)
-	// trip_id?: string;
+	@AllowNull(false)
+	@Column(DataType.INTEGER)
+	declare trip_id?: string;
 
 	@AllowNull(false)
 	@Column(DataType.DATEONLY)
@@ -142,6 +142,13 @@ export class Itinerary extends Model<ItineraryAttributes, ItineraryCreationAttri
 				date: { [Op.between]: [startDate, endDate] },
 			},
 			order: [['date', 'ASC']],
+		});
+	}
+
+	static associate(models: Record<string, any>) {
+		Itinerary.belongsTo(models.Trip, {
+			foreignKey: 'trip_id',
+			as: 'trip',
 		});
 	}
 }
