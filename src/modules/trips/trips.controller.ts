@@ -17,16 +17,18 @@ import {
 import { TripsService } from './trips.service';
 import { CreateTripDto, UpdateTripDto } from './dto';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
-import { TripFiltersInterface } from './trip.interfaces';
+import { Sequelize } from 'sequelize-typescript';
 
 @Controller('trips')
 @UseGuards(JwtAuthGuard)
 export class TripsController {
-	constructor(private readonly tripsService: TripsService) {}
+	constructor(private readonly tripsService: TripsService, private sequelize: Sequelize) {}
 
 	@Post()
 	async create(@Body() createTripDto: CreateTripDto, @Request() req) {
-		console.log("User", req.user)
+
+		const transaction = await this.sequelize.transaction();
+
 		// Validate that dates are coherent
 		const startDate = new Date(createTripDto.start_date);
 		const endDate = new Date(createTripDto.end_date);
@@ -58,7 +60,14 @@ export class TripsController {
 			end_date: endDate,
 		};
 
-		return this.tripsService.create(tripData);
+		try {
+			const createdTrip = await this.tripsService.create(tripData, transaction);
+			await transaction.commit();
+			return createdTrip;
+		} catch (error) {
+			await transaction.rollback();
+			throw error;
+		}
 	}
 
 	@Get()

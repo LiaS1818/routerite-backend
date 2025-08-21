@@ -6,8 +6,8 @@ import {
 import { InjectModel } from '@nestjs/sequelize';
 import { ConfigService } from '@nestjs/config';
 import { Op, Transaction, FindOptions } from 'sequelize';
-import { Trip } from '../../database/models';
-import { User } from '../../database/models';
+import { Itinerary, Trip, User } from '../../database/models';
+import { ItineraryCreationAttributes } from '../../database/models/itinerary.model';
 
 @Injectable()
 export class TripsService {
@@ -18,6 +18,8 @@ export class TripsService {
 		private readonly tripModel: typeof Trip,
 		@InjectModel(User)
 		private readonly userModel: typeof User,
+		@InjectModel(Itinerary)
+		private readonly itineraryModel: typeof Itinerary,
 		private readonly configService: ConfigService
 	) {}
 
@@ -34,16 +36,26 @@ export class TripsService {
 			);
 
 			const trip = await this.tripModel.create(createData as any, {
-				transaction,
-				include: [
-					{
-						model: this.userModel,
-						as: 'user',
-						attributes: ['id', 'name', 'email'],
-					},
-				],
+				transaction
 			});
 
+			// Create trip itineraries
+			const tripDuration = Math.ceil(
+				(trip.end_date.getTime() - trip.start_date.getTime()) /
+					(1000 * 60 * 60 * 24)
+			);
+			for (let i = 0; i < tripDuration; i++) {
+				const itinerary: ItineraryCreationAttributes = {
+					trip_id: trip.id,
+					date: new Date( trip.start_date.getTime() + i * 24 * 60 * 60 * 1000),
+					start_time: '08:00:00',
+					end_time: '20:00:00',
+					start_location: trip.destination,
+					budget: trip.total_budget / tripDuration,
+					experience_type: 'neutral',
+				}
+				await this.itineraryModel.create(itinerary, { transaction });
+			}
 			this.logger.log(`Trip created successfully with ID: ${trip.id}`);
 			return trip;
 		} catch (error) {

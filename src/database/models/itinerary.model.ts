@@ -21,16 +21,16 @@ import sequelize, { Op, Optional } from 'sequelize';
 
 // Interfaces
 export interface ItineraryAttributes {
-	id: string;
-	trip_id?: string;
+	id?: string;
+	trip_id?: number;
 	date: Date;
-	start_time: Date;
-	end_time: Date;
+	start_time: string;
+	end_time: string;
 	start_location: string;
 	budget: number;
 	experience_type: string;
-	created_at: Date;
-	updated_at: Date;
+	created_at?: Date;
+	updated_at?: Date;
 	deleted_at?: Date;
 }
 
@@ -63,11 +63,11 @@ export class Itinerary extends Model<ItineraryAttributes, ItineraryCreationAttri
 
 	@AllowNull(false)
 	@Column(DataType.TIME)
-	declare start_time: Date;
+	declare start_time: string;
 
 	@AllowNull(false)
 	@Column(DataType.TIME)
-	declare end_time: Date;
+	declare end_time: string;
 
 	@AllowNull(false)
 	@Column(DataType.STRING(255))
@@ -90,10 +90,6 @@ export class Itinerary extends Model<ItineraryAttributes, ItineraryCreationAttri
 	@DeletedAt
 	declare deleted_at: Date;
 
-	// // Relaciones
-	// @BelongsTo(() => Trip)
-	// trip?: Trip;
-
 	// Hooks
 	@BeforeCreate
 	static validateBeforeCreate(instance: Itinerary) {
@@ -113,27 +109,6 @@ export class Itinerary extends Model<ItineraryAttributes, ItineraryCreationAttri
 	static logCreation(instance: Itinerary) {
 		console.log(`Nuevo itinerario creado: ${instance.id}`);
 	}
-
-	// Métodos de instancia
-	calculateDurationHours(): number {
-		const start = new Date(`1970-01-01T${this.start_time}Z`);
-		const end = new Date(`1970-01-01T${this.end_time}Z`);
-		return (end.getTime() - start.getTime()) / (1000 * 60 * 60);
-	}
-
-	isWithinBudget(maxBudget: number): boolean {
-		return this.budget <= maxBudget;
-	}
-
-	// // Métodos estáticos
-	// static async findByTrip(tripId: string, options: any = {}) {
-	// 	return await Itinerary.findAll({
-	// 		where: { trip_id: tripId },
-	// 		order: [['date', 'ASC'], ['start_time', 'ASC']],
-	// 		include: [{ model: Trip, as: 'trip' }],
-	// 		...options,
-	// 	});
-	// }
 
 	static async findByDateRange(tripId: string, startDate: Date, endDate: Date) {
 		return await Itinerary.findAll({
