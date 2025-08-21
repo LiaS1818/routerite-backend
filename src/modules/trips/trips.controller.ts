@@ -9,7 +9,6 @@ import {
 	Delete,
 	UseGuards,
 	Request,
-	Query,
 	ParseIntPipe,
 	HttpException,
 	HttpStatus,
@@ -53,7 +52,6 @@ export class TripsController {
 
 		const tripData = {
 			...createTripDto,
-
 			destination: `${createTripDto.location.city}, ${createTripDto.location.state} - ${createTripDto.location.country}`,
 			user_id: req.user.id,
 			start_date: startDate,
@@ -65,15 +63,10 @@ export class TripsController {
 
 	@Get()
 	async findAll(@Request() req) {
-
-		const trips = await this.tripsService.findByUserId(req.user.id);
-		return {
-			data: trips,
-			total: trips.length,
-			page: 1,
-			limit: trips.length,
-			totalPages: 1,
-		};
+		const trips = await this.tripsService.findByUserId(req.user.id, {
+			attributes: { exclude: ['deleted_at', 'cover_image'] },
+		});
+		return  trips;
 	}
 
 	@Get('upcoming')

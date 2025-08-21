@@ -68,14 +68,7 @@ export class TripsService {
 			const defaultOptions: FindOptions = {
 				where: { user_id: userId },
 				order: [['start_date', 'DESC']],
-				include: [
-					{
-						model: this.userModel,
-						as: 'user',
-						attributes: ['id', 'name', 'email'],
-					},
-				],
-				paranoid: true,
+				paranoid: true
 			};
 
 			const trips = await this.tripModel.findAll({
@@ -111,13 +104,6 @@ export class TripsService {
 					id,
 					user_id: userId,
 				},
-				include: [
-					{
-						model: this.userModel,
-						as: 'user',
-						attributes: ['id', 'name', 'email'],
-					},
-				],
 			});
 
 			if (!trip) {
@@ -126,7 +112,6 @@ export class TripsService {
 				);
 				return null;
 			}
-
 			return trip;
 		} catch (error) {
 			this.logger.error(

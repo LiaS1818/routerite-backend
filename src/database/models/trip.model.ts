@@ -73,11 +73,23 @@ export class Trip extends Model<TripAttributes, TripCreationAttributes> {
 	declare destination: string;
 
 	@AllowNull(false)
-	@Column(DataType.DATEONLY)
+	@Column({
+		type: DataType.DATEONLY,
+		get() {
+			const rawValue = this.getDataValue('start_date');
+			return rawValue ? new Date(rawValue) : null;
+		},
+	})
 	declare start_date: Date;
 
 	@AllowNull(false)
-	@Column(DataType.DATEONLY)
+	@Column({
+		type: DataType.DATEONLY,
+		get() {
+			const rawValue = this.getDataValue('end_date');
+			return rawValue ? new Date(rawValue) : null;
+		},
+	})
 	declare end_date: Date;
 
 	@AllowNull(false)
@@ -86,7 +98,13 @@ export class Trip extends Model<TripAttributes, TripCreationAttributes> {
 	declare travelers_count: number;
 
 	@AllowNull(false)
-	@Column(DataType.DECIMAL(10, 2))
+	@Column({
+		type: DataType.DECIMAL(10, 2),
+		get() {
+			const rawValue = this.getDataValue('total_budget');
+			return rawValue ? parseFloat(rawValue.toString()) : null;
+		},
+	})
 	declare total_budget: number;
 
 	@Column(DataType.TEXT)
