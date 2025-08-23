@@ -11,20 +11,20 @@ import {
   DeletedAt,
   ForeignKey,
   BelongsTo,
+  AutoIncrement,
 } from 'sequelize-typescript';
 import { Optional } from 'sequelize';
 import { Itinerary } from './itinerary.model';
-import { Trip } from './trip.model';
 
 export interface ActivityAttributes {
   id: number;
-  description: string;
-  time: Date;
-  location: string;
-  presupuesto: number;
-  transportationMode: string;
-  imgUrl?: string;
-  itineraryId: string;
+  description: string;        // ← Cambiado de 'name' a 'description'
+  time: Date;                 // ← Nuevo campo
+  location: string;           // ← Nuevo campo
+  presupuesto: number;        // ← Nuevo campo
+  transportation_mode: string;// ← Nuevo campo
+  img_url?: string;           // ← Nuevo campo (opcional)
+  itinerary_id: number;
   created_at: Date;
   updated_at: Date;
   deleted_at?: Date;
@@ -33,7 +33,7 @@ export interface ActivityAttributes {
 export interface ActivityCreationAttributes
   extends Optional<
     ActivityAttributes,
-    'id' | 'imgUrl' | 'created_at' | 'updated_at' | 'deleted_at'
+    'id' | 'created_at' | 'updated_at' | 'deleted_at' | 'img_url'
   > {}
 
 @Table({
@@ -48,41 +48,45 @@ export interface ActivityCreationAttributes
 })
 export class Activity extends Model<ActivityAttributes, ActivityCreationAttributes> {
   @PrimaryKey
-  @Default(DataType.INTEGER)
+  @AutoIncrement
   @Column(DataType.INTEGER)
   declare id: number;
 
+  @AllowNull(true) // o false según corresponda
+  @Column(DataType.INTEGER)
+  declare day: number;
+
   @AllowNull(false)
   @Column(DataType.STRING)
-  declare description: string;
+  declare description: string;  // ← Cambiado de 'name' a 'description'
 
   @AllowNull(false)
   @Column(DataType.DATE)
-  declare time: Date;
+  declare time: Date;           // ← Nuevo campo
 
   @AllowNull(false)
   @Column(DataType.STRING)
-  declare location: string;
+  declare location: string;     // ← Nuevo campo
 
   @AllowNull(false)
-  @Column(DataType.FLOAT)
-  declare presupuesto: number;
+  @Column(DataType.DOUBLE)
+  declare presupuesto: number;  // ← Nuevo campo
 
   @AllowNull(false)
   @Column(DataType.STRING)
-  declare transportationMode: string;
+  declare transportation_mode: string; // ← Nuevo campo
 
+  @AllowNull(true)
   @Column(DataType.STRING)
-  declare imgUrl?: string;
+  declare img_url?: string;     // ← Nuevo campo (opcional)
 
   @ForeignKey(() => Itinerary)
   @AllowNull(false)
-  @Column(DataType.INTEGER)
-  declare itineraryId: number;
-
-  @BelongsTo(() => Itinerary)
-  itinerary: Itinerary;
-
+  @Column({
+    type: DataType.INTEGER,
+    field: 'itinerary_id'       // ← Asegurar que mapee correctamente
+  })
+  declare itinerary_id: number;
 
   @CreatedAt
   declare created_at: Date;
@@ -93,7 +97,7 @@ export class Activity extends Model<ActivityAttributes, ActivityCreationAttribut
   @DeletedAt
   declare deleted_at?: Date;
 
-//   static associate(models: Record<string, any>) {
-//     Activity.belongsTo(models.Itinerary, { foreignKey: 'itineraryId', as: 'itinerary' });
-//   }
+  // Relación con Itinerary
+  @BelongsTo(() => Itinerary)
+  declare itinerary: Itinerary;
 }

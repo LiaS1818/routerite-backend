@@ -1,41 +1,52 @@
-// services/ItineraryService.js
-const { Itinerary, Activity } = require('../models');
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { InjectModel } from '@nestjs/sequelize';
+import { Activity } from 'src/database/models';
+import { CreateActivityDto } from './dto/create-activity.dto';
+import { WhereOptions } from 'sequelize';
 
-class ItineraryService {
-  static async getItineraryWithActivities(itineraryId) {
-    try {
-      const itinerary = await Itinerary.findByPk(itineraryId, {
-        include: [
-          {
-            model: Activity,
-            as: 'activities',
-            attributes: ['id', 'name', 'day', 'type'],
-            order: [['day', 'ASC']],
-          },
-        ],
-      });
+@Injectable()
+export class ActivityService {
+    constructor(
+        @InjectModel(Activity)
+        private readonly activityModel: typeof Activity,
+    ) {}
 
-      if (!itinerary) {
-        throw new Error('Itinerary not found');
-      }
-
-      // Agrupamos por día si quieres que quede más ordenado
-      const groupedActivities = itinerary.activities.reduce((acc, activity) => {
-        if (!acc[activity.day]) acc[activity.day] = [];
-        acc[activity.day].push(activity);
-        return acc;
-      }, {});
-
-      return {
-        id: itinerary.id,
-        name: itinerary.name,
-        description: itinerary.description,
-        days: groupedActivities, // 🔑 ya organizado por días
-      };
-    } catch (error) {
-      throw error;
+    async create(createActivityDto: CreateActivityDto): Promise<Activity> {
+        return this.activityModel.create(createActivityDto);
     }
-  }
-}
 
-module.exports = ItineraryService;
+    async findAll(): Promise<Activity[]> {
+        return this.activityModel.findAll();
+    }
+
+    async findOne(id: number): Promise<Activity> {
+        const activity = await this.activityModel.findByPk(id);
+        if (!activity) {
+            throw new NotFoundException(`Activity with ID ${id} not found`);
+        }
+        return activity;
+    }
+
+    // async update(id: number, updateActivityDto: UpdateActivityDto): Promise<Activity> {
+    //     const activity = await this.findOne(id);
+        
+    //     const updateData = Object.fromEntries(
+    //         Object.entries(updateActivityDto).filter(([_, value]) => value !== undefined)
+    //     );
+
+    //     await activity.update(updateData);
+    //     return activity.reload();
+    // }
+
+    async remove(id: number): Promise<void> {
+        const activity = await this.findOne(id);
+        await activity.destroy();
+    }
+
+    async findByItinerary(itineraryId: number): Promise<Activity[]> {
+        return this.activityModel.findAll({
+            where: { itinerary_id: itineraryId } as WhereOptions<Activity>,
+            order: [['time', 'ASC']],
+        });
+    }
+}

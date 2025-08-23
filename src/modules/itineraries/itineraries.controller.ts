@@ -16,6 +16,7 @@ import {
 } from '@nestjs/common';
 import { ItinerariesService } from './itineraries.service';
 import { CreateItineraryDto } from './dto/create-itinerary.dto';
+import { json } from 'stream/consumers';
 
 @Controller('/itineraries')
 export class ItinerariesController {
@@ -27,9 +28,18 @@ export class ItinerariesController {
         return this.itinerariesService.create(createItineraryDto);
     }
 
-    @Get()
-    findAll(@Query('userId', ParseIntPipe) userId: number) {
-        return this.itinerariesService.findAll(userId);
-    }
+    // @Get()
+	// async findAll(@Query('tripId', ParseIntPipe) tripId: number) {
+  	// 	return this.itinerariesService.findAll(tripId);
+	// }
 
+	@Get()
+	async getItinerary(@Query('tripId', ParseIntPipe) id: number) {
+    try {
+      const itinerary = await this.itinerariesService.getItineraryWithActivities(id);
+      return itinerary;
+    } catch (error) {
+      return { statusCode: 404, message: 'Itinerary not found' };
+    }
+  }
 }

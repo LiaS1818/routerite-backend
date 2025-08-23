@@ -1,5 +1,6 @@
 // DTO create Itinerary
 
+import { Type } from 'class-transformer';
 import {
     IsString,
     IsEmail,
@@ -7,7 +8,11 @@ import {
     IsBoolean,
     MinLength,
     MaxLength,
+    IsNotEmpty,
+    isDate
 } from 'class-validator';
+import { IsDate } from 'sequelize-typescript';
+
 
 export class CreateItineraryDto {
     @IsOptional()
@@ -28,12 +33,13 @@ export class CreateItineraryDto {
 
     @IsOptional()
     @IsString()
-    @MaxLength(100)
     experience_type: string;
 
     @IsOptional()
-    @IsString()
-    @MaxLength(100)
+    @Type(() => Date)
     date: Date;
+
+    @IsNotEmpty()
+    trip_id: number;    
 
 }

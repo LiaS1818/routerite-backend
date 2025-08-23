@@ -51,7 +51,7 @@ export class TripsController {
 		}
 
 		const tripData = {
-			...createTripDto,
+			...createTripDto, // Spread the properties of createTripDto, this will in
 			destination: `${createTripDto.location.city}, ${createTripDto.location.state} - ${createTripDto.location.country}`,
 			user_id: req.user.id,
 			start_date: startDate,
@@ -63,14 +63,14 @@ export class TripsController {
 
 	@Get()
 	async findAll(@Request() req) {
-		const trips = await this.tripsService.findByUserId(req.user.id, {
+		const trips = await this.tripsService.findByUserId(req.user.id, { 
 			attributes: { exclude: ['deleted_at', 'cover_image'] },
 		});
-		return  trips;
+		return trips;
 	}
 
 	@Get('upcoming')
-	async findUpcoming(@Request() req) {
+	async findUpcoming(@Request() req) { 
 		return this.tripsService.findUpcomingByUser(req.user.id);
 	}
 

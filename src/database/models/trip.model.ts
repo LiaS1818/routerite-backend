@@ -14,10 +14,13 @@ import {
 	BeforeCreate,
 	BeforeUpdate,
 	AfterCreate,
+	BelongsTo,
+	HasMany,
 } from 'sequelize-typescript';
 import sequelize, { Op, Optional } from 'sequelize';
 import { User } from './user.model';
 import { LocationInterface } from '../../modules/trips/trip.interfaces';
+import { Itinerary } from './itinerary.model';
 
 export interface TripAttributes {
 	id: number;
@@ -136,10 +139,10 @@ export class Trip extends Model<TripAttributes, TripCreationAttributes> {
 	declare deleted_at?: Date;
 
 	// Static method to define associations
-	static associate(models: Record<string, any>) {
-		Trip.belongsTo(models.User, {
-			foreignKey: 'user_id',
-			as: 'user',
-		});
-	}
+	
+	@BelongsTo(() => User, 'user_id')
+	declare user?: User;
+
+	@HasMany(() => Itinerary, 'trip_id')
+	declare itineraries?: Itinerary[];
 }

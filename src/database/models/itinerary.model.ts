@@ -15,14 +15,16 @@ import {
 	AfterCreate,
 	ForeignKey,
 	BelongsTo,
+	HasMany,
 } from 'sequelize-typescript';
 import sequelize, { Op, Optional } from 'sequelize';
+import { Activity } from './activity.model';
 // import { Trip } from './trip.model';
 
 // Interfaces
 export interface ItineraryAttributes {
 	id: string;
-	trip_id?: string;
+	trip_id?: number;
 	date: Date;
 	start_time: Date;
 	end_time: Date;
@@ -49,16 +51,16 @@ export interface ItineraryCreationAttributes
 })
 export class Itinerary extends Model<ItineraryAttributes, ItineraryCreationAttributes> {
 	@PrimaryKey
-	@Default(DataType.UUIDV4)
-	@Column(DataType.UUID)
-	declare id: string;
+	@AutoIncrement // ✅ Esto es crucial
+	@Column(DataType.INTEGER)
+	declare id: number;
 
 	@AllowNull(false)
 	@Column(DataType.INTEGER)
-	declare trip_id?: string;
+	declare trip_id: number;
 
 	@AllowNull(false)
-	@Column(DataType.DATEONLY)
+	@Column(DataType.DATE)
 	declare date: Date;
 
 	@AllowNull(false)
@@ -72,14 +74,16 @@ export class Itinerary extends Model<ItineraryAttributes, ItineraryCreationAttri
 	@AllowNull(false)
 	@Column(DataType.STRING(255))
 	declare start_location: string;
-
+	
 	@AllowNull(false)
 	@Column(DataType.DECIMAL(10, 2))
 	declare budget: number;
-
+	
 	@AllowNull(false)
 	@Column(DataType.STRING(100))
 	declare experience_type: string;
+
+
 
 	@CreatedAt
 	declare created_at: Date;
@@ -90,9 +94,6 @@ export class Itinerary extends Model<ItineraryAttributes, ItineraryCreationAttri
 	@DeletedAt
 	declare deleted_at: Date;
 
-	// // Relaciones
-	// @BelongsTo(() => Trip)
-	// trip?: Trip;
 
 	// Hooks
 	@BeforeCreate
@@ -151,4 +152,11 @@ export class Itinerary extends Model<ItineraryAttributes, ItineraryCreationAttri
 			as: 'trip',
 		});
 	}
+
+	@HasMany(() => Activity, {
+		foreignKey: 'itinerary_id', // ← debe coincidir con el nombre en la BD
+		as: 'activities'
+	})
+	activities: Activity[];
+
 }

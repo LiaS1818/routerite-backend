@@ -21,7 +21,7 @@ export class AuthService {
 		try {
 			const user = await this.usersService.create(signupDto);
 
-			const payload = { email: user.email, id: user.id };
+			const payload = { email: user.email, id: user.id};
 			const access_token = this.jwtService.sign(payload);
 
 			return {
