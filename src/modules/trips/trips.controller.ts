@@ -15,7 +15,8 @@ import {
 	BadRequestException,
 } from '@nestjs/common';
 import { TripsService } from './trips.service';
-import { CreateTripDto, UpdateTripDto } from './dto';
+import { CreateTripDto } from './dto';
+import { UpdateTripExtendedDto } from './dto/update-trip.dto';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { Sequelize } from 'sequelize-typescript';
 
@@ -72,15 +73,10 @@ export class TripsController {
 
 	@Get()
 	async findAll(@Request() req) {
-		const trips = await this.tripsService.findByUserId(req.user.id, {
+		return this.tripsService.findByUserId(req.user.id, {
 			attributes: { exclude: ['deleted_at', 'cover_image'] },
+			order: [['start_date', 'ASC']]
 		});
-		return  trips;
-	}
-
-	@Get('upcoming')
-	async findUpcoming(@Request() req) {
-		return this.tripsService.findUpcomingByUser(req.user.id);
 	}
 
 	@Get(':id')
@@ -100,50 +96,11 @@ export class TripsController {
 	@Patch(':id')
 	async update(
 		@Param('id', ParseIntPipe) id: number,
-		@Body() updateTripDto: UpdateTripDto,
+		@Body() updateTripDto: UpdateTripExtendedDto,
 		@Request() req
 	) {
-		const trip = await this.tripsService.findByIdAndUser(id, req.user.id);
-
-		if (!trip) {
-			throw new HttpException(
-				'Trip not found',
-				HttpStatus.NOT_FOUND
-			);
-		}
-
-		// Validate dates if they're being updated
-		if (updateTripDto.start_date || updateTripDto.end_date) {
-			const startDate = updateTripDto.start_date
-				? new Date(updateTripDto.start_date)
-				: trip.start_date;
-
-			const endDate = updateTripDto.end_date
-				? new Date(updateTripDto.end_date)
-				: trip.end_date;
-
-			if (endDate < startDate) {
-				throw new BadRequestException(
-					'The end date must be greater than or equal to the start date'
-				);
-			}
-
-			// Check for date conflicts with other trips
-			const conflictingTrips = await this.tripsService.findByDateRange(
-				req.user.id,
-				startDate,
-				endDate,
-				id // Exclude current trip from check
-			);
-
-			if (conflictingTrips.length > 0) {
-				throw new BadRequestException(
-					'You already have trips planned that overlap with these dates'
-				);
-			}
-		}
-
-		return this.tripsService.update(id, updateTripDto);
+		// Delegar toda la lógica avanzada al nuevo servicio
+		return this.tripsService.updateTripWithItineraryManagement(req.user.id, id, updateTripDto);
 	}
 
 	@Delete(':id')

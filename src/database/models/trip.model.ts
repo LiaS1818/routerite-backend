@@ -27,13 +27,6 @@ export interface TripAttributes {
 	end_date: Date;
 	travelers_count: number;
 	total_budget: number;
-	experience_type:
-		| 'culture'
-		| 'adventure'
-		| 'gastronomy'
-		| 'beach'
-		| 'nature';
-	guided: boolean;
 	cover_image?: string;
 	status: 'draft' | 'planned' | 'active' | 'completed' | 'cancelled';
 	location: any; // Representa la interfaz LocationInterface como JSON
