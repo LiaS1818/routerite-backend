@@ -119,6 +119,8 @@ export class AuthService {
 
 			// Update password
 			await this.usersService.update(user.id, {
+				name: user.name,
+				email: user.email,
 				password: hashedPassword,
 			});
 
