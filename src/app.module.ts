@@ -7,6 +7,8 @@ import { AuthModule } from './modules/auth/auth.module';
 import { UsersModule } from './modules/users/users.module';
 import { TripsModule } from './modules/trips/trips.module';
 import { ItinerariesModule } from './modules/itineraries/itineraries.module';
+import { ActivityModule } from './modules/activity/activity.module';
+
 
 @Module({
 	imports: [
@@ -18,7 +20,9 @@ import { ItinerariesModule } from './modules/itineraries/itineraries.module';
 		AuthModule,
 		UsersModule,
 		TripsModule,
-		ItinerariesModule
+		ItinerariesModule,
+		ActivityModule
+
 	],
 	controllers: [AppController],
 	providers: [AppService],
