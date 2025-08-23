@@ -79,34 +79,11 @@ export class UsersService {
 		// If changing password, verify current password
 		const updateData: any = { ...updateUserDto };
 
-		if (updateUserDto.new_password) {
-			if (!updateUserDto.current_password) {
-				throw new BadRequestException(
-					'Current password is required to change it'
-				);
-			}
-
-			const isCurrentPasswordValid = await bcrypt.compare(
-				updateUserDto.current_password,
-				user.password
-			);
-
-			if (!isCurrentPasswordValid) {
-				throw new BadRequestException(
-					'Current password is incorrect'
-				);
-			}
-
+		if (updateUserDto.password) {
 			// Hash the new password
-			updateData.password = await bcrypt.hash(updateUserDto.new_password, 10);
-
-			// Remove these fields as they're not part of the model
-			delete updateData.new_password;
-			delete updateData.current_password;
+			updateData.password = await bcrypt.hash(updateUserDto.password, 10);
 		}
-
 		await user.update(updateData);
-
 		// Return user without password
 		return this.userModel.findByPk(id, {
 			attributes: { exclude: ['password'] },

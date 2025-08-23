@@ -15,13 +15,11 @@ import { IsDate } from 'sequelize-typescript';
 
 
 export class CreateItineraryDto {
-    @IsOptional()
     @IsString()
-    start_time: Date;
+    start_time: string;
 
-    @IsOptional()
     @MaxLength(255)
-    end_time: Date;
+    end_time: string;
 
     @IsOptional()
     budget: number;

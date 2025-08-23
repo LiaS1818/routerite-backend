@@ -35,9 +35,10 @@ export class UsersController {
 		return { exists: !!user };
 	}
 
-	@Get(':id')
-	async findOne(@Param('id', ParseIntPipe) id: number) {
-		return this.usersService.findOne(id);
+	@UseGuards(JwtAuthGuard)
+	@Get('/me')
+	async findOne( @Request() req) {
+		return this.usersService.findOne(req.user.id);
 	}
 
 	@Post()
@@ -59,50 +60,9 @@ export class UsersController {
 				HttpStatus.FORBIDDEN
 			);
 		}
+		if(updateUserDto.password == null)
+			delete updateUserDto.password;
 		return this.usersService.update(id, updateUserDto);
 	}
 
-	@Delete(':id')
-	@UseGuards(JwtAuthGuard)
-	async remove(@Param('id', ParseIntPipe) id: number, @Request() req) {
-		// Only allow users to delete their own profile
-		if (req.user.id !== id) {
-			throw new HttpException(
-				'Not authorized to delete this profile',
-				HttpStatus.FORBIDDEN
-			);
-		}
-		return this.usersService.remove(id);
-	}
-
-	@Get('/trips/home')
-	getViajes() {
-    // Aquí podrías traer datos desde la base de datos, pero por ahora es mock
-    const viajes = [
-      {
-        id: 1,
-        nombre: 'Viaje a París',
-        fecha: '2025-09-10',
-        imagen_url: 'https://ejemplo.com/paris.jpg',
-		status: 'active'
-      },
-      {
-        id: 2,
-        nombre: 'Viaje a Roma',
-        fecha: '2025-10-05',
-        imagen_url: 'https://ejemplo.com/roma.jpg',
-		status: 'inactive'
-      },
-      {
-        id: 3,
-        nombre: 'Viaje a Tokio',
-        fecha: '2025-11-20',
-        imagen_url: 'https://ejemplo.com/tokio.jpg',
-		status: 'inactive'
-      }
-    ];
-
-    // Retornamos en formato JSON
-    return { viajes };
-	}
 }
