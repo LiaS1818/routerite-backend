@@ -18,7 +18,6 @@ export class UsersService {
 	) {}
 
 	async create(createUserDto: CreateUserDto): Promise<User> {
-		// Check if email already exists
 		const existingUser = await this.userModel.findOne({
 			where: { email: createUserDto.email },
 		});
@@ -29,16 +28,12 @@ export class UsersService {
 			);
 		}
 
-		// Hash the password
 		const hashedPassword = await bcrypt.hash(createUserDto.password, 10);
-
-		// Create the user
 		const user = await this.userModel.create({
 			...createUserDto,
 			password: hashedPassword,
 		});
 
-		// Reload without password
 		return this.userModel.findByPk(user.id, {
 			attributes: { exclude: ['password'] },
 		}) as Promise<User>;
@@ -111,25 +106,20 @@ export class UsersService {
 	 * @returns User object if credentials are valid, null otherwise
 	 */
 	async validatePassword(email: string, password: string): Promise<User | null> {
-		// Find user with email including password field
 		const user = await this.userModel.findOne({
 			where: { email },
 		});
 
-		// If user doesn't exist, return null
 		if (!user) {
 			return null;
 		}
 
-		// Verify password
 		const isPasswordValid = await bcrypt.compare(password, user.password);
 
-		// If password is not valid, return null
 		if (!isPasswordValid) {
 			return null;
 		}
 
-		// Return user
 		return user;
 	}
 }

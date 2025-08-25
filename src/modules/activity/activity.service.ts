@@ -27,17 +27,6 @@ export class ActivityService {
         return activity;
     }
 
-    // async update(id: number, updateActivityDto: UpdateActivityDto): Promise<Activity> {
-    //     const activity = await this.findOne(id);
-        
-    //     const updateData = Object.fromEntries(
-    //         Object.entries(updateActivityDto).filter(([_, value]) => value !== undefined)
-    //     );
-
-    //     await activity.update(updateData);
-    //     return activity.reload();
-    // }
-
     async remove(id: number): Promise<void> {
         const activity = await this.findOne(id);
         await activity.destroy();

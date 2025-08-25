@@ -13,7 +13,7 @@ export class ItinerariesService {
         @InjectModel(Itinerary)
         private readonly itineraryModel: typeof Itinerary,
         
-        @InjectModel(Activity) // ← CORRECCIÓN: Inyectar el modelo correctamente
+        @InjectModel(Activity)
         private readonly activityModel: typeof Activity,
         
     ) {}
@@ -47,14 +47,14 @@ export class ItinerariesService {
         try {
             const itinerary = await this.itineraryModel.findByPk(itineraryId, {
                 include: [{
-                    model: Activity, // ← Usar el modelo directamente
+                    model: Activity,
                     as: 'activities',
                     attributes: [
                         'id', 
                         'description',
                         'time',
                         'location',
-                        'presupuesto',
+                        'budget',
                         'transportation_mode',
                         'img_url',
                         'day'
@@ -70,7 +70,6 @@ export class ItinerariesService {
 
             const activities = itinerary.activities || [];
 
-            // Agrupar por día 
             const groupedActivities = activities.reduce((acc, activity) => {
                 // Usar el campo 'day' si existe, sino usar la fecha
                 const dayKey = activity.day ? `Day ${activity.day}` : 
@@ -82,7 +81,7 @@ export class ItinerariesService {
                     description: activity.description,
                     time: activity.time,
                     location: activity.location,
-                    budget: activity.presupuesto,
+                    budget: activity.budget,
                     transportation: activity.transportation_mode,
                     image: activity.img_url,
                     day: activity.day
@@ -111,12 +110,6 @@ export class ItinerariesService {
         }
         return itinerary;
     }
-
-    // Método para actualizar itinerario
-    // async update(id: number, updateData: Partial<Itinerary>): Promise<Itinerary> {
-    //     const itinerary = await this.findOne(id);
-    //     return itinerary.update(updateData);
-    // }
 
     // Método para eliminar itinerario
     async remove(id: number): Promise<void> {

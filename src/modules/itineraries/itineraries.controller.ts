@@ -28,11 +28,6 @@ export class ItinerariesController {
         return this.itinerariesService.create(createItineraryDto);
     }
 
-    // @Get()
-	// async findAll(@Query('tripId', ParseIntPipe) tripId: number) {
-  	// 	return this.itinerariesService.findAll(tripId);
-	// }
-
 	@Get()
 	async getItinerary(@Query('tripId', ParseIntPipe) id: number) {
     try {

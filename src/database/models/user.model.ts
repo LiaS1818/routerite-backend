@@ -11,8 +11,10 @@ import {
 	CreatedAt,
 	UpdatedAt,
 	DeletedAt,
+	HasMany,
 } from 'sequelize-typescript';
 import { Optional } from 'sequelize';
+import { Trip } from './index';
 
 export interface UserAttributes {
 	id: number;
@@ -93,11 +95,6 @@ export class User extends Model<UserAttributes, UserCreationAttributes> {
 	@DeletedAt
 	declare deleted_at?: Date;
 
-	// Static method to define associations
-	static associate(models: Record<string, any>) {
-		User.hasMany(models.Trip, {
-			foreignKey: 'user_id',
-			as: 'trips',
-		});
-	}
+	@HasMany(() => Trip, { foreignKey: 'user_id', as: 'trips' })
+	declare trips?: Trip[];
 }
