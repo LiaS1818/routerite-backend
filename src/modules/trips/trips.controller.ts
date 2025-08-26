@@ -53,8 +53,13 @@ export class TripsController {
 			);
 		}
 		const { latLng } = createTripDto.location;
-		const longitude = latLng.match(/lng:\s*([-+]?\d*\.\d+|\d+)/);
-		const latitude = latLng.match(/lat:\s*([-+]?\d*\.\d+|\d+),/);
+		const longitudeMatch = latLng.match(/lng:\s*([-+]?\d*\.\d+|\d+)/);
+		const longitude = longitudeMatch ? longitudeMatch[1] : null;
+		const latitudeMatch = latLng.match(/lat:\s*([-+]?\d*\.\d+|\d+),/);
+		const latitude = latitudeMatch ? latitudeMatch[1]: null;
+		console.log(longitude);
+		console.log(latitude);
+		console.log(literal(`ST_GeomFromText('POINT(${longitude} ${latitude})', 4326)`) as unknown )
 		const tripData = {
 			...createTripDto, // Spread the properties of createTripDto, this will in
 			location_point: literal(`ST_GeomFromText('POINT(${longitude} ${latitude})', 4326)`) as unknown as PostGISPoint,
