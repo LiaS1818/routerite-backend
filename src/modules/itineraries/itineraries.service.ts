@@ -10,6 +10,7 @@ import { CreateItineraryDto } from './dto/create-itinerary.dto';
 import { Logger } from '@nestjs/common';
 @Injectable()
 export class ItinerariesService {
+    private readonly logger = new Logger(ItinerariesService.name);
     constructor(
         @InjectModel(Itinerary)
         private readonly itineraryModel: typeof Itinerary,
@@ -17,7 +18,7 @@ export class ItinerariesService {
         @InjectModel(Activity)
         private readonly activityModel: typeof Activity,
 
-        private readonly logger = new Logger(ItinerariesService.name),
+
     ) {}
 
     async create(createItineraryDto: CreateItineraryDto): Promise<void> {
