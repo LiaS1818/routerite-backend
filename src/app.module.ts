@@ -8,6 +8,10 @@ import { UsersModule } from './modules/users/users.module';
 import { TripsModule } from './modules/trips/trips.module';
 import { ItinerariesModule } from './modules/itineraries/itineraries.module';
 import { ActivityModule } from './modules/activity/activity.module';
+import { FoursquareService } from './foursquare/foursquare.service';
+import { FoursquareController } from './foursquare/foursquare.controller';
+import { FoursquareModule } from './foursquare/foursqueare.module';
+import { HttpModule } from '@nestjs/axios';
 
 
 @Module({
@@ -21,10 +25,14 @@ import { ActivityModule } from './modules/activity/activity.module';
 		UsersModule,
 		TripsModule,
 		ItinerariesModule,
-		ActivityModule
+		ActivityModule,
+		HttpModule.register({ 
+			timeout: 5000, 
+			maxRedirects: 5,
+		})
 
 	],
-	controllers: [AppController],
-	providers: [AppService],
+	controllers: [AppController, FoursquareController],
+	providers: [AppService, FoursquareService],
 })
-export class AppModule {}
+export class AppModule { }

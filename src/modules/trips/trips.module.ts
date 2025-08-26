@@ -6,11 +6,12 @@ import { TripsService } from './trips.service';
 import { Trip } from '../../database/models/trip.model';
 import { User } from '../../database/models/user.model';
 import { Itinerary } from 'src/database/models';
+import { FoursquareModule } from 'src/foursquare/foursqueare.module';
 
 @Module({
-  imports: [SequelizeModule.forFeature([Trip, User, Itinerary])],
+  imports: [SequelizeModule.forFeature([Trip, User, Itinerary]), FoursquareModule],
   controllers: [TripsController],
-  providers: [TripsService],
+  providers: [TripsService], 
   exports: [TripsService]
 })
 export class TripsModule {}

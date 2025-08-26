@@ -18,11 +18,15 @@ import { TripsService } from './trips.service';
 import { CreateTripDto, UpdateTripDto } from './dto';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { TripFiltersInterface } from './trip.interfaces';
+import { FoursquareService } from 'src/foursquare/foursquare.service';
 
 @Controller('trips')
 @UseGuards(JwtAuthGuard)
 export class TripsController {
-	constructor(private readonly tripsService: TripsService) {}
+	constructor(
+		private readonly tripsService: TripsService,
+		private readonly foursquareService: FoursquareService
+	) { }
 
 	@Post()
 	async create(@Body() createTripDto: CreateTripDto, @Request() req) {
@@ -30,6 +34,9 @@ export class TripsController {
 		// Validate that dates are coherent
 		const startDate = new Date(createTripDto.start_date);
 		const endDate = new Date(createTripDto.end_date);
+
+		// separar latLng
+		const [lat, lon] = createTripDto.location.latLng.split(',').map(coord => parseFloat(coord.trim()));
 
 		if (endDate < startDate) {
 			throw new BadRequestException(
@@ -50,10 +57,14 @@ export class TripsController {
 			);
 		}
 
+		// obtener foto sugerida
+		const photoUrl = await this.foursquareService.getTripPhoto(lat, lon);
+
 		const tripData = {
 			...createTripDto, // Spread the properties of createTripDto, this will in
 			destination: `${createTripDto.location.city}, ${createTripDto.location.state} - ${createTripDto.location.country}`,
 			user_id: req.user.id,
+			cover_image: photoUrl ?? undefined,
 			start_date: startDate,
 			end_date: endDate,
 		};
@@ -63,14 +74,14 @@ export class TripsController {
 
 	@Get()
 	async findAll(@Request() req) {
-		const trips = await this.tripsService.findByUserId(req.user.id, { 
+		const trips = await this.tripsService.findByUserId(req.user.id, {
 			attributes: { exclude: ['deleted_at', 'cover_image'] },
 		});
 		return trips;
 	}
 
 	@Get('upcoming')
-	async findUpcoming(@Request() req) { 
+	async findUpcoming(@Request() req) {
 		return this.tripsService.findUpcomingByUser(req.user.id);
 	}
 
