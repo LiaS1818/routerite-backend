@@ -1,4 +1,3 @@
-// filepath: /home/cardonapablo/Documentos/Proyectos/RouteRite/routerite-backend/src/modules/trips/dto/update-trip.dto.ts
 import { PartialType } from '@nestjs/mapped-types';
 import { CreateTripDto } from './create-trip.dto';
 import {
@@ -16,7 +15,6 @@ export class UpdateTripDto extends PartialType(CreateTripDto) {
   status?: 'draft' | 'planned' | 'active' | 'completed' | 'cancelled';
 }
 
-// DTO extendido restringiendo campos editables relevantes al manejo de itinerarios
 export class UpdateTripExtendedDto {
   @IsDateString()
   start_date?: string | Date;

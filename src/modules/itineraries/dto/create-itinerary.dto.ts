@@ -1,18 +1,10 @@
-// DTO create Itinerary
-
 import { Type } from 'class-transformer';
 import {
     IsString,
-    IsEmail,
     IsOptional,
-    IsBoolean,
-    MinLength,
     MaxLength,
     IsNotEmpty,
-    isDate
 } from 'class-validator';
-import { IsDate } from 'sequelize-typescript';
-
 
 export class CreateItineraryDto {
     @IsString()

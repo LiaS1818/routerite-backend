@@ -7,13 +7,28 @@ import { UpdateItineraryDto } from './dto/update-itinerary.dto';
 import { ItineraryAttributes } from '../../database/models/itinerary.model';
 import { ActivityAttributes } from '../activity/entities/activity.interface';
 import { CreateItineraryDto } from './dto/create-itinerary.dto';
+import { Logger } from '@nestjs/common';
 @Injectable()
 export class ItinerariesService {
     constructor(
         @InjectModel(Itinerary)
-        private itineraryModel: typeof Itinerary,
-    ) { }
+        private readonly itineraryModel: typeof Itinerary,
+        
+        @InjectModel(Activity)
+        private readonly activityModel: typeof Activity,
 
+        private readonly logger = new Logger(ItinerariesService.name),
+    ) {}
+
+    async create(createItineraryDto: CreateItineraryDto): Promise<void> {
+        this.logger.debug('DTO recibido:');
+        this.logger.debug(JSON.stringify(createItineraryDto, null, 2));
+        
+        this.logger.debug('Tipos de datos:');
+        Object.entries(createItineraryDto).forEach(([key, value]) => {
+            this.logger.debug(`${key}: ${value} (${typeof value})`);
+        });
+    }   
     async createItinerary(createItineraryDto: CreateItineraryDto): Promise<Itinerary> {
         try {
             const itinerary = await this.itineraryModel.create(createItineraryDto);
@@ -73,7 +88,7 @@ export class ItinerariesService {
                     description: activity.description,
                     time: activity.time,
                     location: activity.location,
-                    budget: activity.presupuesto,
+                    budget: activity.budget,
                     transportation: activity.transportation_mode,
                     image: activity.img_url,
                     day: activity.day
@@ -114,7 +129,7 @@ export class ItinerariesService {
                         'description',
                         'time',
                         'location',
-                        'presupuesto',
+                        'budget',
                         'transportation_mode',
                         'img_url',
                         'day'
@@ -147,7 +162,7 @@ export class ItinerariesService {
                     description: activity.description,
                     time: activity.time,
                     location: activity.location,
-                    budget: activity.presupuesto,
+                    budget: activity.budget,
                     transportation: activity.transportation_mode,
                     image: activity.img_url,
                     day: activity.day
@@ -170,5 +185,20 @@ export class ItinerariesService {
             console.error('Error in getItineraryWithActivities:', error);
             throw error;
         }
+    }
+
+    // Método adicional para encontrar un itinerario por ID
+    async findOne(id: number): Promise<Itinerary> {
+        const itinerary = await this.itineraryModel.findByPk(id);
+        if (!itinerary) {
+            throw new NotFoundException(`Itinerary with ID ${id} not found`);
+        }
+        return itinerary;
+    }
+
+    // Método para eliminar itinerario
+    async remove(id: number): Promise<void> {
+        const itinerary = await this.findOne(id);
+        await itinerary.destroy();
     }
 }

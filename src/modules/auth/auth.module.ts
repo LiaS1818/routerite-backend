@@ -9,7 +9,7 @@ import { UsersModule } from '../users/users.module';
 
 @Module({
 	imports: [
-		UsersModule, // Importar UsersModule para acceder a UsersService
+		UsersModule,
 		PassportModule,
 		JwtModule.registerAsync({
 			imports: [ConfigModule],

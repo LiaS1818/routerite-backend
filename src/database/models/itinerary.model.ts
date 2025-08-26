@@ -13,15 +13,13 @@ import {
 	BeforeCreate,
 	BeforeUpdate,
 	AfterCreate,
-	ForeignKey,
 	BelongsTo,
 	HasMany,
+	ForeignKey,
 } from 'sequelize-typescript';
-import sequelize, { Op, Optional } from 'sequelize';
-import { Activity } from './activity.model';
-// import { Trip } from './trip.model';
+import { Op, Optional } from 'sequelize';
+import { Trip, Activity } from './index'
 
-// Interfaces
 export interface ItineraryAttributes {
 	id: string;
 	trip_id?: number;
@@ -52,10 +50,11 @@ export interface ItineraryCreationAttributes
 })
 export class Itinerary extends Model<ItineraryAttributes, ItineraryCreationAttributes> {
 	@PrimaryKey
-	@AutoIncrement // ✅ Esto es crucial
+	@AutoIncrement
 	@Column(DataType.INTEGER)
 	declare id: number;
 
+	@ForeignKey(() => Trip)
 	@AllowNull(false)
 	@Column(DataType.INTEGER)
 	declare trip_id: number;
@@ -84,8 +83,6 @@ export class Itinerary extends Model<ItineraryAttributes, ItineraryCreationAttri
 	@Column(DataType.STRING(100))
 	declare experience_type: string;
 
-
-
 	@CreatedAt
 	declare created_at: Date;
 
@@ -96,7 +93,6 @@ export class Itinerary extends Model<ItineraryAttributes, ItineraryCreationAttri
 	declare deleted_at: Date;
 
 
-	// Hooks
 	@BeforeCreate
 	static validateBeforeCreate(instance: Itinerary) {
 		if (instance.end_time <= instance.start_time) {
@@ -126,17 +122,10 @@ export class Itinerary extends Model<ItineraryAttributes, ItineraryCreationAttri
 		});
 	}
 
-	static associate(models: Record<string, any>) {
-		Itinerary.belongsTo(models.Trip, {
-			foreignKey: 'trip_id',
-			as: 'trip',
-		});
-	}
+	@BelongsTo(() => Trip, { foreignKey: 'trip_id', as: 'trip' })
+	declare trip?: Trip; // Cambia 'any' por el tipo correcto de Trip si
 
-	@HasMany(() => Activity, {
-		foreignKey: 'itinerary_id', // ← debe coincidir con el nombre en la BD
-		as: 'activities'
-	})
-	activities: Activity[];
+	@HasMany(() => Activity, { foreignKey: 'itinerary_id', as: 'activities' })
+	declare activities?: Activity[]; // Cambia 'any' por el tipo correcto de Activity
 
 }

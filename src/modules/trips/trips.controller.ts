@@ -1,4 +1,3 @@
-// filepath: /home/cardonapablo/Documentos/Proyectos/RouteRite/routerite-backend/src/modules/trips/trips.controller.ts
 import {
 	Controller,
 	Get,
@@ -12,13 +11,14 @@ import {
 	ParseIntPipe,
 	HttpException,
 	HttpStatus,
-	BadRequestException,
+	BadRequestException
 } from '@nestjs/common';
 import { TripsService } from './trips.service';
-import { CreateTripDto } from './dto';
-import { UpdateTripExtendedDto } from './dto/update-trip.dto';
+import { CreateTripDto, UpdateTripExtendedDto } from './dto';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { Sequelize } from 'sequelize-typescript';
+import { literal } from 'sequelize';
+import { PostGISPoint } from '../../common/interfaces/PostGISPoint';
 
 @Controller('trips')
 @UseGuards(JwtAuthGuard)
@@ -26,7 +26,7 @@ export class TripsController {
 	constructor(private readonly tripsService: TripsService, private sequelize: Sequelize) {}
 
 	@Post()
-	async create(@Body() createTripDto: CreateTripDto, @Request() req) {
+	async create(@Body() createTripDto: CreateTripDto, @Request() req: any)  {
 
 		const transaction = await this.sequelize.transaction();
 
@@ -52,9 +52,12 @@ export class TripsController {
 				'You already have trips planned that overlap with these dates'
 			);
 		}
-
+		const { latLng } = createTripDto.location;
+		const longitude = latLng.match(/lng:\s*([-+]?\d*\.\d+|\d+)/);
+		const latitude = latLng.match(/lat:\s*([-+]?\d*\.\d+|\d+),/);
 		const tripData = {
 			...createTripDto, // Spread the properties of createTripDto, this will in
+			location_point: literal(`ST_GeomFromText('POINT(${longitude} ${latitude})', 4326)`) as unknown as PostGISPoint,
 			destination: `${createTripDto.location.city}, ${createTripDto.location.state} - ${createTripDto.location.country}`,
 			user_id: req.user.id,
 			start_date: startDate,
@@ -73,10 +76,9 @@ export class TripsController {
 
 	@Get()
 	async findAll(@Request() req) {
-		const trips = await this.tripsService.findByUserId(req.user.id, { 
+		return  await this.tripsService.findByUserId(req.user.id, {
 			attributes: { exclude: ['deleted_at', 'cover_image'] },
 		});
-		return trips;
 	}
 
 	@Get('upcoming')
@@ -118,7 +120,6 @@ export class TripsController {
 				HttpStatus.NOT_FOUND
 			);
 		}
-
 		return this.tripsService.remove(id);
 	}
 }

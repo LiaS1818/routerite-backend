@@ -22,7 +22,7 @@ export class CreateActivityDto {
 
   @IsNotEmpty({ message: 'Presupuesto is required' })
   @IsNumber({}, { message: 'Presupuesto must be a number' })
-  presupuesto: number;
+  budget: number;
 
   @IsNotEmpty({ message: 'Transportation mode is required' })
   @IsString({ message: 'Transportation mode must be a string' })

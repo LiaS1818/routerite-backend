@@ -17,7 +17,6 @@ import * as path from 'path';
 				const mailHost = config.get<string>('MAIL_HOST');
 				const mailPort = config.get<string>('MAIL_PORT');
 
-				// Debug logs
 				console.log('=== MAIL CONFIG DEBUG ===');
 				console.log('MAIL_USER:', mailUser);
 				console.log(
@@ -32,7 +31,6 @@ import * as path from 'path';
 					console.warn(
 						'Mail credentials not found. Mail service will not work properly.'
 					);
-					// Para desarrollo, usar configuración fake
 					return {
 						transport: {
 							host: 'localhost',
