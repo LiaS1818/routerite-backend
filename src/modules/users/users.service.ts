@@ -18,7 +18,6 @@ export class UsersService {
 	) {}
 
 	async create(createUserDto: CreateUserDto): Promise<User> {
-		// Check if email already exists
 		const existingUser = await this.userModel.findOne({
 			where: { email: createUserDto.email },
 		});
@@ -29,16 +28,12 @@ export class UsersService {
 			);
 		}
 
-		// Hash the password
 		const hashedPassword = await bcrypt.hash(createUserDto.password, 10);
-
-		// Create the user
 		const user = await this.userModel.create({
 			...createUserDto,
 			password: hashedPassword,
 		});
 
-		// Reload without password
 		return this.userModel.findByPk(user.id, {
 			attributes: { exclude: ['password'] },
 		}) as Promise<User>;
@@ -79,34 +74,11 @@ export class UsersService {
 		// If changing password, verify current password
 		const updateData: any = { ...updateUserDto };
 
-		if (updateUserDto.new_password) {
-			if (!updateUserDto.current_password) {
-				throw new BadRequestException(
-					'Current password is required to change it'
-				);
-			}
-
-			const isCurrentPasswordValid = await bcrypt.compare(
-				updateUserDto.current_password,
-				user.password
-			);
-
-			if (!isCurrentPasswordValid) {
-				throw new BadRequestException(
-					'Current password is incorrect'
-				);
-			}
-
+		if (updateUserDto.password) {
 			// Hash the new password
-			updateData.password = await bcrypt.hash(updateUserDto.new_password, 10);
-
-			// Remove these fields as they're not part of the model
-			delete updateData.new_password;
-			delete updateData.current_password;
+			updateData.password = await bcrypt.hash(updateUserDto.password, 10);
 		}
-
 		await user.update(updateData);
-
 		// Return user without password
 		return this.userModel.findByPk(id, {
 			attributes: { exclude: ['password'] },
@@ -134,25 +106,20 @@ export class UsersService {
 	 * @returns User object if credentials are valid, null otherwise
 	 */
 	async validatePassword(email: string, password: string): Promise<User | null> {
-		// Find user with email including password field
 		const user = await this.userModel.findOne({
 			where: { email },
 		});
 
-		// If user doesn't exist, return null
 		if (!user) {
 			return null;
 		}
 
-		// Verify password
 		const isPasswordValid = await bcrypt.compare(password, user.password);
 
-		// If password is not valid, return null
 		if (!isPasswordValid) {
 			return null;
 		}
 
-		// Return user
 		return user;
 	}
 }

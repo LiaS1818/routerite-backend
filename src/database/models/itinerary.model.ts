@@ -13,27 +13,26 @@ import {
 	BeforeCreate,
 	BeforeUpdate,
 	AfterCreate,
-	ForeignKey,
 	BelongsTo,
 	HasMany,
+	ForeignKey,
 } from 'sequelize-typescript';
-import sequelize, { Op, Optional } from 'sequelize';
-import { Activity } from './activity.model';
-// import { Trip } from './trip.model';
+import { Op, Optional } from 'sequelize';
+import { Trip, Activity } from './index'
 
-// Interfaces
 export interface ItineraryAttributes {
 	id: string;
 	trip_id?: number;
 	date: Date;
-	start_time: Date;
-	end_time: Date;
+	start_time: string;
+	end_time: string;
 	start_location: string;
 	budget: number;
 	experience_type: string;
-	created_at: Date;
-	updated_at: Date;
-	deleted_at?: Date;
+	activities?: Activity[];
+	created_at?: Date;
+	updated_at?: Date;
+	deleted_at: Date | null;
 }
 
 export interface ItineraryCreationAttributes
@@ -51,10 +50,11 @@ export interface ItineraryCreationAttributes
 })
 export class Itinerary extends Model<ItineraryAttributes, ItineraryCreationAttributes> {
 	@PrimaryKey
-	@AutoIncrement // ✅ Esto es crucial
+	@AutoIncrement
 	@Column(DataType.INTEGER)
 	declare id: number;
 
+	@ForeignKey(() => Trip)
 	@AllowNull(false)
 	@Column(DataType.INTEGER)
 	declare trip_id: number;
@@ -65,11 +65,11 @@ export class Itinerary extends Model<ItineraryAttributes, ItineraryCreationAttri
 
 	@AllowNull(false)
 	@Column(DataType.TIME)
-	declare start_time: Date;
+	declare start_time: string;
 
 	@AllowNull(false)
 	@Column(DataType.TIME)
-	declare end_time: Date;
+	declare end_time: string;
 
 	@AllowNull(false)
 	@Column(DataType.STRING(255))
@@ -83,8 +83,6 @@ export class Itinerary extends Model<ItineraryAttributes, ItineraryCreationAttri
 	@Column(DataType.STRING(100))
 	declare experience_type: string;
 
-
-
 	@CreatedAt
 	declare created_at: Date;
 
@@ -95,7 +93,6 @@ export class Itinerary extends Model<ItineraryAttributes, ItineraryCreationAttri
 	declare deleted_at: Date;
 
 
-	// Hooks
 	@BeforeCreate
 	static validateBeforeCreate(instance: Itinerary) {
 		if (instance.end_time <= instance.start_time) {
@@ -115,27 +112,6 @@ export class Itinerary extends Model<ItineraryAttributes, ItineraryCreationAttri
 		console.log(`Nuevo itinerario creado: ${instance.id}`);
 	}
 
-	// Métodos de instancia
-	calculateDurationHours(): number {
-		const start = new Date(`1970-01-01T${this.start_time}Z`);
-		const end = new Date(`1970-01-01T${this.end_time}Z`);
-		return (end.getTime() - start.getTime()) / (1000 * 60 * 60);
-	}
-
-	isWithinBudget(maxBudget: number): boolean {
-		return this.budget <= maxBudget;
-	}
-
-	// // Métodos estáticos
-	// static async findByTrip(tripId: string, options: any = {}) {
-	// 	return await Itinerary.findAll({
-	// 		where: { trip_id: tripId },
-	// 		order: [['date', 'ASC'], ['start_time', 'ASC']],
-	// 		include: [{ model: Trip, as: 'trip' }],
-	// 		...options,
-	// 	});
-	// }
-
 	static async findByDateRange(tripId: string, startDate: Date, endDate: Date) {
 		return await Itinerary.findAll({
 			where: {
@@ -146,17 +122,10 @@ export class Itinerary extends Model<ItineraryAttributes, ItineraryCreationAttri
 		});
 	}
 
-	static associate(models: Record<string, any>) {
-		Itinerary.belongsTo(models.Trip, {
-			foreignKey: 'trip_id',
-			as: 'trip',
-		});
-	}
+	@BelongsTo(() => Trip, { foreignKey: 'trip_id', as: 'trip' })
+	declare trip?: Trip; // Cambia 'any' por el tipo correcto de Trip si
 
-	@HasMany(() => Activity, {
-		foreignKey: 'itinerary_id', // ← debe coincidir con el nombre en la BD
-		as: 'activities'
-	})
-	activities: Activity[];
+	@HasMany(() => Activity, { foreignKey: 'itinerary_id', as: 'activities' })
+	declare activities?: Activity[]; // Cambia 'any' por el tipo correcto de Activity
 
 }

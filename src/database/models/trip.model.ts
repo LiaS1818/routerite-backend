@@ -1,4 +1,3 @@
-// filepath: /home/cardonapablo/Documentos/Proyectos/RouteRite/routerite-backend/src/database/models/trip.model.ts
 import {
 	Table,
 	Column,
@@ -11,16 +10,14 @@ import {
 	CreatedAt,
 	UpdatedAt,
 	DeletedAt,
-	BeforeCreate,
-	BeforeUpdate,
-	AfterCreate,
 	BelongsTo,
 	HasMany,
+	ForeignKey,
 } from 'sequelize-typescript';
-import sequelize, { Op, Optional } from 'sequelize';
-import { User } from './user.model';
+import { Optional } from 'sequelize';
 import { LocationInterface } from '../../modules/trips/trip.interfaces';
-import { Itinerary } from './itinerary.model';
+import { PostGISPoint } from '../../common/interfaces/PostGISPoint';
+import { User, Itinerary } from './index'
 
 export interface TripAttributes {
 	id: number;
@@ -30,16 +27,11 @@ export interface TripAttributes {
 	end_date: Date;
 	travelers_count: number;
 	total_budget: number;
-	experience_type:
-		| 'culture'
-		| 'adventure'
-		| 'gastronomy'
-		| 'beach'
-		| 'nature';
 	guided: boolean;
 	cover_image?: string;
 	status: 'draft' | 'planned' | 'active' | 'completed' | 'cancelled';
 	location: any; // Representa la interfaz LocationInterface como JSON
+	location_point: any;
 	created_at: Date;
 	updated_at: Date;
 	deleted_at?: Date;
@@ -67,6 +59,7 @@ export class Trip extends Model<TripAttributes, TripCreationAttributes> {
 	@Column(DataType.INTEGER)
 	declare id: number;
 
+	@ForeignKey(() => User)
 	@AllowNull(false)
 	@Column(DataType.INTEGER)
 	declare user_id: number;
@@ -129,6 +122,12 @@ export class Trip extends Model<TripAttributes, TripCreationAttributes> {
 	@Column(DataType.JSON)
 	declare location: LocationInterface;
 
+	@Column({
+		type: DataType.GEOMETRY('POINT', 4326),
+		allowNull: true
+	})
+	declare location_point: PostGISPoint;
+
 	@CreatedAt
 	declare created_at: Date;
 
@@ -138,11 +137,9 @@ export class Trip extends Model<TripAttributes, TripCreationAttributes> {
 	@DeletedAt
 	declare deleted_at?: Date;
 
-	// Static method to define associations
-	
-	@BelongsTo(() => User, 'user_id')
+	@BelongsTo(() => User, { foreignKey: 'user_id', as: 'user' })
 	declare user?: User;
 
-	@HasMany(() => Itinerary, 'trip_id')
+	@HasMany(() => Itinerary, { foreignKey: 'trip_id', as: 'itineraries' })
 	declare itineraries?: Itinerary[];
 }

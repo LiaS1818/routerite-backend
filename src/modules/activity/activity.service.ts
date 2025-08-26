@@ -6,47 +6,36 @@ import { WhereOptions } from 'sequelize';
 
 @Injectable()
 export class ActivityService {
-    constructor(
-        @InjectModel(Activity)
-        private readonly activityModel: typeof Activity,
-    ) {}
+	constructor(
+		@InjectModel(Activity)
+		private readonly activityModel: typeof Activity
+	) {}
 
-    async create(createActivityDto: CreateActivityDto): Promise<Activity> {
-        return this.activityModel.create(createActivityDto);
-    }
+	async create(createActivityDto: CreateActivityDto): Promise<Activity> {
+		return this.activityModel.create(createActivityDto);
+	}
 
-    async findAll(): Promise<Activity[]> {
-        return this.activityModel.findAll();
-    }
+	async findAll(): Promise<Activity[]> {
+		return this.activityModel.findAll();
+	}
 
-    async findOne(id: number): Promise<Activity> {
-        const activity = await this.activityModel.findByPk(id);
-        if (!activity) {
-            throw new NotFoundException(`Activity with ID ${id} not found`);
-        }
-        return activity;
-    }
+	async findOne(id: number): Promise<Activity> {
+		const activity = await this.activityModel.findByPk(id);
+		if (!activity) {
+			throw new NotFoundException(`Activity with ID ${id} not found`);
+		}
+		return activity;
+	}
 
-    // async update(id: number, updateActivityDto: UpdateActivityDto): Promise<Activity> {
-    //     const activity = await this.findOne(id);
-        
-    //     const updateData = Object.fromEntries(
-    //         Object.entries(updateActivityDto).filter(([_, value]) => value !== undefined)
-    //     );
+	async remove(id: number): Promise<void> {
+		const activity = await this.findOne(id);
+		await activity.destroy();
+	}
 
-    //     await activity.update(updateData);
-    //     return activity.reload();
-    // }
-
-    async remove(id: number): Promise<void> {
-        const activity = await this.findOne(id);
-        await activity.destroy();
-    }
-
-    async findByItinerary(itineraryId: number): Promise<Activity[]> {
-        return this.activityModel.findAll({
-            where: { itinerary_id: itineraryId } as WhereOptions<Activity>,
-            order: [['time', 'ASC']],
-        });
-    }
+	async findByItinerary(itineraryId: number): Promise<Activity[]> {
+		return this.activityModel.findAll({
+			where: { itinerary_id: itineraryId } as WhereOptions<Activity>,
+			order: [['time', 'ASC']],
+		});
+	}
 }

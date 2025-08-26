@@ -1,7 +1,17 @@
 import { Type } from 'class-transformer';
-import { IsString, IsOptional, MaxLength, IsNotEmpty } from 'class-validator';
+import {
+	IsString,
+	IsEmail,
+	IsOptional,
+	IsBoolean,
+	MinLength,
+	MaxLength,
+	IsNotEmpty,
+	isDate,
+} from 'class-validator';
+import { IsDate } from 'sequelize-typescript';
 
-export class CreateItineraryDto {
+export class UpdateItineraryDto {
 	@IsString()
 	start_time: string;
 

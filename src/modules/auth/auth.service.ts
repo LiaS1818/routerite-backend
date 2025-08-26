@@ -99,15 +99,12 @@ export class AuthService {
 
 	async resetPassword(resetPasswordDto: ResetPasswordDto) {
 		try {
-			// Verify token
 			const payload = this.jwtService.verify(resetPasswordDto.token);
 
-			// Check if it's a password reset token
 			if (payload.type !== 'password-reset') {
 				throw new UnauthorizedException('Invalid token');
 			}
 
-			// Find user
 			const user = await this.usersService.findByEmail(payload.email);
 
 			if (!user) {
@@ -117,8 +114,9 @@ export class AuthService {
 			// Hash new password
 			const hashedPassword = await bcrypt.hash(resetPasswordDto.new_password, 10);
 
-			// Update password
 			await this.usersService.update(user.id, {
+				name: user.name,
+				email: user.email,
 				password: hashedPassword,
 			});
 
