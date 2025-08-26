@@ -13,7 +13,7 @@ import {
   BelongsTo,
   AutoIncrement,
 } from 'sequelize-typescript';
-import { Optional } from 'sequelize';
+import { DataTypes, Optional } from 'sequelize';
 import { Itinerary } from './itinerary.model';
 
 export interface ActivityAttributes {
@@ -27,14 +27,14 @@ export interface ActivityAttributes {
   itinerary_id: number;
   created_at: Date;
   updated_at: Date;
-  deleted_at?: Date;
+  deleted_at: Date | null;
 }
 
 export interface ActivityCreationAttributes
   extends Optional<
     ActivityAttributes,
     'id' | 'created_at' | 'updated_at' | 'deleted_at' | 'img_url'
-  > {}
+  > { }
 
 @Table({
   tableName: 'activities',
@@ -95,9 +95,18 @@ export class Activity extends Model<ActivityAttributes, ActivityCreationAttribut
   declare updated_at: Date;
 
   @DeletedAt
-  declare deleted_at?: Date;
+  @Column({
+    type: DataTypes.DATE,
+    allowNull: true,
+  })
+  deleted_at: Date | null; // ← Asegúrate que sea Date | null
+
 
   // Relación con Itinerary
-  @BelongsTo(() => Itinerary)
+  @BelongsTo(() => Itinerary, {
+    foreignKey: 'itinerary_id',
+    as: 'itinerary',
+  })
   declare itinerary: Itinerary;
+
 }

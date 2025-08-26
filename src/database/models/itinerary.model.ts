@@ -31,9 +31,10 @@ export interface ItineraryAttributes {
 	start_location: string;
 	budget: number;
 	experience_type: string;
+	activities?: Activity[];
 	created_at?: Date;
 	updated_at?: Date;
-	deleted_at?: Date;
+	deleted_at: Date | null;
 }
 
 export interface ItineraryCreationAttributes
