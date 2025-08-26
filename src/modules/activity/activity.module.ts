@@ -5,9 +5,9 @@ import { ActivityService } from './activity.service';
 import { Activity } from '../../database/models/activity.model';
 
 @Module({
-    imports: [SequelizeModule.forFeature([Activity])],
-    providers: [ActivityService],
-    controllers: [ActivityController],
-    exports: [ActivityService],
+	imports: [SequelizeModule.forFeature([Activity])],
+	providers: [ActivityService],
+	controllers: [ActivityController],
+	exports: [ActivityService],
 })
 export class ActivityModule {}

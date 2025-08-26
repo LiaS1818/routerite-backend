@@ -6,12 +6,12 @@ import { Itinerary, Trip, User, Activity } from '../../database/models';
 import { ConfigModule } from '@nestjs/config';
 
 @Module({
-    imports: [
-        SequelizeModule.forFeature([Itinerary, Trip, User, Activity]),
-        ConfigModule,
-    ],
-    providers: [ItinerariesService],
-    controllers: [ItinerariesController],
-    exports: [ItinerariesService],
+	imports: [
+		SequelizeModule.forFeature([Itinerary, Trip, User, Activity]),
+		ConfigModule,
+	],
+	providers: [ItinerariesService],
+	controllers: [ItinerariesController],
+	exports: [ItinerariesService],
 })
 export class ItinerariesModule {}
