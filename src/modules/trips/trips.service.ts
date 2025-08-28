@@ -412,9 +412,9 @@ export class TripsService {
 							date: date as any,
 							start_time: lastExisting ? lastExisting.start_time : '08:00:00',
 							end_time: lastExisting ? lastExisting.end_time : '20:00:00',
-							start_location: lastExisting ? lastExisting.start_location : trip.destination,
+							start_location: trip.destination,
 							budget: 0,
-							experience_type: lastExisting ? lastExisting.experience_type : 'neutral'
+							experience_type: 'neutral'
 						}, { transaction });
 						workingItineraries.push(newIt);
 						summary.created.push({ id: newIt.id, date });

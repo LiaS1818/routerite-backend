@@ -8,11 +8,7 @@ import { UsersModule } from './modules/users/users.module';
 import { TripsModule } from './modules/trips/trips.module';
 import { ItinerariesModule } from './modules/itineraries/itineraries.module';
 import { ActivityModule } from './modules/activity/activity.module';
-import { FoursquareService } from './foursquare/foursquare.service';
-import { FoursquareController } from './foursquare/foursquare.controller';
-import { FoursquareModule } from './foursquare/foursqueare.module';
 import { HttpModule } from '@nestjs/axios';
-
 
 @Module({
 	imports: [
@@ -32,7 +28,7 @@ import { HttpModule } from '@nestjs/axios';
 		})
 
 	],
-	controllers: [AppController, FoursquareController],
-	providers: [AppService, FoursquareService],
+	controllers: [AppController],
+	providers: [AppService],
 })
 export class AppModule { }

@@ -19,7 +19,7 @@ import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { Sequelize } from 'sequelize-typescript';
 import { literal } from 'sequelize';
 import { PostGISPoint } from '../../common/interfaces/PostGISPoint';
-import { FoursquareService } from 'src/foursquare/foursquare.service';
+import { FoursquareService } from 'src/common/services/foursquare/foursquare.service';
 
 @Controller('trips')
 @UseGuards(JwtAuthGuard)

@@ -97,7 +97,6 @@ export class ItinerariesService {
 					budget: activity.budget,
 					transportation: activity.transportation_mode,
 					image: activity.img_url,
-					day: activity.day,
 				}));
 
 				return {
@@ -106,9 +105,8 @@ export class ItinerariesService {
 					date: itinerary.date,
 					start_time: itinerary.start_time,
 					end_time: itinerary.end_time,
-					start_location: itinerary.start_location,
 					budget: itinerary.budget,
-					experience_type: itinerary.experience_type,
+					experience_types: itinerary.experience_types,
 					activities: flatActivities, // ahora es un array plano
 				};
 			});
@@ -165,9 +163,7 @@ export class ItinerariesService {
 			const activities = itineraryData.activities || [];
 
 			const groupedActivities = activities.reduce((acc, activity) => {
-				const dayKey = activity.day
-					? `Day ${activity.day}`
-					: activity.time
+				const dayKey =  activity.time
 						? new Date(activity.time).toISOString().split('T')[0]
 						: 'Unspecified Day';
 
@@ -180,7 +176,6 @@ export class ItinerariesService {
 					budget: activity.budget,
 					transportation: activity.transportation_mode,
 					image: activity.img_url,
-					day: activity.day,
 				});
 				return acc;
 			}, {});
@@ -191,9 +186,7 @@ export class ItinerariesService {
 				date: itinerary.date,
 				start_time: itinerary.start_time,
 				end_time: itinerary.end_time,
-				start_location: itinerary.start_location,
 				budget: itinerary.budget,
-				experience_type: itinerary.experience_type,
 				activities: groupedActivities,
 			};
 		} catch (error) {
