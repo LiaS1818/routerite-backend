@@ -21,7 +21,7 @@ export class AuthService {
 		try {
 			const user = await this.usersService.create(signupDto);
 
-			const payload = { email: user.email, id: user.id};
+			const payload = { email: user.email, id: user.id };
 			const access_token = this.jwtService.sign(payload);
 
 			return {
@@ -55,7 +55,7 @@ export class AuthService {
 			throw new UnauthorizedException('Account disabled');
 		}
 
-		const payload = {  id: user.id };
+		const payload = { id: user.id };
 		const access_token = this.jwtService.sign(payload);
 
 		return {
@@ -112,7 +112,10 @@ export class AuthService {
 			}
 
 			// Hash new password
-			const hashedPassword = await bcrypt.hash(resetPasswordDto.new_password, 10);
+			const hashedPassword = await bcrypt.hash(
+				resetPasswordDto.new_password,
+				10
+			);
 
 			await this.usersService.update(user.id, {
 				name: user.name,
@@ -124,7 +127,10 @@ export class AuthService {
 				message: 'Password updated successfully',
 			};
 		} catch (error) {
-			if (error.name === 'JsonWebTokenError' || error.name === 'TokenExpiredError') {
+			if (
+				error.name === 'JsonWebTokenError' ||
+				error.name === 'TokenExpiredError'
+			) {
 				throw new UnauthorizedException('Invalid or expired token');
 			}
 			throw error;

@@ -17,7 +17,7 @@ import {
 import { Optional } from 'sequelize';
 import { LocationInterface } from '../../modules/trips/trip.interfaces';
 import { PostGISPoint } from '../../common/interfaces/PostGISPoint';
-import { User, Itinerary } from './index'
+import { User, Itinerary } from './index';
 
 export interface TripAttributes {
 	id: number;
@@ -109,13 +109,7 @@ export class Trip extends Model<TripAttributes, TripCreationAttributes> {
 	@AllowNull(false)
 	@Default('draft')
 	@Column(
-		DataType.ENUM(
-			'draft',
-			'planned',
-			'active',
-			'completed',
-			'cancelled'
-		)
+		DataType.ENUM('draft', 'planned', 'active', 'completed', 'cancelled')
 	)
 	declare status: 'draft' | 'planned' | 'active' | 'completed' | 'cancelled';
 
@@ -124,9 +118,21 @@ export class Trip extends Model<TripAttributes, TripCreationAttributes> {
 
 	@Column({
 		type: DataType.GEOMETRY('POINT', 4326),
-		allowNull: true
+		allowNull: true,
 	})
 	declare location_point: PostGISPoint;
+
+	@Column({
+		type: DataType.FLOAT(),
+	})
+	@AllowNull(false)
+	declare lat: number;
+
+	@Column({
+		type: DataType.FLOAT(),
+	})
+	@AllowNull(false)
+	declare lng: number;
 
 	@CreatedAt
 	declare created_at: Date;

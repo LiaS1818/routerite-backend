@@ -1,26 +1,39 @@
 import { Type } from 'class-transformer';
-import { IsString, IsOptional, MaxLength, IsNotEmpty } from 'class-validator';
+import {
+	IsString,
+	IsOptional,
+	MaxLength,
+	IsNotEmpty,
+	IsNumber,
+	IsDateString,
+} from 'class-validator';
 
 export class CreateItineraryDto {
 	@IsString()
 	start_time: string;
 
-	@MaxLength(255)
+	@IsString()
 	end_time: string;
 
-	@IsOptional()
+	@IsNotEmpty()
+	@IsNumber()
+	lat: number;
+
+	@IsNotEmpty()
+	@IsNumber()
+	lng: number;
+
+	@IsNotEmpty()
+	@IsNumber()
 	budget: number;
 
-	@IsOptional()
 	@IsString()
-	@MaxLength(100)
-	start_location: string;
+	experience_type_ids: string;
 
-	@IsOptional()
 	@IsString()
-	experience_type: string;
+	experience_types: string;
 
-	@IsOptional()
+	@IsNotEmpty()
 	@Type(() => Date)
 	date: Date;
 

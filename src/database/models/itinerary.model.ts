@@ -18,25 +18,32 @@ import {
 	ForeignKey,
 } from 'sequelize-typescript';
 import { Op, Optional } from 'sequelize';
-import { Trip, Activity } from './index'
+import { Trip, Activity } from './index';
 
 export interface ItineraryAttributes {
-	id: string;
-	trip_id?: number;
+	id: number;
+	trip_id: number;
 	date: Date;
 	start_time: string;
 	end_time: string;
-	start_location: string;
+	lat: number;
+	lng: number;
 	budget: number;
-	experience_type: string;
+	experience_type_ids: string;
+	experience_types: string;
+	configured?: boolean;
+	created_at: Date;
+	updated_at: Date;
+	deleted_at?: Date | null;
 	activities?: Activity[];
-	created_at?: Date;
-	updated_at?: Date;
-	deleted_at: Date | null;
+	trip?: Trip;
 }
 
 export interface ItineraryCreationAttributes
-	extends Optional<ItineraryAttributes, 'id' | 'created_at' | 'updated_at' | 'deleted_at'> {}
+	extends Optional<
+		ItineraryAttributes,
+		'id' | 'created_at' | 'updated_at' | 'deleted_at'
+	> {}
 
 @Table({
 	tableName: 'itineraries',
@@ -48,7 +55,7 @@ export interface ItineraryCreationAttributes
 	updatedAt: 'updated_at',
 	deletedAt: 'deleted_at',
 })
-export class Itinerary extends Model<ItineraryAttributes, ItineraryCreationAttributes> {
+export class Itinerary extends Model<ItineraryCreationAttributes> {
 	@PrimaryKey
 	@AutoIncrement
 	@Column(DataType.INTEGER)
@@ -78,11 +85,11 @@ export class Itinerary extends Model<ItineraryAttributes, ItineraryCreationAttri
 	@AllowNull(false)
 	@Column(DataType.FLOAT())
 	declare lng: number;
-	
+
 	@AllowNull(false)
 	@Column(DataType.DECIMAL(10, 2))
 	declare budget: number;
-	
+
 	@AllowNull(false)
 	@Column(DataType.STRING(100))
 	declare experience_type_ids: string; // 52e928d0bcbc57f1066b7e9b,52e928d0bcbc57f1066b7e9b
@@ -93,6 +100,23 @@ export class Itinerary extends Model<ItineraryAttributes, ItineraryCreationAttri
 	declare experience_types: string; // 52e928d0bcbc57f1066b7e9b,52e928d0bcbc57f1066b7e9b
 	// TODO: Getter, setter to return an array to be sento to frontend
 
+	get configured(): boolean {
+		// Check every single nullable field has a none-null value
+		return (
+			this.budget !== null &&
+			this.date !== null &&
+			this.end_time !== null &&
+			this.experience_type_ids !== null &&
+			this.experience_types !== null &&
+			this.lat !== null &&
+			this.lng !== null &&
+			this.start_time !== null &&
+			this.trip_id !== null &&
+			this.getDataValue('experience_types') !== null &&
+			this.getDataValue('experience_type_ids') !== null
+		);
+	}
+
 	@CreatedAt
 	declare created_at: Date;
 
@@ -100,19 +124,24 @@ export class Itinerary extends Model<ItineraryAttributes, ItineraryCreationAttri
 	declare updated_at: Date;
 
 	@DeletedAt
-	declare deleted_at: Date;
+	@AllowNull(true)
+	declare deleted_at?: Date;
 
 	@BeforeCreate
 	static validateBeforeCreate(instance: Itinerary) {
 		if (instance.end_time <= instance.start_time) {
-			throw new Error('La hora de fin debe ser mayor que la hora de inicio');
+			throw new Error(
+				'La hora de fin debe ser mayor que la hora de inicio'
+			);
 		}
 	}
 
 	@BeforeUpdate
 	static validateBeforeUpdate(instance: Itinerary) {
 		if (instance.end_time <= instance.start_time) {
-			throw new Error('La hora de fin debe ser mayor que la hora de inicio');
+			throw new Error(
+				'La hora de fin debe ser mayor que la hora de inicio'
+			);
 		}
 	}
 
@@ -121,7 +150,11 @@ export class Itinerary extends Model<ItineraryAttributes, ItineraryCreationAttri
 		console.log(`Nuevo itinerario creado: ${instance.id}`);
 	}
 
-	static async findByDateRange(tripId: string, startDate: Date, endDate: Date) {
+	static async findByDateRange(
+		tripId: string,
+		startDate: Date,
+		endDate: Date
+	) {
 		return await Itinerary.findAll({
 			where: {
 				trip_id: tripId,
@@ -136,5 +169,4 @@ export class Itinerary extends Model<ItineraryAttributes, ItineraryCreationAttri
 
 	@HasMany(() => Activity, { foreignKey: 'itinerary_id', as: 'activities' })
 	declare activities?: Activity[]; // Cambia 'any' por el tipo correcto de Activity
-
 }

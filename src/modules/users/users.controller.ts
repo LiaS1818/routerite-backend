@@ -37,7 +37,7 @@ export class UsersController {
 
 	@UseGuards(JwtAuthGuard)
 	@Get('/me')
-	async findOne( @Request() req) {
+	async findOne(@Request() req) {
 		return this.usersService.findOne(req.user.id);
 	}
 
@@ -60,10 +60,7 @@ export class UsersController {
 				HttpStatus.FORBIDDEN
 			);
 		}
-		if(updateUserDto.password == null)
-			delete updateUserDto.password;
+		if (updateUserDto.password == null) delete updateUserDto.password;
 		return this.usersService.update(id, updateUserDto);
 	}
-
-
 }

@@ -54,7 +54,14 @@ export interface FoursquarePhotoUrlParams {
 	 * Tamaño deseado de la imagen
 	 * Formato: 'widthxheight' o tamaños predefinidos
 	 */
-	size?: 'original' | '36x36' | '100x100' | '300x300' | '500x500' | '600x600' | string;
+	size?:
+		| 'original'
+		| '36x36'
+		| '100x100'
+		| '300x300'
+		| '500x500'
+		| '600x600'
+		| string;
 }
 
 /**
@@ -86,7 +93,14 @@ export interface FoursquarePhotoClassification {
 	/**
 	 * Tipo de clasificación
 	 */
-	type: 'food' | 'indoor' | 'menu' | 'outdoor' | 'drink' | 'ambience' | string;
+	type:
+		| 'food'
+		| 'indoor'
+		| 'menu'
+		| 'outdoor'
+		| 'drink'
+		| 'ambience'
+		| string;
 
 	/**
 	 * Puntuación de confianza de la clasificación (0-1)
@@ -292,8 +306,11 @@ export class FoursquarePhotosService {
 	private readonly apiKey: string;
 
 	// Cache temporal en memoria para fotos
-	private photosCache = new Map<string, { data: FoursquarePlacePhotosResponse; timestamp: number }>();
-	private readonly cacheTTL = 1000 * 60 * 60; // 1 hora para fotos (cambian menos frecuentemente)
+	private photosCache = new Map<
+		string,
+		{ data: FoursquarePlacePhotosResponse; timestamp: number }
+	>();
+	private readonly cacheTTL = 1000 * 60 * 60;
 
 	// Tamaños predefinidos comúnmente usados en la aplicación
 	private readonly commonSizes = {
@@ -302,16 +319,20 @@ export class FoursquarePhotosService {
 		medium: '500x500',
 		large: '600x600',
 		xlarge: '800x800',
-		original: 'original'
+		original: 'original',
 	};
 
 	constructor(
 		private readonly configService: ConfigService,
-		private readonly httpService: HttpService,
+		private readonly httpService: HttpService
 	) {
-		this.apiKey = <string>this.configService.get<string>('FOURSQUARE_API_KEY');
+		this.apiKey = <string>(
+			this.configService.get<string>('FOURSQUARE_API_KEY')
+		);
 		if (!this.apiKey) {
-			this.logger.error('FOURSQUARE_API_KEY no está configurado en las variables de entorno');
+			this.logger.error(
+				'FOURSQUARE_API_KEY no está configurado en las variables de entorno'
+			);
 			throw new Error('Foursquare API key is not configured');
 		}
 	}
@@ -321,7 +342,9 @@ export class FoursquarePhotosService {
 	 * @param params Parámetros de búsqueda incluyendo fsq_id
 	 * @returns Lista de fotos del lugar
 	 */
-	async getPlacePhotos(params: FoursquarePlacePhotosRequest): Promise<FoursquarePlacePhotosResponse> {
+	async getPlacePhotos(
+		params: FoursquarePlacePhotosRequest
+	): Promise<FoursquarePlacePhotosResponse> {
 		try {
 			// Validar parámetros
 			this.validatePhotoParams(params);
@@ -332,7 +355,9 @@ export class FoursquarePhotosService {
 			// Verificar cache
 			const cachedResult = this.getFromCache(cacheKey);
 			if (cachedResult) {
-				this.logger.debug(`Retornando fotos desde cache para lugar: ${params.fsq_id}`);
+				this.logger.debug(
+					`Retornando fotos desde cache para lugar: ${params.fsq_id}`
+				);
 				return cachedResult;
 			}
 
@@ -340,17 +365,22 @@ export class FoursquarePhotosService {
 			const queryParams = this.buildQueryParams(params);
 
 			// Log de la búsqueda
-			this.logger.debug(`Obteniendo fotos para lugar ${params.fsq_id} con parámetros: ${JSON.stringify(queryParams)}`);
+			this.logger.debug(
+				`Obteniendo fotos para lugar ${params.fsq_id} con parámetros: ${JSON.stringify(queryParams)}`
+			);
 
 			// Realizar petición a la API
 			const response = await firstValueFrom(
-				this.httpService.get<FoursquarePhoto[]>(`${this.baseUrl}/${params.fsq_id}/photos`, {
-					params: queryParams,
-					headers: {
-						'Authorization': this.apiKey,
-						'Accept': 'application/json',
-					},
-				})
+				this.httpService.get<FoursquarePhoto[]>(
+					`${this.baseUrl}/${params.fsq_id}/photos`,
+					{
+						params: queryParams,
+						headers: {
+							Authorization: this.apiKey,
+							Accept: 'application/json',
+						},
+					}
+				)
 			);
 
 			// Procesar respuesta
@@ -359,10 +389,11 @@ export class FoursquarePhotosService {
 			// Cachear respuesta
 			this.saveToCache(cacheKey, processedResponse);
 
-			this.logger.debug(`Obtenidas ${processedResponse.photos.length} fotos para lugar ${params.fsq_id}`);
+			this.logger.debug(
+				`Obtenidas ${processedResponse.photos.length} fotos para lugar ${params.fsq_id}`
+			);
 
 			return processedResponse;
-
 		} catch (error) {
 			this.handleError(error);
 		}
@@ -374,12 +405,15 @@ export class FoursquarePhotosService {
 	 * @param size Tamaño deseado de la imagen
 	 * @returns URL de la foto principal o null si no existe
 	 */
-	async getPrimaryPhoto(fsq_id: string, size: string = '500x500'): Promise<string | null> {
+	async getPrimaryPhoto(
+		fsq_id: string,
+		size: string = '500x500'
+	): Promise<string | null> {
 		try {
 			const photos = await this.getPlacePhotos({
 				fsq_id,
 				limit: 1,
-				sort: 'popular'
+				sort: 'popular',
 			});
 
 			if (photos.photos.length === 0) {
@@ -389,10 +423,12 @@ export class FoursquarePhotosService {
 			return this.buildPhotoUrl({
 				prefix: photos.photos[0].prefix,
 				suffix: photos.photos[0].suffix,
-				size
+				size,
 			});
 		} catch (error) {
-			this.logger.error(`Error obteniendo foto principal para lugar ${fsq_id}: ${error.message}`);
+			this.logger.error(
+				`Error obteniendo foto principal para lugar ${fsq_id}: ${error.message}`
+			);
 			return null;
 		}
 	}
@@ -401,12 +437,15 @@ export class FoursquarePhotosService {
 	 * Obtiene fotos de comida de un lugar
 	 * Útil para restaurantes y lugares gastronómicos
 	 */
-	async getFoodPhotos(fsq_id: string, limit: number = 10): Promise<FoursquarePlacePhotosResponse> {
+	async getFoodPhotos(
+		fsq_id: string,
+		limit: number = 10
+	): Promise<FoursquarePlacePhotosResponse> {
 		return this.getPlacePhotos({
 			fsq_id,
 			limit,
 			classifications: 'food,menu',
-			sort: 'popular'
+			sort: 'popular',
 		});
 	}
 
@@ -414,12 +453,15 @@ export class FoursquarePhotosService {
 	 * Obtiene fotos del ambiente/exterior de un lugar
 	 * Útil para mostrar el ambiente general del lugar
 	 */
-	async getAmbiencePhotos(fsq_id: string, limit: number = 10): Promise<FoursquarePlacePhotosResponse> {
+	async getAmbiencePhotos(
+		fsq_id: string,
+		limit: number = 10
+	): Promise<FoursquarePlacePhotosResponse> {
 		return this.getPlacePhotos({
 			fsq_id,
 			limit,
 			classifications: 'outdoor,indoor',
-			sort: 'popular'
+			sort: 'popular',
 		});
 	}
 
@@ -446,7 +488,10 @@ export class FoursquarePhotosService {
 	 * @param sizes Array de tamaños deseados
 	 * @returns Objeto con URLs para cada tamaño
 	 */
-	generateMultipleSizeUrls(photo: FoursquarePhoto, sizes?: string[]): FoursquarePhotoUrls {
+	generateMultipleSizeUrls(
+		photo: FoursquarePhoto,
+		sizes?: string[]
+	): FoursquarePhotoUrls {
 		const requestedSizes = sizes || Object.values(this.commonSizes);
 		const urls: { [size: string]: string } = {};
 
@@ -454,7 +499,7 @@ export class FoursquarePhotosService {
 			urls[size] = this.buildPhotoUrl({
 				prefix: photo.prefix,
 				suffix: photo.suffix,
-				size
+				size,
 			});
 		});
 
@@ -464,8 +509,8 @@ export class FoursquarePhotosService {
 			original_url: this.buildPhotoUrl({
 				prefix: photo.prefix,
 				suffix: photo.suffix,
-				size: 'original'
-			})
+				size: 'original',
+			}),
 		};
 	}
 
@@ -481,7 +526,7 @@ export class FoursquarePhotosService {
 		const photosResponse = await this.getPlacePhotos({
 			fsq_id,
 			limit,
-			sort: 'popular'
+			sort: 'popular',
 		});
 
 		return photosResponse.photos.map(photo =>
@@ -519,7 +564,7 @@ export class FoursquarePhotosService {
 			thumbnailSize = '100x100',
 			fullSize = '600x600',
 			includeFood = true,
-			includeAmbience = true
+			includeAmbience = true,
 		} = options;
 
 		// Construir clasificaciones basadas en opciones
@@ -530,8 +575,11 @@ export class FoursquarePhotosService {
 		const photosResponse = await this.getPlacePhotos({
 			fsq_id,
 			limit,
-			classifications: classifications.length > 0 ? classifications.join(',') : undefined,
-			sort: 'popular'
+			classifications:
+				classifications.length > 0
+					? classifications.join(',')
+					: undefined,
+			sort: 'popular',
 		});
 
 		const carouselPhotos = photosResponse.photos.map(photo => ({
@@ -539,25 +587,25 @@ export class FoursquarePhotosService {
 			thumbnail_url: this.buildPhotoUrl({
 				prefix: photo.prefix,
 				suffix: photo.suffix,
-				size: thumbnailSize
+				size: thumbnailSize,
 			}),
 			full_url: this.buildPhotoUrl({
 				prefix: photo.prefix,
 				suffix: photo.suffix,
-				size: fullSize
+				size: fullSize,
 			}),
 			original_url: this.buildPhotoUrl({
 				prefix: photo.prefix,
 				suffix: photo.suffix,
-				size: 'original'
+				size: 'original',
 			}),
 			caption: photo.caption,
-			classifications: photo.classifications
+			classifications: photo.classifications,
 		}));
 
 		return {
 			photos: carouselPhotos,
-			total: photosResponse.total || photosResponse.photos.length
+			total: photosResponse.total || photosResponse.photos.length,
 		};
 	}
 
@@ -580,7 +628,7 @@ export class FoursquarePhotosService {
 				fsq_id,
 				limit: 1,
 				classifications: 'outdoor,indoor',
-				sort: 'popular'
+				sort: 'popular',
 			});
 
 			// Si no hay fotos de ambiente, obtener cualquier foto popular
@@ -588,7 +636,7 @@ export class FoursquarePhotosService {
 				photosResponse = await this.getPlacePhotos({
 					fsq_id,
 					limit: 1,
-					sort: 'popular'
+					sort: 'popular',
 				});
 			}
 
@@ -602,14 +650,16 @@ export class FoursquarePhotosService {
 				url: this.buildPhotoUrl({
 					prefix: photo.prefix,
 					suffix: photo.suffix,
-					size: preferredSize
+					size: preferredSize,
 				}),
 				photo_id: photo.id,
 				width: photo.width,
-				height: photo.height
+				height: photo.height,
 			};
 		} catch (error) {
-			this.logger.error(`Error obteniendo foto de portada para lugar ${fsq_id}: ${error.message}`);
+			this.logger.error(
+				`Error obteniendo foto de portada para lugar ${fsq_id}: ${error.message}`
+			);
 			return null;
 		}
 	}
@@ -648,7 +698,7 @@ export class FoursquarePhotosService {
 			if (invalidClassifications.length > 0) {
 				throw new HttpException(
 					`Clasificaciones inválidas: ${invalidClassifications.join(', ')}. ` +
-					`Valores válidos: ${validClassifications.join(', ')}`,
+						`Valores válidos: ${validClassifications.join(', ')}`,
 					HttpStatus.BAD_REQUEST
 				);
 			}
@@ -660,7 +710,7 @@ export class FoursquarePhotosService {
 			if (!validSorts.includes(params.sort)) {
 				throw new HttpException(
 					`Ordenamiento inválido: ${params.sort}. ` +
-					`Valores válidos: ${validSorts.join(', ')}`,
+						`Valores válidos: ${validSorts.join(', ')}`,
 					HttpStatus.BAD_REQUEST
 				);
 			}
@@ -670,7 +720,9 @@ export class FoursquarePhotosService {
 	/**
 	 * Construye los query parameters para la petición
 	 */
-	private buildQueryParams(params: FoursquarePlacePhotosRequest): Record<string, any> {
+	private buildQueryParams(
+		params: FoursquarePlacePhotosRequest
+	): Record<string, any> {
 		const queryParams: Record<string, any> = {};
 
 		if (params.limit !== undefined) {
@@ -700,10 +752,12 @@ export class FoursquarePhotosService {
 	/**
 	 * Procesa la respuesta de fotos de la API
 	 */
-	private processPhotosResponse(photos: FoursquarePhoto[]): FoursquarePlacePhotosResponse {
+	private processPhotosResponse(
+		photos: FoursquarePhoto[]
+	): FoursquarePlacePhotosResponse {
 		// Filtrar fotos inválidas (sin prefix o suffix)
-		const validPhotos = photos.filter(photo =>
-			photo.prefix && photo.suffix && photo.width && photo.height
+		const validPhotos = photos.filter(
+			photo => photo.prefix && photo.suffix && photo.width && photo.height
 		);
 
 		// Enriquecer con metadatos adicionales
@@ -712,21 +766,27 @@ export class FoursquarePhotosService {
 			metadata: {
 				width: photo.width,
 				height: photo.height,
-				orientation: this.getPhotoOrientation(photo.width, photo.height),
-				format: photo.suffix?.replace('.', '')
-			}
+				orientation: this.getPhotoOrientation(
+					photo.width,
+					photo.height
+				),
+				format: photo.suffix?.replace('.', ''),
+			},
 		}));
 
 		return {
 			photos: enrichedPhotos,
-			total: enrichedPhotos.length
+			total: enrichedPhotos.length,
 		};
 	}
 
 	/**
 	 * Determina la orientación de una foto basada en sus dimensiones
 	 */
-	private getPhotoOrientation(width: number, height: number): 'landscape' | 'portrait' | 'square' {
+	private getPhotoOrientation(
+		width: number,
+		height: number
+	): 'landscape' | 'portrait' | 'square' {
 		const ratio = width / height;
 
 		if (Math.abs(ratio - 1) < 0.1) {
@@ -765,10 +825,13 @@ export class FoursquarePhotosService {
 	/**
 	 * Guarda un resultado en el cache
 	 */
-	private saveToCache(key: string, data: FoursquarePlacePhotosResponse): void {
+	private saveToCache(
+		key: string,
+		data: FoursquarePlacePhotosResponse
+	): void {
 		this.photosCache.set(key, {
 			data,
-			timestamp: Date.now()
+			timestamp: Date.now(),
 		});
 
 		// Limpiar cache si es muy grande
@@ -811,18 +874,23 @@ export class FoursquarePhotosService {
 			throw error;
 		}
 
-		const axiosError = error as AxiosError<{ error?: FoursquarePhotosApiError }>;
+		const axiosError = error as AxiosError<{
+			error?: FoursquarePhotosApiError;
+		}>;
 
 		if (axiosError.response) {
 			const status = axiosError.response.status;
 			const errorData = axiosError.response.data?.error;
 
-			this.logger.error(`Error de Foursquare Photos API: ${status} - ${errorData?.message || 'Sin mensaje'}`);
+			this.logger.error(
+				`Error de Foursquare Photos API: ${status} - ${errorData?.message || 'Sin mensaje'}`
+			);
 
 			switch (status) {
 				case 400:
 					throw new HttpException(
-						errorData?.message || 'Parámetros inválidos para obtener fotos',
+						errorData?.message ||
+							'Parámetros inválidos para obtener fotos',
 						HttpStatus.BAD_REQUEST
 					);
 				case 401:
@@ -854,12 +922,15 @@ export class FoursquarePhotosService {
 					);
 				default:
 					throw new HttpException(
-						errorData?.message || 'Error al obtener fotos del lugar',
+						errorData?.message ||
+							'Error al obtener fotos del lugar',
 						status || HttpStatus.INTERNAL_SERVER_ERROR
 					);
 			}
 		} else if (axiosError.request) {
-			this.logger.error('No se recibió respuesta de Foursquare Photos API');
+			this.logger.error(
+				'No se recibió respuesta de Foursquare Photos API'
+			);
 			throw new HttpException(
 				'No se pudo conectar con el servicio de fotos',
 				HttpStatus.SERVICE_UNAVAILABLE

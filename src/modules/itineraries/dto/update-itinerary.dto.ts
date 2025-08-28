@@ -1,39 +1,46 @@
 import { Type } from 'class-transformer';
 import {
 	IsString,
-	IsEmail,
 	IsOptional,
-	IsBoolean,
-	MinLength,
 	MaxLength,
 	IsNotEmpty,
-	isDate,
+	IsNumber,
+	IsDateString,
 } from 'class-validator';
-import { IsDate } from 'sequelize-typescript';
 
 export class UpdateItineraryDto {
-	@IsString()
-	start_time: string;
-
-	@MaxLength(255)
-	end_time: string;
-
 	@IsOptional()
-	budget: number;
+	@IsString()
+	start_time?: string;
 
 	@IsOptional()
 	@IsString()
-	@MaxLength(100)
-	start_location: string;
+	end_time?: string;
+
+	@IsOptional()
+	@IsNumber()
+	budget?: number;
+
+	@IsOptional()
+	@IsNumber()
+	lat?: number;
+
+	@IsOptional()
+	@IsNumber()
+	lng?: number;
 
 	@IsOptional()
 	@IsString()
-	experience_type: string;
+	experience_type_ids?: string;
+
+	@IsOptional()
+	@IsString()
+	experience_types?: string;
 
 	@IsOptional()
 	@Type(() => Date)
-	date: Date;
+	date?: Date;
 
-	@IsNotEmpty()
-	trip_id: number;
+	@IsOptional()
+	trip_id?: number;
 }

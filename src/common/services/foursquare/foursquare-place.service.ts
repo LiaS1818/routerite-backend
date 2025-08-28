@@ -125,7 +125,7 @@ export interface FoursquareStats {
 /**
  * Interface para un lugar individual en la respuesta
  */
-export interface FoursquarePlaceService {
+export interface FoursquarePlace {
 	fsq_id: string;
 	name: string;
 
@@ -151,8 +151,8 @@ export interface FoursquarePlaceService {
 	// Enlaces y contacto
 	link?: string;
 	related_places?: {
-		parent?: FoursquarePlaceService;
-		children?: FoursquarePlaceService[];
+		parent?: FoursquarePlace;
+		children?: FoursquarePlace[];
 	};
 
 	// Calificaciones y precios
@@ -209,7 +209,7 @@ export interface FoursquareGeocodingContext {
  * Interface para la respuesta completa de búsqueda
  */
 export interface FoursquarePlaceSearchResponse {
-	results: FoursquarePlaceService[];
+	results: FoursquarePlace[];
 	context?: FoursquareGeocodingContext;
 }
 
@@ -230,22 +230,28 @@ export interface FoursquareApiError {
  */
 @Injectable()
 export class FoursquarePlacesService {
-
 	private readonly logger = new Logger(FoursquarePlacesService.name);
 	private readonly baseUrl = 'https://api.foursquare.com/v3/places';
 	private readonly apiKey: string;
 
 	// Cache temporal en memoria (considerar Redis para producción)
-	private cache = new Map<string, { data: FoursquarePlaceSearchResponse; timestamp: number }>();
+	private cache = new Map<
+		string,
+		{ data: FoursquarePlaceSearchResponse; timestamp: number }
+	>();
 	private readonly cacheTTL = 1000 * 60 * 30; // 30 minutos
 
 	constructor(
 		private readonly configService: ConfigService,
-		private readonly httpService: HttpService,
+		private readonly httpService: HttpService
 	) {
-		this.apiKey = <string>this.configService.get<string>('FOURSQUARE_API_KEY');
+		this.apiKey = <string>(
+			this.configService.get<string>('FOURSQUARE_API_KEY')
+		);
 		if (!this.apiKey) {
-			this.logger.error('FOURSQUARE_API_KEY no está configurado en las variables de entorno');
+			this.logger.error(
+				'FOURSQUARE_API_KEY no está configurado en las variables de entorno'
+			);
 			throw new Error('Foursquare API key is not configured');
 		}
 	}
@@ -255,8 +261,10 @@ export class FoursquarePlacesService {
 	 * @param params Parámetros de búsqueda
 	 * @returns Respuesta con la lista de lugares encontrados
 	 */
-	async searchPlaces(params: FoursquarePlaceSearchRequest): Promise<FoursquarePlaceSearchResponse> {
-		this.logger.log("Inside of search places")
+	async searchPlaces(
+		params: FoursquarePlaceSearchRequest
+	): Promise<FoursquarePlaceSearchResponse> {
+		this.logger.log('Inside of search places');
 		try {
 			// Validar parámetros requeridos
 			this.validateSearchParams(params);
@@ -267,7 +275,9 @@ export class FoursquarePlacesService {
 			// Verificar cache
 			const cachedResult = this.getFromCache(cacheKey);
 			if (cachedResult) {
-				this.logger.debug(`Retornando resultado desde cache para: ${cacheKey}`);
+				this.logger.debug(
+					`Retornando resultado desde cache para: ${cacheKey}`
+				);
 				return cachedResult;
 			}
 
@@ -275,28 +285,34 @@ export class FoursquarePlacesService {
 			const queryParams = this.buildQueryParams(params);
 
 			// Log de la búsqueda
-			this.logger.debug(`Buscando lugares con parámetros: ${JSON.stringify(queryParams)}`);
+			this.logger.debug(
+				`Buscando lugares con parámetros: ${JSON.stringify(queryParams)}`
+			);
 
 			// Realizar petición a la API
 			const response = await firstValueFrom(
-				this.httpService.get<FoursquarePlaceSearchResponse>(`${this.baseUrl}/search`, {
-					params: queryParams,
-					headers: {
-						'Authorization': this.apiKey,
-						'Accept': 'application/json',
-						'Accept-Language': 'es-MX', // Para resultados en español de México
-					},
-				})
+				this.httpService.get<FoursquarePlaceSearchResponse>(
+					`${this.baseUrl}/search`,
+					{
+						params: queryParams,
+						headers: {
+							Authorization: this.apiKey,
+							Accept: 'application/json',
+							'Accept-Language': 'es-MX', // Para resultados en español de México
+						},
+					}
+				)
 			);
 
 			// Procesar y cachear respuesta
 			const processedResponse = this.processResponse(response.data);
 			this.saveToCache(cacheKey, processedResponse);
 
-			this.logger.debug(`Encontrados ${processedResponse.results.length} lugares`);
+			this.logger.debug(
+				`Encontrados ${processedResponse.results.length} lugares`
+			);
 
 			return processedResponse;
-
 		} catch (error) {
 			this.handleError(error);
 		}
@@ -356,14 +372,20 @@ export class FoursquarePlacesService {
 			);
 		}
 
-		if (params.min_price && (params.min_price < 1 || params.min_price > 4)) {
+		if (
+			params.min_price &&
+			(params.min_price < 1 || params.min_price > 4)
+		) {
 			throw new HttpException(
 				'El precio mínimo debe estar entre 1 y 4',
 				HttpStatus.BAD_REQUEST
 			);
 		}
 
-		if (params.max_price && (params.max_price < 1 || params.max_price > 4)) {
+		if (
+			params.max_price &&
+			(params.max_price < 1 || params.max_price > 4)
+		) {
 			throw new HttpException(
 				'El precio máximo debe estar entre 1 y 4',
 				HttpStatus.BAD_REQUEST
@@ -385,7 +407,9 @@ export class FoursquarePlacesService {
 	/**
 	 * Construye los query parameters para la petición
 	 */
-	private buildQueryParams(params: FoursquarePlaceSearchRequest): Record<string, any> {
+	private buildQueryParams(
+		params: FoursquarePlaceSearchRequest
+	): Record<string, any> {
 		const queryParams: Record<string, any> = {};
 
 		// Agregar solo los parámetros que tienen valor
@@ -411,10 +435,14 @@ export class FoursquarePlacesService {
 	/**
 	 * Procesa la respuesta de la API
 	 */
-	private processResponse(response: FoursquarePlaceSearchResponse): FoursquarePlaceSearchResponse {
+	private processResponse(
+		response: FoursquarePlaceSearchResponse
+	): FoursquarePlaceSearchResponse {
 		// Filtrar lugares sin coordenadas válidas
-		const validResults = response.results.filter(place =>
-			place.geocodes?.main?.latitude && place.geocodes?.main?.longitude
+		const validResults = response.results.filter(
+			place =>
+				place.geocodes?.main?.latitude &&
+				place.geocodes?.main?.longitude
 		);
 
 		// Ordenar por rating si está disponible
@@ -465,7 +493,10 @@ export class FoursquarePlacesService {
 	/**
 	 * Guarda un resultado en el cache
 	 */
-	private saveToCache(key: string, data: FoursquarePlaceSearchResponse): void {
+	private saveToCache(
+		key: string,
+		data: FoursquarePlaceSearchResponse
+	): void {
 		this.cache.set(key, {
 			data,
 			timestamp: Date.now(),
@@ -501,12 +532,15 @@ export class FoursquarePlacesService {
 			const status = axiosError.response.status;
 			const errorData = axiosError.response.data?.error;
 
-			this.logger.error(`Error de Foursquare API: ${status} - ${errorData?.message || 'Sin mensaje'}`);
+			this.logger.error(
+				`Error de Foursquare API: ${status} - ${errorData?.message || 'Sin mensaje'}`
+			);
 
 			switch (status) {
 				case 400:
 					throw new HttpException(
-						errorData?.message || 'Parámetros de búsqueda inválidos',
+						errorData?.message ||
+							'Parámetros de búsqueda inválidos',
 						HttpStatus.BAD_REQUEST
 					);
 				case 401:

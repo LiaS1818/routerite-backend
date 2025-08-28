@@ -3,20 +3,21 @@ import {
 	Get,
 	Post,
 	Body,
-	Patch,
-	Param,
-	Delete,
 	ParseIntPipe,
 	Query,
 	BadRequestException,
 } from '@nestjs/common';
 import { ActivityService } from './activity.service';
 import { CreateActivityDto } from './dto/create-activity.dto';
-
 import { Activity } from 'src/database/models';
-@Controller('activity')
+import { FoursquarePlacesService } from '../../common/services/foursquare/foursquare-place.service';
+
+@Controller('activities')
 export class ActivityController {
-	constructor(private readonly activityService: ActivityService) {}
+	constructor(
+		private readonly activityService: ActivityService,
+		private readonly foursquarePlacesService: FoursquarePlacesService
+	) {}
 
 	@Post()
 	async create(
@@ -33,5 +34,20 @@ export class ActivityController {
 			console.error('Error al crear actividad:', error);
 			throw new BadRequestException('No se pudo crear la actividad');
 		}
+	}
+
+	@Get()
+	async getPlacesByItineraryParams(
+		@Query('itinerary_id', ParseIntPipe) itinerary_id: number
+	): Promise<any> {
+		console.log(
+			'Intentando obtener actividades por itinerario_id:',
+			itinerary_id
+		);
+		return this.foursquarePlacesService.searchPlaces({
+			ll: '40.748817,-73.985428', // Example: Latitude and Longitude of the Empire State Building
+			query: '',
+			radius: 1000,
+		});
 	}
 }

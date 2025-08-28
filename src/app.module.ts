@@ -22,13 +22,12 @@ import { HttpModule } from '@nestjs/axios';
 		TripsModule,
 		ItinerariesModule,
 		ActivityModule,
-		HttpModule.register({ 
-			timeout: 5000, 
+		HttpModule.register({
+			timeout: 5000,
 			maxRedirects: 5,
-		})
-
+		}),
 	],
 	controllers: [AppController],
 	providers: [AppService],
 })
-export class AppModule { }
+export class AppModule {}

@@ -9,9 +9,12 @@ import { Itinerary } from 'src/database/models';
 import { FoursquareModule } from 'src/common/services/foursquare/foursquare.module';
 
 @Module({
-  imports: [SequelizeModule.forFeature([Trip, User, Itinerary]), FoursquareModule],
-  controllers: [TripsController],
-  providers: [TripsService], 
-  exports: [TripsService]
+	imports: [
+		SequelizeModule.forFeature([Trip, User, Itinerary]),
+		FoursquareModule,
+	],
+	controllers: [TripsController],
+	providers: [TripsService],
+	exports: [TripsService],
 })
 export class TripsModule {}
