@@ -99,7 +99,8 @@ export class Itinerary extends Model<ItineraryCreationAttributes> {
 			return rawValue ? rawValue.split(',') : null;
 		},
 		set(value: string[]) {
-			this.setDataValue('experience_type_ids', value.join(','));
+			if(value)
+				this.setDataValue('experience_type_ids', value.join(','));
 		},
 	})
 	declare experience_type_ids: string; // 52e928d0bcbc57f1066b7e9b,52e928d0bcbc57f1066b7e9b
@@ -112,7 +113,8 @@ export class Itinerary extends Model<ItineraryCreationAttributes> {
 			return rawValue ? rawValue.split(',') : null;
 		},
 		set(value: string[]) {
-			this.setDataValue('experience_types', value.join(','));
+			if(value)
+				this.setDataValue('experience_types', value.join(','));
 		},
 	})
 	declare experience_types: string; // 52e928d0bcbc57f1066b7e9b,52e928d0bcbc57f1066b7e9b
@@ -152,6 +154,7 @@ export class Itinerary extends Model<ItineraryCreationAttributes> {
 
 	@BeforeCreate
 	static validateBeforeCreate(instance: Itinerary) {
+		if(instance.end_time == null || instance.start_time == null) return
 		if (instance.end_time <= instance.start_time) {
 			throw new Error(
 				'La hora de fin debe ser mayor que la hora de inicio'
