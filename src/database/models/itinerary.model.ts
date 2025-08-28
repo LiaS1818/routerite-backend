@@ -24,9 +24,9 @@ export interface ItineraryAttributes {
 	id: number;
 	trip_id: number;
 	date: Date;
-	start_time: string | null;
-	end_time: string | null;
-	cover_image?: string | null
+	start_time: string | null; // Properly reflect nullable field
+	end_time: string | null; // Properly reflect nullable field
+	cover_image?: string | null;
 	lat: number;
 	lng: number;
 	budget: number;
@@ -35,7 +35,7 @@ export interface ItineraryAttributes {
 	configured?: boolean;
 	created_at: Date;
 	updated_at: Date;
-	deleted_at?: Date | null;
+	deleted_at?: Date | null; // Added null type for nullable field
 	activities?: Activity[];
 	trip?: Trip;
 }

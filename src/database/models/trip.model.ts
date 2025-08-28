@@ -28,13 +28,15 @@ export interface TripAttributes {
 	travelers_count: number;
 	total_budget: number;
 	guided: boolean;
-	cover_image?: string;
+	cover_image?: string | null; // Added null type for nullable field
 	status: 'draft' | 'planned' | 'active' | 'completed' | 'cancelled';
-	location: any; // Representa la interfaz LocationInterface como JSON
+	location: any; // Represents LocationInterface as JSON
 	location_point: any;
+	lat: string; // Changed from number to string
+	lng: string; // Changed from number to string
 	created_at: Date;
 	updated_at: Date;
-	deleted_at?: Date;
+	deleted_at?: Date | null; // Added null type for nullable field
 }
 
 export interface TripCreationAttributes
@@ -104,7 +106,7 @@ export class Trip extends Model<TripAttributes, TripCreationAttributes> {
 	declare total_budget: number;
 
 	@Column(DataType.TEXT)
-	declare cover_image?: string;
+	declare cover_image?: string | null;
 
 	@AllowNull(false)
 	@Default('draft')
@@ -124,15 +126,15 @@ export class Trip extends Model<TripAttributes, TripCreationAttributes> {
 
 	@AllowNull(false)
 	@Column({
-		type: DataType.FLOAT(),
+		type: DataType.STRING(),
 	})
-	declare lat: number;
+	declare lat: string;
 
 	@AllowNull(false)
 	@Column({
-		type: DataType.FLOAT(),
+		type: DataType.STRING(),
 	})
-	declare lng: number;
+	declare lng: string;
 
 	@CreatedAt
 	declare created_at: Date;
@@ -141,7 +143,7 @@ export class Trip extends Model<TripAttributes, TripCreationAttributes> {
 	declare updated_at: Date;
 
 	@DeletedAt
-	declare deleted_at?: Date;
+	declare deleted_at?: Date | null;
 
 	@BelongsTo(() => User, { foreignKey: 'user_id', as: 'user' })
 	declare user?: User;

@@ -50,8 +50,8 @@ export class TripsService {
 					),
 					start_time: null,
 					end_time: null,
-					lat: trip.lat,
-					lng: trip.lng,
+					lat: parseFloat(trip.lat), // Convert string to number
+					lng: parseFloat(trip.lng), // Convert string to number
 					budget: trip.total_budget / tripDuration,
 					experience_type_ids: '',
 					experience_types: '',
@@ -506,12 +506,12 @@ export class TripsService {
 								date: date as any,
 								start_time: lastExisting
 									? lastExisting.start_time
-									: '08:00:00',
+									: null,
 								end_time: lastExisting
 									? lastExisting.end_time
-									: '20:00:00',
-								lat: trip.lat,
-								lng: trip.lng,
+									: null,
+								lat: parseFloat(trip.lat), // Convert string to number
+								lng: parseFloat(trip.lng), // Convert string to number
 								budget: 0,
 								experience_type_ids: '',
 								experience_types: '',

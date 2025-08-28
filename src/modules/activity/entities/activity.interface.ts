@@ -6,8 +6,8 @@ export interface ActivityAttributes {
 	name: string;
 	description: string;
 	time: Date;
-	lat: number;
-	lng: number;
+	lat: string; // Changed from number to string
+	lng: string; // Changed from number to string
 	category_name: string;
 	category_fsqr_id: string;
 	distance_to_start: number;
@@ -15,11 +15,11 @@ export interface ActivityAttributes {
 	price: number;
 	location: any; // JSON type
 	transportation_mode: string;
-	img_url?: string;
+	img_url?: string | null; // Added null type for nullable field
 	itinerary_id: number;
 	created_at: Date;
 	updated_at: Date;
-	deleted_at?: Date;
+	deleted_at?: Date | null; // Added null type for nullable field
 }
 
 export interface ActivityCreationAttributes

@@ -26,12 +26,12 @@ export class CreateActivityDto {
 	time: Date;
 
 	@IsNotEmpty({ message: 'Latitude is required' })
-	@IsNumber({}, { message: 'Latitude must be a number' })
-	lat: number;
+	@IsString({ message: 'Latitude must be a string' })
+	lat: string;
 
 	@IsNotEmpty({ message: 'Longitude is required' })
-	@IsNumber({}, { message: 'Longitude must be a number' })
-	lng: number;
+	@IsString({ message: 'Longitude must be a string' })
+	lng: string;
 
 	@IsNotEmpty({ message: 'Category name is required' })
 	@IsString({ message: 'Category name must be a string' })

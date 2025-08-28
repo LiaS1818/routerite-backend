@@ -38,11 +38,6 @@ export class TripsController {
 		const startDate = new Date(createTripDto.start_date);
 		const endDate = new Date(createTripDto.end_date);
 
-		// separar latLng
-		const [lat, lon] = createTripDto.location.latLng
-			.split(',')
-			.map(coord => parseFloat(coord.trim()));
-
 		if (endDate < startDate) {
 			throw new BadRequestException(
 				'The end date must be greater than or equal to the start date'
@@ -62,16 +57,18 @@ export class TripsController {
 			);
 		}
 		const { latLng } = createTripDto.location;
-		const longitudeMatch = latLng.match(/lng:\s*([-+]?\d*\.\d+|\d+)/);
-		const longitude = longitudeMatch ? longitudeMatch[1] : null;
-		const latitudeMatch = latLng.match(/lat:\s*([-+]?\d*\.\d+|\d+),/);
-		const latitude = latitudeMatch ? latitudeMatch[1] : null;
+		const longitudeMatch = latLng.match(/lng:\s*([-+]?\d*\.\d+|\d+)/) || [null, '0.0'];
+		const longitude = longitudeMatch[1];
+		const latitudeMatch = latLng.match(/lat:\s*([-+]?\d*\.\d+|\d+),/)  || [null, '0.0'];
+		const latitude = latitudeMatch[1];
 
 		const tripData = {
 			...createTripDto, // Spread the properties of createTripDto, this will in
 			location_point: literal(
 				`ST_GeomFromText('POINT(${longitude} ${latitude})', 4326)`
 			) as unknown as PostGISPoint,
+			lat: latitude,
+			lng: longitude, // Fixed: was 'lon' but should be 'lng' to match model
 			destination: `${createTripDto.location.city}, ${createTripDto.location.state} - ${createTripDto.location.country}`,
 			user_id: req.user.id,
 			start_date: startDate,
