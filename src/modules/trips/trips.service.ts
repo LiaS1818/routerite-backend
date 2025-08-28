@@ -2,7 +2,10 @@ import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 import { Op, Transaction, FindOptions } from 'sequelize';
 import { Itinerary, Trip, User } from '../../database/models';
-import { ItineraryCreationAttributes } from '../../database/models/itinerary.model';
+import {
+	ItineraryAttributes,
+	ItineraryCreationAttributes,
+} from '../../database/models/itinerary.model';
 import { UpdateTripExtendedDto } from './dto/update-trip.dto';
 
 @Injectable()
@@ -45,8 +48,8 @@ export class TripsService {
 					date: new Date(
 						trip.start_date.getTime() + i * 24 * 60 * 60 * 1000
 					),
-					start_time: '08:00:00',
-					end_time: '20:00:00',
+					start_time: null,
+					end_time: null,
 					lat: trip.lat,
 					lng: trip.lng,
 					budget: trip.total_budget / tripDuration,
