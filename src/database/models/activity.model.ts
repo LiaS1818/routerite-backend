@@ -55,9 +55,9 @@ export class Activity extends Model<
 	@Column(DataType.INTEGER)
 	declare id: number;
 
-	@AllowNull(true)
-	@Column(DataType.INTEGER)
-	declare day: number;
+	@AllowNull(false)
+	@Column(DataType.STRING)
+	declare name: string;
 
 	@AllowNull(false)
 	@Column(DataType.STRING)
@@ -68,12 +68,36 @@ export class Activity extends Model<
 	declare time: Date;
 
 	@AllowNull(false)
-	@Column(DataType.STRING)
-	declare location: string;
+	@Column(DataType.FLOAT())
+	declare lat: number;
 
 	@AllowNull(false)
-	@Column(DataType.DOUBLE)
+	@Column(DataType.FLOAT())
+	declare lng: number;
+
+	@AllowNull(false)
+	@Column(DataType.STRING())
+	declare category_name: string;
+
+	@AllowNull(false)
+	@Column(DataType.STRING())
+	declare category_fsqr_id: string;
+
+	@AllowNull(false)
+	@Column(DataType.FLOAT())
+	declare distance_to_start: number;
+
+	@AllowNull(false)
+	@Column(DataType.DOUBLE())
 	declare budget: number;
+
+	@AllowNull(false)
+	@Column(DataType.DOUBLE())
+	declare price: number;
+
+	@AllowNull(false)
+	@Column(DataType.JSON())
+	declare location: any;
 
 	@AllowNull(false)
 	@Column(DataType.STRING)

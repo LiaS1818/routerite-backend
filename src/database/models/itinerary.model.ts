@@ -72,8 +72,12 @@ export class Itinerary extends Model<ItineraryAttributes, ItineraryCreationAttri
 	declare end_time: string;
 
 	@AllowNull(false)
-	@Column(DataType.STRING(255))
-	declare start_location: string;
+	@Column(DataType.FLOAT())
+	declare lat: number;
+
+	@AllowNull(false)
+	@Column(DataType.FLOAT())
+	declare lng: number;
 	
 	@AllowNull(false)
 	@Column(DataType.DECIMAL(10, 2))
@@ -81,7 +85,13 @@ export class Itinerary extends Model<ItineraryAttributes, ItineraryCreationAttri
 	
 	@AllowNull(false)
 	@Column(DataType.STRING(100))
-	declare experience_type: string;
+	declare experience_type_ids: string; // 52e928d0bcbc57f1066b7e9b,52e928d0bcbc57f1066b7e9b
+	// TODO: Getter, setter to return an array to be sento to FSQR
+
+	@AllowNull(false)
+	@Column(DataType.STRING(100))
+	declare experience_types: string; // 52e928d0bcbc57f1066b7e9b,52e928d0bcbc57f1066b7e9b
+	// TODO: Getter, setter to return an array to be sento to FSQR
 
 	@CreatedAt
 	declare created_at: Date;
@@ -91,7 +101,6 @@ export class Itinerary extends Model<ItineraryAttributes, ItineraryCreationAttri
 
 	@DeletedAt
 	declare deleted_at: Date;
-
 
 	@BeforeCreate
 	static validateBeforeCreate(instance: Itinerary) {
