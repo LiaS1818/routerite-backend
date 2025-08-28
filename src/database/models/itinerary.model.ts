@@ -91,7 +91,7 @@ export class Itinerary extends Model<ItineraryAttributes, ItineraryCreationAttri
 	@AllowNull(false)
 	@Column(DataType.STRING(100))
 	declare experience_types: string; // 52e928d0bcbc57f1066b7e9b,52e928d0bcbc57f1066b7e9b
-	// TODO: Getter, setter to return an array to be sento to FSQR
+	// TODO: Getter, setter to return an array to be sento to frontend
 
 	@CreatedAt
 	declare created_at: Date;
