@@ -122,16 +122,16 @@ export class Trip extends Model<TripAttributes, TripCreationAttributes> {
 	})
 	declare location_point: PostGISPoint;
 
+	@AllowNull(false)
 	@Column({
 		type: DataType.FLOAT(),
 	})
-	@AllowNull(false)
 	declare lat: number;
 
+	@AllowNull(false)
 	@Column({
 		type: DataType.FLOAT(),
 	})
-	@AllowNull(false)
 	declare lng: number;
 
 	@CreatedAt

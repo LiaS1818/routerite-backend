@@ -148,7 +148,6 @@ export class Itinerary extends Model<ItineraryCreationAttributes> {
 	declare updated_at: Date;
 
 	@DeletedAt
-	@AllowNull(true)
 	declare deleted_at?: Date;
 
 	@BeforeCreate
