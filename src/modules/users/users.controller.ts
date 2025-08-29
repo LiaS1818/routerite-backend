@@ -46,6 +46,17 @@ export class UsersController {
 		return this.usersService.create(createUserDto);
 	}
 
+	@Patch('me/profile-picture')
+	@UseGuards(JwtAuthGuard)
+	async updateProfilePicture(
+		@Body('profile_picture') profile_picture: string,
+		@Request() req
+	) {
+		const user = await this.usersService.findOne(req.user.id);
+		await user.update({ profile_picture });
+		return user;
+	}
+
 	@Patch(':id')
 	@UseGuards(JwtAuthGuard)
 	async update(

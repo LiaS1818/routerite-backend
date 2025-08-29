@@ -120,7 +120,7 @@ export class TripsService {
 				this.logger.warn(
 					`Trip with ID ${id} not found for user ${userId}`
 				);
-				return null;
+				throw new NotFoundException(`Trip with ID ${id} not found`);
 			}
 			return trip;
 		} catch (error) {

@@ -21,8 +21,7 @@ export interface UserAttributes {
 	name: string;
 	email: string;
 	password: string;
-	country?: string;
-	city?: string;
+	profile_picture?: string;
 	verified: boolean;
 	active: boolean;
 	created_at: Date;
@@ -36,6 +35,7 @@ export interface UserCreationAttributes
 		| 'id'
 		| 'verified'
 		| 'active'
+		| 'profile_picture'
 		| 'created_at'
 		| 'updated_at'
 		| 'deleted_at'
@@ -70,12 +70,6 @@ export class User extends Model<UserAttributes, UserCreationAttributes> {
 	@Column(DataType.STRING(255))
 	declare password: string;
 
-	@Column(DataType.STRING(100))
-	declare country?: string;
-
-	@Column(DataType.STRING(100))
-	declare city?: string;
-
 	@AllowNull(false)
 	@Default(false)
 	@Column(DataType.BOOLEAN)
@@ -85,6 +79,10 @@ export class User extends Model<UserAttributes, UserCreationAttributes> {
 	@Default(true)
 	@Column(DataType.BOOLEAN)
 	declare active: boolean;
+
+	@AllowNull(true)
+	@Column(DataType.STRING(255))
+	declare profile_picture?: string;
 
 	@CreatedAt
 	declare created_at: Date;
