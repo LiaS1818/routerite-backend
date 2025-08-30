@@ -93,31 +93,23 @@ export class Itinerary extends Model<ItineraryCreationAttributes> {
 
 	@AllowNull(true)
 	@Column({
-		type: DataType.STRING(255),
-		get() {
-			const rawValue = this.getDataValue('experience_type_ids');
-			return rawValue ? rawValue.split(',') : null;
-		},
-		set(value: string[]) {
-			if(value)
-				this.setDataValue('experience_type_ids', value.join(','));
-		},
+		type: DataType.STRING(255)
 	})
 	declare experience_type_ids: string; // 52e928d0bcbc57f1066b7e9b,52e928d0bcbc57f1066b7e9b
 
-	@AllowNull(true)
-	@Column({
-		type: DataType.STRING(255),
-		get() {
-			const rawValue = this.getDataValue('experience_types');
-			return rawValue ? rawValue.split(',') : null;
-		},
-		set(value: string[]) {
-			if(value)
-				this.setDataValue('experience_types', value.join(','));
-		},
-	})
-	declare experience_types: string; // 52e928d0bcbc57f1066b7e9b,52e928d0bcbc57f1066b7e9b
+	// @AllowNull(true)
+	// @Column({
+	// 	type: DataType.STRING(255),
+	// 	get() {
+	// 		const rawValue = this.getDataValue('experience_types');
+	// 		return rawValue ? rawValue.split(',') : null;
+	// 	},
+	// 	set(value: string[]) {
+	// 		if(value)
+	// 			this.setDataValue('experience_types', value.join(','));
+	// 	},
+	// })
+	// declare experience_types: string; // 52e928d0bcbc57f1066b7e9b,52e928d0bcbc57f1066b7e9b
 
 	@AllowNull(true)
 	@Column(DataType.STRING(255))

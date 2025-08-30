@@ -10,6 +10,7 @@ import {
 	ParseIntPipe,
 	UseGuards,
 	Request,
+	Patch,
 } from '@nestjs/common';
 import { ItinerariesService } from './itineraries.service';
 import { CreateItineraryDto } from './dto/create-itinerary.dto';
@@ -59,8 +60,7 @@ export class ItinerariesController {
 		}
 	}
 
-	//update itinerary. receiving itinerary id in body json
-	@Put(':id')
+	@Patch('/:id')
 	async updateItinerary(
 		@Param('id', ParseIntPipe) id: number,
 		@Body() updateItineraryDto: UpdateItineraryDto

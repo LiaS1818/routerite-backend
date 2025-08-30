@@ -1,44 +1,39 @@
 import { Type } from 'class-transformer';
 import {
-	IsString,
-	IsOptional,
-	MaxLength,
-	IsNotEmpty,
-	IsNumber,
-	IsDateString,
+    IsString,
+    IsOptional,
+    MaxLength,
+    IsNotEmpty,
+    IsNumber,
+    IsDateString,
+    IsArray,
+    ValidateNested,
 } from 'class-validator';
+import { ExperienceTypeDto } from './experience_type.dto';
 
 export class UpdateItineraryDto {
-	@IsOptional()
-	@IsString()
-	start_time?: string;
+    @IsOptional()
+    @IsString()
+    start_time?: string;
 
-	@IsOptional()
-	@IsString()
-	end_time?: string;
+    @IsOptional()
+    @IsString()
+    end_time?: string;
 
-	@IsOptional()
-	@IsNumber()
-	budget?: number;
+    @IsOptional()
+    @IsNumber()
+    budget?: number;
 
-	@IsOptional()
-	@IsNumber()
-	lat?: number;
+    @IsOptional()
+    @IsNumber()
+    lat?: number;
 
-	@IsOptional()
-	@IsNumber()
-	lng?: number;
+    @IsOptional()
+    @IsNumber()
+    lng?: number;
 
-	@IsOptional()
-	@IsString()
-	experience_type_ids?: string;
-
-	@IsOptional()
-	@IsString()
-	experience_types?: string;
-
-	@IsOptional()
-	@Type(() => Date)
-	date?: Date;
-
+    @IsOptional()
+    @IsArray()
+    @Type(() =>  String)
+    experience_type_ids?: string[];
 }

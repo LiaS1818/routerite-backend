@@ -30,9 +30,6 @@ export class CreateItineraryDto {
 	@IsString()
 	experience_type_ids: string;
 
-	@IsString()
-	experience_types: string;
-
 	@IsNotEmpty()
 	@Type(() => Date)
 	date: Date;

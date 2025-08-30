@@ -2,6 +2,7 @@ import {
 	Injectable,
 	NotFoundException,
 	ForbiddenException,
+	BadRequestException,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 import { Itinerary, Activity, Trip, User } from '../../database/models';
@@ -11,6 +12,7 @@ import { CreateItineraryDto } from './dto/create-itinerary.dto';
 import { UpdateItineraryDto } from './dto/update-itinerary.dto';
 import { Logger } from '@nestjs/common';
 import { TripAccessValidatorService } from '../../common/services/trip-access-validator.service';
+import { ExperienceTypeDto } from './dto/experience_type.dto';
 
 
 @Injectable()
@@ -23,7 +25,7 @@ export class ItinerariesService {
 		@InjectModel(Activity)
 		private readonly activityModel: typeof Activity,
 		private readonly tripAccessValidator: TripAccessValidatorService
-	) {}
+	) { }
 
 	async create(createItineraryDto: CreateItineraryDto): Promise<void> {
 		this.logger.debug('DTO recibido:');
@@ -48,7 +50,12 @@ export class ItinerariesService {
 				);
 			}
 
-			return await this.itineraryModel.create(createItineraryDto);
+			// Ensure experience_types is included as required by the model
+			const experience_types = (createItineraryDto as any).experience_types ?? '';
+			return await this.itineraryModel.create({
+				...createItineraryDto,
+				experience_types,
+			});
 		} catch (error) {
 			console.error('Error creating itinerary:', error);
 			throw error;
@@ -157,14 +164,40 @@ export class ItinerariesService {
 		return itinerary;
 	}
 
+	
+
 	// Método para eliminar itinerario
 	async remove(id: number): Promise<void> {
 		const itinerary = await this.findOne(id);
 		await itinerary.destroy();
 	}
 
-	async updateItinerary(id: number, updateData: UpdateItineraryDto): Promise<Itinerary> {
-		const itinerary = await this.findOne(id);
-		return itinerary.update(updateData);
-	}
+	// Método para actualizar un itinerario
+  async updateItinerary(id: number, updateItineraryDto: UpdateItineraryDto): Promise<Itinerary> {
+    // Buscar el itinerario en la base de datos
+    const itinerary = await this.itineraryModel.findOne({
+      where: { id },
+    });
+
+    // Si no se encuentra el itinerario, lanzamos una excepción
+    if (!itinerary) {
+      throw new NotFoundException(`Itinerary with ID ${id} not found`);
+    }
+
+
+    // Actualizar los campos del itinerario con los valores del DTO
+    if (updateItineraryDto.start_time) itinerary.start_time = updateItineraryDto.start_time;
+    if (updateItineraryDto.end_time) itinerary.end_time = updateItineraryDto.end_time;
+    if (updateItineraryDto.budget !== undefined) itinerary.budget = updateItineraryDto.budget;
+    if (updateItineraryDto.lat !== undefined) itinerary.lat = updateItineraryDto.lat;
+    if (updateItineraryDto.lng !== undefined) itinerary.lng = updateItineraryDto.lng;
+    if (updateItineraryDto.experience_type_ids) itinerary.experience_type_ids = updateItineraryDto.experience_type_ids.join(',');
+
+    // Guardar los cambios en el itinerario
+    await itinerary.save();
+
+    // Retornar el itinerario actualizado
+    return itinerary;
+  }
+
 }

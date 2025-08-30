@@ -30,7 +30,7 @@ export class CategoriesController {
   @Get()
   async getAllCategories(
     @Query('page') page: string = '1',
-    @Query('limit') limit: string = '50'
+    @Query('limit') limit: string = '10'
   ) {
     return this.categoriesService.getAll(
       parseInt(page),
