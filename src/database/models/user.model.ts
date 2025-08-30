@@ -12,9 +12,10 @@ import {
 	UpdatedAt,
 	DeletedAt,
 	HasMany,
+	BelongsToMany,
 } from 'sequelize-typescript';
 import { Optional } from 'sequelize';
-import { Trip } from './index';
+import { Trip, TripInvitation } from './index';
 
 export interface UserAttributes {
 	id: number;
@@ -93,6 +94,9 @@ export class User extends Model<UserAttributes, UserCreationAttributes> {
 	@DeletedAt
 	declare deleted_at?: Date;
 
-	@HasMany(() => Trip, { foreignKey: 'user_id', as: 'trips' })
-	declare trips?: Trip[];
+	@HasMany(() => Trip, { foreignKey: 'user_id', as: 'owned_trips' })
+	declare owned_trips?: Trip[];
+
+	@BelongsToMany(() => Trip, () => TripInvitation)
+	trips: Trip[];
 }

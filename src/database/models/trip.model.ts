@@ -13,11 +13,12 @@ import {
 	BelongsTo,
 	HasMany,
 	ForeignKey,
+	BelongsToMany,
 } from 'sequelize-typescript';
 import { Optional } from 'sequelize';
 import { LocationInterface } from '../../modules/trips/trip.interfaces';
 import { PostGISPoint } from '../../common/interfaces/PostGISPoint';
-import { User, Itinerary } from './index';
+import { User, Itinerary, TripInvitation } from './index';
 
 export interface TripAttributes {
 	id: number;
@@ -37,6 +38,10 @@ export interface TripAttributes {
 	created_at: Date;
 	updated_at: Date;
 	deleted_at?: Date | null; // Added null type for nullable field
+	// Virtual attributes for relationships
+	owner?: any;
+	guests?: any[];
+	itineraries?: any[];
 }
 
 export interface TripCreationAttributes
@@ -145,9 +150,12 @@ export class Trip extends Model<TripAttributes, TripCreationAttributes> {
 	@DeletedAt
 	declare deleted_at?: Date | null;
 
-	@BelongsTo(() => User, { foreignKey: 'user_id', as: 'user' })
-	declare user?: User;
+	@BelongsTo(() => User, { foreignKey: 'user_id', as: 'owner' })
+	declare owner?: User;
 
 	@HasMany(() => Itinerary, { foreignKey: 'trip_id', as: 'itineraries' })
 	declare itineraries?: Itinerary[];
+
+	@BelongsToMany(() => User, () => TripInvitation, 'trip_id', 'user_id')
+	guests: User[];
 }

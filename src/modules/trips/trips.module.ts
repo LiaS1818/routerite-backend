@@ -5,13 +5,15 @@ import { TripsController } from './trips.controller';
 import { TripsService } from './trips.service';
 import { Trip } from '../../database/models/trip.model';
 import { User } from '../../database/models/user.model';
-import { Itinerary } from 'src/database/models';
+import { Itinerary, TripInvitation } from 'src/database/models';
 import { FoursquareModule } from 'src/common/services/foursquare/foursquare.module';
+import { TripAccessValidatorModule } from '../../common/services/trip-access-validator.module';
 
 @Module({
 	imports: [
-		SequelizeModule.forFeature([Trip, User, Itinerary]),
+		SequelizeModule.forFeature([Trip, User, Itinerary, TripInvitation]),
 		FoursquareModule,
+		TripAccessValidatorModule,
 	],
 	controllers: [TripsController],
 	providers: [TripsService],

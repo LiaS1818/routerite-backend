@@ -1,12 +1,13 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 import { Op, Transaction, FindOptions } from 'sequelize';
-import { Itinerary, Trip, User } from '../../database/models';
+import { Itinerary, Trip, User, TripInvitation } from '../../database/models';
 import {
 	ItineraryAttributes,
 	ItineraryCreationAttributes,
 } from '../../database/models/itinerary.model';
 import { UpdateTripExtendedDto } from './dto/update-trip.dto';
+import { TripAccessValidatorService } from '../../common/services/trip-access-validator.service';
 
 @Injectable()
 export class TripsService {
@@ -18,7 +19,8 @@ export class TripsService {
 		@InjectModel(User)
 		private readonly userModel: typeof User,
 		@InjectModel(Itinerary)
-		private readonly itineraryModel: typeof Itinerary
+		private readonly itineraryModel: typeof Itinerary,
+		private readonly tripAccessValidator: TripAccessValidatorService
 	) {}
 
 	/**
@@ -71,7 +73,7 @@ export class TripsService {
 	}
 
 	/**
-	 * Get all trips for a user
+	 * Get all trips for a user (both owned and invited)
 	 */
 	async findByUserId(
 		userId: number,
@@ -80,19 +82,48 @@ export class TripsService {
 		try {
 			this.logger.log(`Getting trips for user ${userId}`);
 
-			const defaultOptions: FindOptions = {
+			// Get trips where user is owner
+			const ownedTrips = await this.tripModel.findAll({
 				where: { user_id: userId },
 				order: [['start_date', 'DESC']],
 				paranoid: true,
-			};
-
-			const trips = await this.tripModel.findAll({
-				...defaultOptions,
 				...options,
 			});
 
-			this.logger.log(`Found ${trips.length} trips for user ${userId}`);
-			return trips;
+			// Get trips where user is accepted guest
+			const invitedTrips = await this.tripModel.findAll({
+				include: [
+					{
+						model: User,
+						as: 'guests',
+						where: { id: userId },
+						through: {
+							where: { status: 'accepted' },
+							attributes: [],
+						},
+						attributes: [],
+					},
+				],
+				order: [['start_date', 'DESC']],
+				paranoid: true,
+				...options,
+			});
+
+			// Combine and deduplicate trips
+			const allTrips = [...ownedTrips, ...invitedTrips];
+			const uniqueTrips = allTrips.filter(
+				(trip, index, self) =>
+					index === self.findIndex(t => t.id === trip.id)
+			);
+
+			this.logger.log(
+				`Found ${uniqueTrips.length} trips for user ${userId} (${ownedTrips.length} owned, ${invitedTrips.length} invited)`
+			);
+			return uniqueTrips.sort(
+				(a, b) =>
+					new Date(b.start_date).getTime() -
+					new Date(a.start_date).getTime()
+			);
 		} catch (error) {
 			this.logger.error(
 				`Error getting trips for user ${userId}: ${error.message}`,
@@ -103,7 +134,61 @@ export class TripsService {
 	}
 
 	/**
-	 * Find a trip by ID and user ID
+	 * Check if user has access to trip (owner or accepted guest)
+	 */
+	async hasAccessToTrip(tripId: number, userId: number): Promise<boolean> {
+		try {
+			await this.tripAccessValidator.validateTripAccess(tripId, userId);
+			return true;
+		} catch {
+			return false;
+		}
+	}
+
+	/**
+	 * Find a trip by ID with access validation (owner or accepted guest)
+	 */
+	async findByIdWithAccess(id: number, userId: number): Promise<Trip | null> {
+		try {
+			this.logger.log(
+				`Finding trip with ID ${id} with access validation for user ${userId}`
+			);
+
+			// Validate access first
+			await this.tripAccessValidator.validateTripAccess(id, userId);
+
+			const trip = await this.tripModel.findOne({
+				where: { id },
+				include: [
+					{
+						model: User,
+						as: 'guests',
+						attributes: ['id', 'name', 'email', 'profile_picture'],
+						through: {
+							where: { status: 'accepted' },
+							attributes: [],
+						},
+					},
+					{
+						model: User,
+						as: 'owner',
+						attributes: ['id', 'name', 'email'],
+					},
+				],
+			});
+
+			return trip;
+		} catch (error) {
+			this.logger.error(
+				`Error finding trip ${id} for user ${userId}: ${error.message}`,
+				error.stack
+			);
+			throw error;
+		}
+	}
+
+	/**
+	 * Find a trip by ID and user ID (only for owners - for administrative operations)
 	 */
 	async findByIdAndUser(id: number, userId: number): Promise<Trip | null> {
 		try {
@@ -114,6 +199,22 @@ export class TripsService {
 					id,
 					user_id: userId,
 				},
+				include: [
+					{
+						model: this.userModel,
+						as: 'guests',
+						attributes: ['id', 'name', 'email', 'profile_picture'],
+						through: {
+							where: { status: 'accepted' },
+							attributes: [],
+						},
+					},
+					{
+						model: this.userModel,
+						as: 'user',
+						attributes: ['id', 'name', 'email'],
+					},
+				],
 			});
 
 			if (!trip) {

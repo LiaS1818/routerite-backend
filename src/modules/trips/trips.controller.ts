@@ -57,9 +57,15 @@ export class TripsController {
 			);
 		}
 		const { latLng } = createTripDto.location;
-		const longitudeMatch = latLng.match(/lng:\s*([-+]?\d*\.\d+|\d+)/) || [null, '0.0'];
+		const longitudeMatch = latLng.match(/lng:\s*([-+]?\d*\.\d+|\d+)/) || [
+			null,
+			'0.0',
+		];
 		const longitude = longitudeMatch[1];
-		const latitudeMatch = latLng.match(/lat:\s*([-+]?\d*\.\d+|\d+),/)  || [null, '0.0'];
+		const latitudeMatch = latLng.match(/lat:\s*([-+]?\d*\.\d+|\d+),/) || [
+			null,
+			'0.0',
+		];
 		const latitude = latitudeMatch[1];
 
 		const tripData = {
@@ -102,7 +108,10 @@ export class TripsController {
 
 	@Get(':id')
 	async findOne(@Param('id', ParseIntPipe) id: number, @Request() req) {
-		const trip = await this.tripsService.findByIdAndUser(id, req.user.id);
+		const trip = await this.tripsService.findByIdWithAccess(
+			id,
+			req.user.id
+		);
 
 		if (!trip) {
 			throw new HttpException('Trip not found', HttpStatus.NOT_FOUND);
@@ -117,6 +126,16 @@ export class TripsController {
 		@Body() updateTripDto: UpdateTripExtendedDto,
 		@Request() req
 	) {
+		// Only owners can update trips - use strict validation
+		const trip = await this.tripsService.findByIdAndUser(id, req.user.id);
+
+		if (!trip) {
+			throw new HttpException(
+				'Trip not found or you are not the owner',
+				HttpStatus.NOT_FOUND
+			);
+		}
+
 		// Delegar toda la lógica avanzada al nuevo servicio
 		return this.tripsService.updateTripWithItineraryManagement(
 			req.user.id,
@@ -127,10 +146,14 @@ export class TripsController {
 
 	@Delete(':id')
 	async remove(@Param('id', ParseIntPipe) id: number, @Request() req) {
+		// Only owners can delete trips - use strict validation
 		const trip = await this.tripsService.findByIdAndUser(id, req.user.id);
 
 		if (!trip) {
-			throw new HttpException('Trip not found', HttpStatus.NOT_FOUND);
+			throw new HttpException(
+				'Trip not found or you are not the owner',
+				HttpStatus.NOT_FOUND
+			);
 		}
 		return this.tripsService.remove(id);
 	}
