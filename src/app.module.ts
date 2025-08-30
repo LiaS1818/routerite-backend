@@ -10,6 +10,7 @@ import { ItinerariesModule } from './modules/itineraries/itineraries.module';
 import { ActivityModule } from './modules/activity/activity.module';
 import { TripInvitationsModule } from './modules/trip-invitations/trip-invitations.module';
 import { HttpModule } from '@nestjs/axios';
+import { CategoriesModule } from './modules/categories/categories.module';
 
 @Module({
 	imports: [
@@ -28,6 +29,7 @@ import { HttpModule } from '@nestjs/axios';
 			timeout: 5000,
 			maxRedirects: 5,
 		}),
+		CategoriesModule,
 	],
 	controllers: [AppController],
 	providers: [AppService],

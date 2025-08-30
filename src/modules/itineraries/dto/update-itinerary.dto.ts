@@ -41,6 +41,4 @@ export class UpdateItineraryDto {
 	@Type(() => Date)
 	date?: Date;
 
-	@IsOptional()
-	trip_id?: number;
 }

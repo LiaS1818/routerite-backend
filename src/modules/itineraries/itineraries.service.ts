@@ -8,8 +8,10 @@ import { Itinerary, Activity, Trip, User } from '../../database/models';
 import { Op, WhereOptions } from 'sequelize';
 import { ActivityAttributes } from '../activity/entities/activity.interface';
 import { CreateItineraryDto } from './dto/create-itinerary.dto';
+import { UpdateItineraryDto } from './dto/update-itinerary.dto';
 import { Logger } from '@nestjs/common';
 import { TripAccessValidatorService } from '../../common/services/trip-access-validator.service';
+
 
 @Injectable()
 export class ItinerariesService {
@@ -144,5 +146,25 @@ export class ItinerariesService {
 			console.error('Error fetching itinerary:', error);
 			throw error;
 		}
+	}
+
+	// Método adicional para encontrar un itinerario por ID
+	async findOne(id: number): Promise<Itinerary> {
+		const itinerary = await this.itineraryModel.findByPk(id);
+		if (!itinerary) {
+			throw new NotFoundException(`Itinerary with ID ${id} not found`);
+		}
+		return itinerary;
+	}
+
+	// Método para eliminar itinerario
+	async remove(id: number): Promise<void> {
+		const itinerary = await this.findOne(id);
+		await itinerary.destroy();
+	}
+
+	async updateItinerary(id: number, updateData: UpdateItineraryDto): Promise<Itinerary> {
+		const itinerary = await this.findOne(id);
+		return itinerary.update(updateData);
 	}
 }

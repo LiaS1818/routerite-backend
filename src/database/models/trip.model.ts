@@ -31,10 +31,8 @@ export interface TripAttributes {
 	guided: boolean;
 	cover_image?: string | null; // Added null type for nullable field
 	status: 'draft' | 'planned' | 'active' | 'completed' | 'cancelled';
-	location: any; // Represents LocationInterface as JSON
-	location_point: any;
-	lat: string; // Changed from number to string
-	lng: string; // Changed from number to string
+	location: any; // Representa la interfaz LocationInterface como JSON
+	// location_point: any;
 	created_at: Date;
 	updated_at: Date;
 	deleted_at?: Date | null; // Added null type for nullable field
@@ -123,10 +121,10 @@ export class Trip extends Model<TripAttributes, TripCreationAttributes> {
 	@Column(DataType.JSON)
 	declare location: LocationInterface;
 
-	@Column({
-		type: DataType.GEOMETRY('POINT', 4326),
-		allowNull: true,
-	})
+	// @Column({
+	// 	type: DataType.GEOMETRY('POINT', 4326),
+	// 	allowNull: true
+	// })
 	declare location_point: PostGISPoint;
 
 	@AllowNull(false)

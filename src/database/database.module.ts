@@ -1,3 +1,4 @@
+// src/database/database.module.ts
 import { Module } from '@nestjs/common';
 import { SequelizeModule } from '@nestjs/sequelize';
 import { ConfigModule, ConfigService } from '@nestjs/config';
@@ -6,6 +7,7 @@ import { Trip } from './models/trip.model';
 import { Itinerary } from './models/itinerary.model';
 import { Activity } from './models/activity.model';
 import { TripInvitation } from './models';
+import { FoursquareCategory } from './models/foursquare-categories.model';
 
 @Module({
 	imports: [
@@ -21,7 +23,7 @@ import { TripInvitation } from './models';
 				autoLoadModels: true,
 				synchronize: true,
 				alter: true,
-				models: [User, Trip, Itinerary, Activity, TripInvitation],
+				models: [User, Trip, Itinerary, Activity, TripInvitation, FoursquareCategory],
 				logging:
 					configService.get('NODE_ENV') === 'development'
 						? console.log
@@ -35,6 +37,7 @@ import { TripInvitation } from './models';
 			Itinerary,
 			Activity,
 			TripInvitation,
+      FoursquareCategory
 		]),
 	],
 	exports: [SequelizeModule],
