@@ -31,7 +31,7 @@ export interface TripAttributes {
 	cover_image?: string;
 	status: 'draft' | 'planned' | 'active' | 'completed' | 'cancelled';
 	location: any; // Representa la interfaz LocationInterface como JSON
-	location_point: any;
+	// location_point: any;
 	created_at: Date;
 	updated_at: Date;
 	deleted_at?: Date;
@@ -122,10 +122,10 @@ export class Trip extends Model<TripAttributes, TripCreationAttributes> {
 	@Column(DataType.JSON)
 	declare location: LocationInterface;
 
-	@Column({
-		type: DataType.GEOMETRY('POINT', 4326),
-		allowNull: true
-	})
+	// @Column({
+	// 	type: DataType.GEOMETRY('POINT', 4326),
+	// 	allowNull: true
+	// })
 	declare location_point: PostGISPoint;
 
 	@CreatedAt

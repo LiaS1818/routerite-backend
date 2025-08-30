@@ -2,6 +2,8 @@ import {
 	Controller,
 	Get,
 	Post,
+	Put,
+	Delete,
 	Body,
 	Param,
 	Query,
@@ -9,6 +11,7 @@ import {
 } from '@nestjs/common';
 import { ItinerariesService } from './itineraries.service';
 import { CreateItineraryDto } from './dto/create-itinerary.dto';
+import { UpdateItineraryDto } from './dto/update-itinerary.dto';
 
 @Controller('/itineraries')
 export class ItinerariesController {
@@ -35,5 +38,20 @@ export class ItinerariesController {
 		} catch (error) {
 			return { statusCode: 404, message: 'Itinerary not found' };
 		}
+	}
+
+	//update itinerary. receiving itinerary id in body json
+	@Put(':id')
+	async updateItinerary(
+		@Param('id', ParseIntPipe) id: number,
+		@Body() updateItineraryDto: UpdateItineraryDto
+	) {
+		return this.itinerariesService.updateItinerary(id, updateItineraryDto);
+	}
+
+	//delete itinerary
+	@Delete(':id')
+	async deleteItinerary(@Param('id', ParseIntPipe) id: number) {
+		return this.itinerariesService.remove(id);
 	}
 }

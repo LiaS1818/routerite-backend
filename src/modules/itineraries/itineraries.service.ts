@@ -216,4 +216,9 @@ export class ItinerariesService {
 		const itinerary = await this.findOne(id);
 		await itinerary.destroy();
 	}
+
+	async updateItinerary(id: number, updateData: UpdateItineraryDto): Promise<Itinerary> {
+		const itinerary = await this.findOne(id);
+		return itinerary.update(updateData);
+	}
 }

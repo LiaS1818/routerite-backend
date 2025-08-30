@@ -9,9 +9,9 @@ import { TripsModule } from './modules/trips/trips.module';
 import { ItinerariesModule } from './modules/itineraries/itineraries.module';
 import { ActivityModule } from './modules/activity/activity.module';
 import { FoursquareService } from './foursquare/foursquare.service';
-import { FoursquareController } from './foursquare/foursquare.controller';
 import { FoursquareModule } from './foursquare/foursqueare.module';
 import { HttpModule } from '@nestjs/axios';
+import { CategoriesModule } from './modules/categories/categories.module';
 
 
 @Module({
@@ -29,10 +29,11 @@ import { HttpModule } from '@nestjs/axios';
 		HttpModule.register({ 
 			timeout: 5000, 
 			maxRedirects: 5,
-		})
+		}),
+		CategoriesModule
 
 	],
-	controllers: [AppController, FoursquareController],
+	controllers: [AppController],
 	providers: [AppService, FoursquareService],
 })
 export class AppModule { }

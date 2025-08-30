@@ -34,6 +34,4 @@ export class UpdateItineraryDto {
 	@Type(() => Date)
 	date: Date;
 
-	@IsNotEmpty()
-	trip_id: number;
 }
