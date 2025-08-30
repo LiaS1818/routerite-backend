@@ -39,9 +39,116 @@ export interface FoursquarePlaceSearchRequest {
 	session_token?: string; // Token de sesión único por usuario
 }
 
+// ==================== NUEVAS INTERFACES Y TIPOS (FIELDS LEVEL) ====================
 /**
- * Interface para la ubicación de un lugar
+ * Tipo de nivel de campos para las respuestas
  */
+export type FoursquareFieldsLevel = 'basic' | 'pro' | 'premium' | 'custom';
+
+/**
+ * Interface extendida para el request con nivel de campos
+ */
+export interface FoursquarePlaceSearchRequestExtended
+	extends FoursquarePlaceSearchRequest {
+	/**
+	 * Nivel de campos a retornar
+	 * - 'basic': Campos gratuitos básicos
+	 * - 'pro': Campos Pro (gratuitos pero más detallados)
+	 * - 'premium': Campos Premium (requieren plan de pago)
+	 * - 'custom': Lista personalizada de campos
+	 */
+	fieldsLevel?: FoursquareFieldsLevel;
+	/**
+	 * Lista personalizada de campos cuando fieldsLevel es 'custom'
+	 * Sobrescribe el campo 'fields' original
+	 */
+	customFields?: string[];
+}
+
+/**
+ * Definición de campos por nivel
+ */
+export class FoursquareFields {
+	static readonly BASIC_FIELDS = [
+		'fsq_id',
+		'name',
+		'geocodes',
+		'location',
+		'categories',
+		'distance',
+		'link',
+		'timezone',
+	];
+	static readonly PRO_FIELDS = [
+		...FoursquareFields.BASIC_FIELDS,
+		'chains',
+		'closed_bucket',
+		'email',
+		'hours',
+		'hours_popular',
+		'photos',
+		'price',
+		'rating',
+		'related_places',
+		'social_media',
+		'stats',
+		'tel',
+		'verified',
+		'website',
+	];
+	static readonly PREMIUM_FIELDS = [
+		...FoursquareFields.PRO_FIELDS,
+		'popularity',
+		'tips',
+		'tastes',
+		'date_closed',
+		'description',
+		'menu',
+		'store_id',
+		'venuepage_id',
+		'attributes',
+		'features',
+	];
+	static getFieldsByLevel(
+		level: FoursquareFieldsLevel,
+		customFields?: string[]
+	): string[] {
+		switch (level) {
+			case 'basic':
+				return FoursquareFields.BASIC_FIELDS;
+			case 'pro':
+				return FoursquareFields.PRO_FIELDS;
+			case 'premium':
+				return FoursquareFields.PREMIUM_FIELDS;
+			case 'custom':
+				return customFields || FoursquareFields.BASIC_FIELDS;
+			default:
+				return FoursquareFields.BASIC_FIELDS;
+		}
+	}
+	static validateFieldsForLevel(
+		fields: string[],
+		level: FoursquareFieldsLevel
+	): {
+		valid: boolean;
+		invalidFields: string[];
+		suggestedLevel?: FoursquareFieldsLevel;
+	} {
+		const allowedFields = FoursquareFields.getFieldsByLevel(level);
+		const invalidFields = fields.filter(f => !allowedFields.includes(f));
+		if (invalidFields.length === 0)
+			return { valid: true, invalidFields: [] };
+		let suggestedLevel: FoursquareFieldsLevel | undefined;
+		if (fields.every(f => FoursquareFields.PRO_FIELDS.includes(f)))
+			suggestedLevel = 'pro';
+		else if (fields.every(f => FoursquareFields.PREMIUM_FIELDS.includes(f)))
+			suggestedLevel = 'premium';
+		return { valid: false, invalidFields, suggestedLevel };
+	}
+}
+// ==================== FIN NUEVAS INTERFACES Y TIPOS ====================
+
+// ==================== INTERFACES ORIGINALES RESTAURADAS ====================
 export interface FoursquareLocation {
 	address?: string;
 	address_extended?: string;
@@ -58,112 +165,51 @@ export interface FoursquareLocation {
 	postcode?: string;
 	region?: string;
 }
-
-/**
- * Interface para las geocodes del lugar
- */
 export interface FoursquareGeocodes {
-	drop_off?: {
-		latitude: number;
-		longitude: number;
-	};
-	main?: {
-		latitude: number;
-		longitude: number;
-	};
-	roof?: {
-		latitude: number;
-		longitude: number;
-	};
+	drop_off?: { latitude: number; longitude: number };
+	main?: { latitude: number; longitude: number };
+	roof?: { latitude: number; longitude: number };
 }
-
-/**
- * Interface para las categorías del lugar
- */
 export interface FoursquareCategory {
 	id: number;
 	name: string;
 	short_name?: string;
 	plural_name?: string;
-	icon?: {
-		prefix: string;
-		suffix: string;
-	};
+	icon?: { prefix: string; suffix: string };
 }
-
-/**
- * Interface para las cadenas asociadas
- */
 export interface FoursquareChain {
 	id: string;
 	name: string;
 }
-
-/**
- * Interface para las horas de operación
- */
 export interface FoursquareHours {
 	display?: string;
 	is_local_holiday?: boolean;
 	open_now?: boolean;
-	regular?: Array<{
-		close: string;
-		day: number;
-		open: string;
-	}>;
+	regular?: Array<{ close: string; day: number; open: string }>;
 }
-
-/**
- * Interface para estadísticas del lugar
- */
 export interface FoursquareStats {
 	total_photos?: number;
 	total_ratings?: number;
 	total_tips?: number;
 }
-
-/**
- * Interface para un lugar individual en la respuesta
- */
 export interface FoursquarePlace {
 	fsq_id: string;
 	name: string;
-
-	// Información de ubicación
 	location?: FoursquareLocation;
 	geocodes?: FoursquareGeocodes;
-	distance?: number; // Distancia en metros desde el punto de búsqueda
+	distance?: number;
 	timezone?: string;
-
-	// Categorías y cadenas
 	categories?: FoursquareCategory[];
 	chains?: FoursquareChain[];
-
-	// Información adicional
 	closed_bucket?: string;
 	hours?: FoursquareHours;
-	hours_popular?: Array<{
-		close: string;
-		day: number;
-		open: string;
-	}>;
-
-	// Enlaces y contacto
+	hours_popular?: Array<{ close: string; day: number; open: string }>;
 	link?: string;
-	related_places?: {
-		parent?: FoursquarePlace;
-		children?: FoursquarePlace[];
-	};
-
-	// Calificaciones y precios
+	related_places?: { parent?: FoursquarePlace; children?: FoursquarePlace[] };
 	rating?: number;
-	price?: number; // 1-4
-
-	// Estadísticas
+	price?: number;
 	stats?: FoursquareStats;
 	popularity?: number;
-
-	// Medios
 	photos?: Array<{
 		id: string;
 		created_at: string;
@@ -173,8 +219,6 @@ export interface FoursquarePlace {
 		height: number;
 		classifications?: string[];
 	}>;
-
-	// Metadatos
 	verified?: boolean;
 	description?: string;
 	tel?: string;
@@ -185,42 +229,26 @@ export interface FoursquarePlace {
 		instagram?: string;
 		twitter?: string;
 	};
-
-	// Información de fecha
 	date_closed?: string;
 }
-
-/**
- * Interface para el contexto de geocoding
- */
 export interface FoursquareGeocodingContext {
 	geo_bounds?: {
 		circle?: {
-			center?: {
-				latitude: number;
-				longitude: number;
-			};
+			center?: { latitude: number; longitude: number };
 			radius?: number;
 		};
 	};
 }
-
-/**
- * Interface para la respuesta completa de búsqueda
- */
 export interface FoursquarePlaceSearchResponse {
 	results: FoursquarePlace[];
 	context?: FoursquareGeocodingContext;
 }
-
-/**
- * Interface para errores de la API
- */
 export interface FoursquareApiError {
 	code: string;
 	message: string;
 	detail?: string;
 }
+// ==================== FIN INTERFACES ORIGINALES RESTAURADAS ====================
 
 // ==================== SERVICE IMPLEMENTATION ====================
 
@@ -241,19 +269,45 @@ export class FoursquarePlacesService {
 	>();
 	private readonly cacheTTL = 1000 * 60 * 30; // 30 minutos
 
+	/**
+	 * Nivel de campos por defecto (configurable via env FSQR_FIELDS_LEVEL)
+	 */
+	private defaultFieldsLevel: FoursquareFieldsLevel = 'pro';
+
 	constructor(
 		private readonly configService: ConfigService,
 		private readonly httpService: HttpService
 	) {
-		this.apiKey = <string>(
-			this.configService.get<string>('FOURSQUARE_API_KEY')
-		);
+		this.apiKey = (this.configService.get<string>('FSQR_API_KEY') ||
+			this.configService.get<string>('FOURSQUARE_API_KEY') ||
+			'') as string;
 		if (!this.apiKey) {
 			this.logger.error(
-				'FOURSQUARE_API_KEY no está configurado en las variables de entorno'
+				'FOURSQUARE_API_KEY / FSQR_API_KEY no está configurado en las variables de entorno'
 			);
 			throw new Error('Foursquare API key is not configured');
 		}
+		const configuredLevel =
+			this.configService.get<string>('FSQR_FIELDS_LEVEL');
+		if (
+			configuredLevel &&
+			['basic', 'pro', 'premium'].includes(configuredLevel)
+		) {
+			this.defaultFieldsLevel = configuredLevel as FoursquareFieldsLevel;
+			this.logger.log(
+				`Nivel de campos configurado: ${this.defaultFieldsLevel}`
+			);
+		}
+	}
+
+	/** Establece el nivel de campos por defecto */
+	setDefaultFieldsLevel(level: FoursquareFieldsLevel): void {
+		this.defaultFieldsLevel = level;
+		this.logger.log(`Nivel de campos actualizado a: ${level}`);
+	}
+	/** Obtiene el nivel de campos por defecto */
+	getDefaultFieldsLevel(): FoursquareFieldsLevel {
+		return this.defaultFieldsLevel;
 	}
 
 	/**
@@ -262,17 +316,44 @@ export class FoursquarePlacesService {
 	 * @returns Respuesta con la lista de lugares encontrados
 	 */
 	async searchPlaces(
-		params: FoursquarePlaceSearchRequest
+		params: FoursquarePlaceSearchRequestExtended
 	): Promise<FoursquarePlaceSearchResponse> {
 		this.logger.log('Inside of search places');
 		try {
+			// Determinar nivel de campos
+			const fieldsLevel = params.fieldsLevel || this.defaultFieldsLevel;
+			const fields = FoursquareFields.getFieldsByLevel(
+				fieldsLevel,
+				params.customFields
+			);
+			if (fieldsLevel === 'basic' || fieldsLevel === 'pro') {
+				const validation = FoursquareFields.validateFieldsForLevel(
+					fields,
+					fieldsLevel
+				);
+				if (!validation.valid) {
+					this.logger.warn(
+						`Campos no disponibles en nivel ${fieldsLevel}: ${validation.invalidFields.join(', ')}. Considera cambiar a nivel: ${validation.suggestedLevel}`
+					);
+				}
+			}
+			// Enriquecer params base para API (excluir fieldsLevel/customFields)
+			const {
+				fieldsLevel: _fl,
+				customFields: _cf,
+				...rest
+			} = params as any;
+			const enrichedParams: FoursquarePlaceSearchRequest = {
+				...rest,
+				fields: fields.join(','),
+			};
 			// Validar parámetros requeridos
-			this.validateSearchParams(params);
-
-			// Generar cache key
-			const cacheKey = this.generateCacheKey(params);
-
-			// Verificar cache
+			this.validateSearchParams(enrichedParams);
+			// Generar cache key con nivel de campos
+			const cacheKey = this.generateCacheKeyWithFields(
+				enrichedParams,
+				fieldsLevel
+			);
 			const cachedResult = this.getFromCache(cacheKey);
 			if (cachedResult) {
 				this.logger.debug(
@@ -280,16 +361,11 @@ export class FoursquarePlacesService {
 				);
 				return cachedResult;
 			}
-
 			// Construir query params
-			const queryParams = this.buildQueryParams(params);
-
-			// Log de la búsqueda
+			const queryParams = this.buildQueryParams(enrichedParams);
 			this.logger.debug(
-				`Buscando lugares con parámetros: ${JSON.stringify(queryParams)}`
+				`Buscando lugares con nivel ${fieldsLevel} (${fields.length} campos) y parámetros: ${JSON.stringify(queryParams)}`
 			);
-
-			// Realizar petición a la API
 			const response = await firstValueFrom(
 				this.httpService.get<FoursquarePlaceSearchResponse>(
 					`${this.baseUrl}/search`,
@@ -298,24 +374,158 @@ export class FoursquarePlacesService {
 						headers: {
 							Authorization: this.apiKey,
 							Accept: 'application/json',
-							'Accept-Language': 'es-MX', // Para resultados en español de México
+							'Accept-Language': 'es-MX',
 						},
 					}
 				)
 			);
-
-			// Procesar y cachear respuesta
 			const processedResponse = this.processResponse(response.data);
 			this.saveToCache(cacheKey, processedResponse);
-
 			this.logger.debug(
-				`Encontrados ${processedResponse.results.length} lugares`
+				`Encontrados ${processedResponse.results.length} lugares (nivel ${fieldsLevel})`
 			);
-
 			return processedResponse;
 		} catch (error) {
 			this.handleError(error);
 		}
+	}
+
+	/** Búsqueda con campos básicos */
+	async searchPlacesBasic(
+		params: FoursquarePlaceSearchRequest
+	): Promise<FoursquarePlaceSearchResponse> {
+		return this.searchPlaces({ ...params, fieldsLevel: 'basic' });
+	}
+	/** Búsqueda con campos Pro */
+	async searchPlacesPro(
+		params: FoursquarePlaceSearchRequest
+	): Promise<FoursquarePlaceSearchResponse> {
+		return this.searchPlaces({ ...params, fieldsLevel: 'pro' });
+	}
+	/** Búsqueda con campos Premium */
+	async searchPlacesPremium(
+		params: FoursquarePlaceSearchRequest
+	): Promise<FoursquarePlaceSearchResponse> {
+		return this.searchPlaces({ ...params, fieldsLevel: 'premium' });
+	}
+	/** Búsqueda con campos personalizados */
+	async searchPlacesWithCustomFields(
+		params: FoursquarePlaceSearchRequest,
+		customFields: string[]
+	): Promise<FoursquarePlaceSearchResponse> {
+		const allAvailableFields = FoursquareFields.PREMIUM_FIELDS;
+		const invalidFields = customFields.filter(
+			f => !allAvailableFields.includes(f)
+		);
+		if (invalidFields.length)
+			this.logger.warn(
+				`Campos personalizados inválidos: ${invalidFields.join(', ')}`
+			);
+		return this.searchPlaces({
+			...params,
+			fieldsLevel: 'custom',
+			customFields: customFields.filter(f =>
+				allAvailableFields.includes(f)
+			),
+		});
+	}
+	/** Búsqueda optimizada para itinerarios */
+	async searchPlacesForItinerary(
+		location: { lat: number; lng: number },
+		experienceType: 'cultura' | 'gastronomia' | 'aventura' | 'playa',
+		options: {
+			budget?: { min?: number; max?: number };
+			openNow?: boolean;
+			includePhotos?: boolean;
+			includeRatings?: boolean;
+			includePricing?: boolean;
+		} = {}
+	): Promise<FoursquarePlaceSearchResponse> {
+		const customFields = [
+			'fsq_id',
+			'name',
+			'geocodes',
+			'location',
+			'categories',
+			'distance',
+		];
+		if (options.includePhotos) customFields.push('photos');
+		if (options.includeRatings) customFields.push('rating', 'stats');
+		if (options.includePricing) customFields.push('price');
+		customFields.push('hours', 'hours_popular');
+		const categoryMap: Record<string, string> = {
+			cultura: '10000,10001,10002,10003',
+			gastronomia: '13000,13001,13002,13003',
+			aventura: '16000,16001,16002,16003',
+			playa: '16015,16016,16017',
+		};
+		return this.searchPlacesWithCustomFields(
+			{
+				ll: `${location.lat},${location.lng}`,
+				categories: categoryMap[experienceType],
+				radius: 10000,
+				limit: 30,
+				sort: 'popularity',
+				open_now: options.openNow,
+				min_price: options.budget?.min,
+				max_price: options.budget?.max,
+			},
+			customFields
+		);
+	}
+	/** Genera cache key con nivel de campos */
+	private generateCacheKeyWithFields(
+		params: FoursquarePlaceSearchRequest,
+		fieldsLevel: FoursquareFieldsLevel
+	): string {
+		const sortedParams = Object.keys(params)
+			.sort()
+			.reduce((acc, k) => {
+				acc[k] = (params as any)[k];
+				return acc;
+			}, {} as any);
+		return `fsq_places_${fieldsLevel}_${JSON.stringify(sortedParams)}`;
+	}
+	/** Información sobre uso de campos */
+	getFieldsUsageInfo(): {
+		currentLevel: FoursquareFieldsLevel;
+		fieldsCount: number;
+		fields: string[];
+		costTier: 'free' | 'pro' | 'premium';
+		recommendation: string;
+	} {
+		const fields = FoursquareFields.getFieldsByLevel(
+			this.defaultFieldsLevel
+		);
+		let costTier: 'free' | 'pro' | 'premium';
+		let recommendation: string;
+		switch (this.defaultFieldsLevel) {
+			case 'basic':
+				costTier = 'free';
+				recommendation =
+					'Óptimo para búsquedas rápidas y visualización básica en mapas.';
+				break;
+			case 'pro':
+				costTier = 'pro';
+				recommendation =
+					'Balance ideal para itinerarios con información detallada sin costo adicional.';
+				break;
+			case 'premium':
+				costTier = 'premium';
+				recommendation =
+					'Información completa. Considerar solo para usuarios premium de la app.';
+				break;
+			default:
+				costTier = 'free';
+				recommendation = 'Configuración personalizada activa.';
+		}
+		return {
+			currentLevel: this.defaultFieldsLevel,
+			fieldsCount: fields.length,
+			fields,
+			costTier,
+			recommendation,
+		};
 	}
 
 	/**

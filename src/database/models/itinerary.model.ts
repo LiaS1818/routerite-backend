@@ -43,7 +43,13 @@ export interface ItineraryAttributes {
 export interface ItineraryCreationAttributes
 	extends Optional<
 		ItineraryAttributes,
-		'id' | 'created_at' | 'updated_at' | 'deleted_at' | 'configured' | 'activities' | 'trip'
+		| 'id'
+		| 'created_at'
+		| 'updated_at'
+		| 'deleted_at'
+		| 'configured'
+		| 'activities'
+		| 'trip'
 	> {}
 
 @Table({
@@ -99,7 +105,7 @@ export class Itinerary extends Model<ItineraryCreationAttributes> {
 			return rawValue ? rawValue.split(',') : null;
 		},
 		set(value: string[]) {
-			if(value)
+			if (value)
 				this.setDataValue('experience_type_ids', value.join(','));
 		},
 	})
@@ -113,8 +119,7 @@ export class Itinerary extends Model<ItineraryCreationAttributes> {
 			return rawValue ? rawValue.split(',') : null;
 		},
 		set(value: string[]) {
-			if(value)
-				this.setDataValue('experience_types', value.join(','));
+			if (value) this.setDataValue('experience_types', value.join(','));
 		},
 	})
 	declare experience_types: string; // 52e928d0bcbc57f1066b7e9b,52e928d0bcbc57f1066b7e9b
@@ -135,11 +140,13 @@ export class Itinerary extends Model<ItineraryCreationAttributes> {
 				this.getDataValue('lat') !== null &&
 				this.getDataValue('lng') !== null &&
 				this.getDataValue('start_time') !== null
-			)
+			);
 		},
 		set() {
-			throw new Error('No se puede asignar un valor a esta columna virtual');
-		}
+			throw new Error(
+				'No se puede asignar un valor a esta columna virtual'
+			);
+		},
 	})
 	declare configured?: boolean;
 
@@ -154,7 +161,7 @@ export class Itinerary extends Model<ItineraryCreationAttributes> {
 
 	@BeforeCreate
 	static validateBeforeCreate(instance: Itinerary) {
-		if(instance.end_time == null || instance.start_time == null) return
+		if (instance.end_time == null || instance.start_time == null) return;
 		if (instance.end_time <= instance.start_time) {
 			throw new Error(
 				'La hora de fin debe ser mayor que la hora de inicio'
@@ -186,7 +193,7 @@ export class Itinerary extends Model<ItineraryCreationAttributes> {
 				trip_id: tripId,
 				date: { [Op.between]: [startDate, endDate] },
 			},
-			order: [['date', 'ASC']]
+			order: [['date', 'ASC']],
 		});
 	}
 

@@ -40,5 +40,4 @@ export class UpdateItineraryDto {
 	@IsOptional()
 	@Type(() => Date)
 	date?: Date;
-
 }

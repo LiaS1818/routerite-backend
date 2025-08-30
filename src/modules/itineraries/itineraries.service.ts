@@ -12,7 +12,6 @@ import { UpdateItineraryDto } from './dto/update-itinerary.dto';
 import { Logger } from '@nestjs/common';
 import { TripAccessValidatorService } from '../../common/services/trip-access-validator.service';
 
-
 @Injectable()
 export class ItinerariesService {
 	private readonly logger = new Logger(ItinerariesService.name);
@@ -163,7 +162,10 @@ export class ItinerariesService {
 		await itinerary.destroy();
 	}
 
-	async updateItinerary(id: number, updateData: UpdateItineraryDto): Promise<Itinerary> {
+	async updateItinerary(
+		id: number,
+		updateData: UpdateItineraryDto
+	): Promise<Itinerary> {
 		const itinerary = await this.findOne(id);
 		return itinerary.update(updateData);
 	}
