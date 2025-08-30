@@ -11,7 +11,7 @@ import {
 	ParseIntPipe,
 	HttpException,
 	HttpStatus,
-	BadRequestException
+	BadRequestException,
 } from '@nestjs/common';
 import { TripsService } from './trips.service';
 import { CreateTripDto, UpdateTripExtendedDto } from './dto';
@@ -19,15 +19,19 @@ import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { Sequelize } from 'sequelize-typescript';
 import { literal } from 'sequelize';
 import { PostGISPoint } from '../../common/interfaces/PostGISPoint';
+import { FoursquarePhotosService } from '../../common/services/foursquare/foursquare-place-photos.service';
 
 @Controller('trips')
 @UseGuards(JwtAuthGuard)
 export class TripsController {
-	constructor(private readonly tripsService: TripsService, private sequelize: Sequelize) {}
+	constructor(
+		private readonly tripsService: TripsService,
+		private sequelize: Sequelize,
+		private readonly fsqrPhotosService: FoursquarePhotosService
+	) {}
 
 	@Post()
-	async create(@Body() createTripDto: CreateTripDto, @Request() req: any)  {
-
+	async create(@Body() createTripDto: CreateTripDto, @Request() req: any) {
 		const transaction = await this.sequelize.transaction();
 
 		// Validate that dates are coherent
@@ -53,11 +57,24 @@ export class TripsController {
 			);
 		}
 		const { latLng } = createTripDto.location;
-		const longitude = latLng.match(/lng:\s*([-+]?\d*\.\d+|\d+)/);
-		const latitude = latLng.match(/lat:\s*([-+]?\d*\.\d+|\d+),/);
+		const longitudeMatch = latLng.match(/lng:\s*([-+]?\d*\.\d+|\d+)/) || [
+			null,
+			'0.0',
+		];
+		const longitude = longitudeMatch[1];
+		const latitudeMatch = latLng.match(/lat:\s*([-+]?\d*\.\d+|\d+),/) || [
+			null,
+			'0.0',
+		];
+		const latitude = latitudeMatch[1];
+
 		const tripData = {
 			...createTripDto, // Spread the properties of createTripDto, this will in
-			location_point: literal(`ST_GeomFromText('POINT(${longitude} ${latitude})', 4326)`) as unknown as PostGISPoint,
+			location_point: literal(
+				`ST_GeomFromText('POINT(${longitude} ${latitude})', 4326)`
+			) as unknown as PostGISPoint,
+			lat: latitude,
+			lng: longitude, // Fixed: was 'lon' but should be 'lng' to match model
 			destination: `${createTripDto.location.city}, ${createTripDto.location.state} - ${createTripDto.location.country}`,
 			user_id: req.user.id,
 			start_date: startDate,
@@ -65,7 +82,10 @@ export class TripsController {
 		};
 
 		try {
-			const createdTrip = await this.tripsService.create(tripData, transaction);
+			const createdTrip = await this.tripsService.create(
+				tripData,
+				transaction
+			);
 			await transaction.commit();
 			return createdTrip;
 		} catch (error) {
@@ -76,25 +96,25 @@ export class TripsController {
 
 	@Get()
 	async findAll(@Request() req) {
-		return  await this.tripsService.findByUserId(req.user.id, {
+		return await this.tripsService.findByUserId(req.user.id, {
 			attributes: { exclude: ['deleted_at', 'cover_image'] },
 		});
 	}
 
 	@Get('upcoming')
-	async findUpcoming(@Request() req) { 
+	async findUpcoming(@Request() req) {
 		return this.tripsService.findUpcomingByUser(req.user.id);
 	}
 
 	@Get(':id')
 	async findOne(@Param('id', ParseIntPipe) id: number, @Request() req) {
-		const trip = await this.tripsService.findByIdAndUser(id, req.user.id);
+		const trip = await this.tripsService.findByIdWithAccess(
+			id,
+			req.user.id
+		);
 
 		if (!trip) {
-			throw new HttpException(
-				'Trip not found',
-				HttpStatus.NOT_FOUND
-			);
+			throw new HttpException('Trip not found', HttpStatus.NOT_FOUND);
 		}
 
 		return trip;
@@ -106,17 +126,32 @@ export class TripsController {
 		@Body() updateTripDto: UpdateTripExtendedDto,
 		@Request() req
 	) {
-		// Delegar toda la lógica avanzada al nuevo servicio
-		return this.tripsService.updateTripWithItineraryManagement(req.user.id, id, updateTripDto);
-	}
-
-	@Delete(':id')
-	async remove(@Param('id', ParseIntPipe) id: number, @Request() req) {
+		// Only owners can update trips - use strict validation
 		const trip = await this.tripsService.findByIdAndUser(id, req.user.id);
 
 		if (!trip) {
 			throw new HttpException(
-				'Trip not found',
+				'Trip not found or you are not the owner',
+				HttpStatus.NOT_FOUND
+			);
+		}
+
+		// Delegar toda la lógica avanzada al nuevo servicio
+		return this.tripsService.updateTripWithItineraryManagement(
+			req.user.id,
+			id,
+			updateTripDto
+		);
+	}
+
+	@Delete(':id')
+	async remove(@Param('id', ParseIntPipe) id: number, @Request() req) {
+		// Only owners can delete trips - use strict validation
+		const trip = await this.tripsService.findByIdAndUser(id, req.user.id);
+
+		if (!trip) {
+			throw new HttpException(
+				'Trip not found or you are not the owner',
 				HttpStatus.NOT_FOUND
 			);
 		}

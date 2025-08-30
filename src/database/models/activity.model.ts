@@ -18,16 +18,23 @@ import { Itinerary } from './index';
 
 export interface ActivityAttributes {
 	id: number;
+	name: string;
 	description: string;
 	time: Date;
-	location: string;
+	lat: string; // Changed from number to string
+	lng: string; // Changed from number to string
+	category_name: string;
+	category_fsqr_id: string;
+	distance_to_start: number;
 	budget: number;
+	price: number;
+	location: any; // JSON type
 	transportation_mode: string;
-	img_url?: string;
+	img_url?: string | null; // Added null type for nullable field
 	itinerary_id: number;
 	created_at: Date;
 	updated_at: Date;
-	deleted_at?: Date;
+	deleted_at?: Date | null; // Added null type for nullable field
 }
 
 export interface ActivityCreationAttributes
@@ -55,9 +62,9 @@ export class Activity extends Model<
 	@Column(DataType.INTEGER)
 	declare id: number;
 
-	@AllowNull(true)
-	@Column(DataType.INTEGER)
-	declare day: number;
+	@AllowNull(false)
+	@Column(DataType.STRING)
+	declare name: string;
 
 	@AllowNull(false)
 	@Column(DataType.STRING)
@@ -69,11 +76,35 @@ export class Activity extends Model<
 
 	@AllowNull(false)
 	@Column(DataType.STRING)
-	declare location: string;
+	declare lat: string; // Changed from number to string
 
 	@AllowNull(false)
-	@Column(DataType.DOUBLE)
+	@Column(DataType.STRING)
+	declare lng: string; // Changed from number to string
+
+	@AllowNull(false)
+	@Column(DataType.STRING())
+	declare category_name: string;
+
+	@AllowNull(false)
+	@Column(DataType.STRING())
+	declare category_fsqr_id: string;
+
+	@AllowNull(false)
+	@Column(DataType.FLOAT())
+	declare distance_to_start: number;
+
+	@AllowNull(false)
+	@Column(DataType.DOUBLE())
 	declare budget: number;
+
+	@AllowNull(false)
+	@Column(DataType.DOUBLE())
+	declare price: number;
+
+	@AllowNull(false)
+	@Column(DataType.JSON())
+	declare location: any;
 
 	@AllowNull(false)
 	@Column(DataType.STRING)
@@ -81,7 +112,7 @@ export class Activity extends Model<
 
 	@AllowNull(true)
 	@Column(DataType.STRING)
-	declare img_url?: string;
+	declare img_url?: string | null; // Added null type for nullable field
 
 	@ForeignKey(() => Itinerary)
 	@AllowNull(false)
@@ -98,7 +129,7 @@ export class Activity extends Model<
 	declare updated_at: Date;
 
 	@DeletedAt
-	declare deleted_at?: Date;
+	declare deleted_at?: Date | null; // Added null type for nullable field
 
 	@BelongsTo(() => Itinerary, { foreignKey: 'itinerary_id' })
 	declare itinerary?: Itinerary;

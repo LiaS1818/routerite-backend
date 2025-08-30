@@ -13,11 +13,12 @@ import {
 	BelongsTo,
 	HasMany,
 	ForeignKey,
+	BelongsToMany,
 } from 'sequelize-typescript';
 import { Optional } from 'sequelize';
 import { LocationInterface } from '../../modules/trips/trip.interfaces';
 import { PostGISPoint } from '../../common/interfaces/PostGISPoint';
-import { User, Itinerary } from './index'
+import { User, Itinerary, TripInvitation } from './index';
 
 export interface TripAttributes {
 	id: number;
@@ -28,13 +29,19 @@ export interface TripAttributes {
 	travelers_count: number;
 	total_budget: number;
 	guided: boolean;
-	cover_image?: string;
+	cover_image?: string | null; // Added null type for nullable field
 	status: 'draft' | 'planned' | 'active' | 'completed' | 'cancelled';
-	location: any; // Representa la interfaz LocationInterface como JSON
+	location: any; // Represents LocationInterface as JSON
 	location_point: any;
+	lat: string; // Changed from number to string
+	lng: string; // Changed from number to string
 	created_at: Date;
 	updated_at: Date;
-	deleted_at?: Date;
+	deleted_at?: Date | null; // Added null type for nullable field
+	// Virtual attributes for relationships
+	owner?: any;
+	guests?: any[];
+	itineraries?: any[];
 }
 
 export interface TripCreationAttributes
@@ -104,18 +111,12 @@ export class Trip extends Model<TripAttributes, TripCreationAttributes> {
 	declare total_budget: number;
 
 	@Column(DataType.TEXT)
-	declare cover_image?: string;
+	declare cover_image?: string | null;
 
 	@AllowNull(false)
 	@Default('draft')
 	@Column(
-		DataType.ENUM(
-			'draft',
-			'planned',
-			'active',
-			'completed',
-			'cancelled'
-		)
+		DataType.ENUM('draft', 'planned', 'active', 'completed', 'cancelled')
 	)
 	declare status: 'draft' | 'planned' | 'active' | 'completed' | 'cancelled';
 
@@ -124,9 +125,21 @@ export class Trip extends Model<TripAttributes, TripCreationAttributes> {
 
 	@Column({
 		type: DataType.GEOMETRY('POINT', 4326),
-		allowNull: true
+		allowNull: true,
 	})
 	declare location_point: PostGISPoint;
+
+	@AllowNull(false)
+	@Column({
+		type: DataType.STRING(),
+	})
+	declare lat: string;
+
+	@AllowNull(false)
+	@Column({
+		type: DataType.STRING(),
+	})
+	declare lng: string;
 
 	@CreatedAt
 	declare created_at: Date;
@@ -135,11 +148,14 @@ export class Trip extends Model<TripAttributes, TripCreationAttributes> {
 	declare updated_at: Date;
 
 	@DeletedAt
-	declare deleted_at?: Date;
+	declare deleted_at?: Date | null;
 
-	@BelongsTo(() => User, { foreignKey: 'user_id', as: 'user' })
-	declare user?: User;
+	@BelongsTo(() => User, { foreignKey: 'user_id', as: 'owner' })
+	declare owner?: User;
 
 	@HasMany(() => Itinerary, { foreignKey: 'trip_id', as: 'itineraries' })
 	declare itineraries?: Itinerary[];
+
+	@BelongsToMany(() => User, () => TripInvitation, 'trip_id', 'user_id')
+	guests: User[];
 }

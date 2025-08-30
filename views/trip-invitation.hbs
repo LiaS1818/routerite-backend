@@ -1,0 +1,293 @@
+<html lang='es'>
+	<head>
+		<meta charset='UTF-8' />
+		<meta name='viewport' content='width=device-width, initial-scale=1.0' />
+		<title>Invitación al Viaje - RouteRite</title>
+		<style>
+			* {
+				margin: 0;
+				padding: 0;
+				box-sizing: border-box;
+			}
+
+			body {
+				font-family: 'Arial', sans-serif;
+				background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+				min-height: 100vh;
+				display: flex;
+				justify-content: center;
+				align-items: center;
+				padding: 20px;
+			}
+
+			.invitation-card {
+				background: white;
+				border-radius: 20px;
+				box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+				padding: 40px;
+				max-width: 500px;
+				width: 100%;
+				text-align: center;
+			}
+
+			.error-card {
+				background: #fff5f5;
+				border: 1px solid #fed7d7;
+				color: #c53030;
+			}
+
+			.trip-image {
+				width: 100%;
+				height: 200px;
+				object-fit: cover;
+				border-radius: 15px;
+				margin-bottom: 20px;
+			}
+
+			.default-image {
+				width: 100%;
+				height: 200px;
+				background: linear-gradient(45deg, #f093fb 0%, #f5576c 100%);
+				border-radius: 15px;
+				margin-bottom: 20px;
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				color: white;
+				font-size: 48px;
+			}
+
+			h1 {
+				color: #2d3748;
+				font-size: 28px;
+				margin-bottom: 10px;
+			}
+
+			.destination {
+				color: #4a5568;
+				font-size: 20px;
+				font-weight: 600;
+				margin-bottom: 20px;
+			}
+
+			.invitation-info {
+				background: #f7fafc;
+				border-radius: 10px;
+				padding: 20px;
+				margin: 20px 0;
+				text-align: left;
+			}
+
+			.info-row {
+				margin-bottom: 10px;
+				display: flex;
+				justify-content: space-between;
+				align-items: center;
+			}
+
+			.info-label {
+				font-weight: 600;
+				color: #4a5568;
+			}
+
+			.info-value {
+				color: #2d3748;
+			}
+
+			.inviter-info {
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				margin: 20px 0;
+				padding: 15px;
+				background: #edf2f7;
+				border-radius: 10px;
+			}
+
+			.inviter-avatar {
+				width: 50px;
+				height: 50px;
+				border-radius: 50%;
+				margin-right: 15px;
+				object-fit: cover;
+			}
+
+			.default-avatar {
+				width: 50px;
+				height: 50px;
+				border-radius: 50%;
+				margin-right: 15px;
+				background: #667eea;
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				color: white;
+				font-weight: bold;
+				font-size: 20px;
+			}
+
+			.buttons {
+				display: flex;
+				gap: 15px;
+				margin-top: 30px;
+			}
+
+			.btn {
+				flex: 1;
+				padding: 15px 20px;
+				border: none;
+				border-radius: 10px;
+				font-size: 16px;
+				font-weight: 600;
+				cursor: pointer;
+				transition: all 0.3s ease;
+			}
+
+			.btn-accept {
+				background: #48bb78;
+				color: white;
+			}
+
+			.btn-accept:hover {
+				background: #38a169;
+				transform: translateY(-2px);
+			}
+
+			.btn-reject {
+				background: #f56565;
+				color: white;
+			}
+
+			.btn-reject:hover {
+				background: #e53e3e;
+				transform: translateY(-2px);
+			}
+
+			.loading {
+				opacity: 0.6;
+				pointer-events: none;
+			}
+
+			.message {
+				margin-top: 20px;
+				padding: 15px;
+				border-radius: 8px;
+				font-weight: 500;
+			}
+
+			.message.success {
+				background: #c6f6d5;
+				color: #22543d;
+				border: 1px solid #9ae6b4;
+			}
+
+			.message.error {
+				background: #fed7d7;
+				color: #c53030;
+				border: 1px solid #feb2b2;
+			}
+		</style>
+	</head>
+	<body>
+		{{#if error}}
+			<div class='invitation-card error-card'>
+				<h1>Error</h1>
+				<p>{{error}}</p>
+			</div>
+		{{else}}
+			<div class='invitation-card'>
+				<div id='invitation-content'>
+					{{#if trip.cover_image}}
+						<img
+							src='{{trip.cover_image}}'
+							alt='{{trip.destination}}'
+							class='trip-image'
+						/>
+					{{else}}
+						<div class='default-image'>
+							✈️
+						</div>
+					{{/if}}
+
+					<h1>¡Estás invitado a un viaje!</h1>
+					<div class='destination'>{{trip.destination}}</div>
+
+					<div class='invitation-info'>
+						<div class='info-row'>
+							<span class='info-label'>Fecha de inicio:</span>
+							<span class='info-value'>{{formatDate
+									trip.start_date
+								}}</span>
+						</div>
+						<div class='info-row'>
+							<span class='info-label'>Fecha de fin:</span>
+							<span class='info-value'>{{formatDate
+									trip.end_date
+								}}</span>
+						</div>
+					</div>
+
+					<div class='inviter-info'>
+						{{#if inviter.profile_picture}}
+							<img
+								src='{{inviter.profile_picture}}'
+								alt='{{inviter.name}}'
+								class='inviter-avatar'
+							/>
+						{{else}}
+							<div class='default-avatar'>{{substring
+									inviter.name
+									0
+									1
+								}}</div>
+						{{/if}}
+						<div>
+							<strong>{{inviter.name}}</strong>
+							te ha invitado a este viaje
+						</div>
+					</div>
+
+					<div class='buttons'>
+						<button
+							class='btn btn-accept'
+							onclick="respondInvitation('accept')"
+						>
+							✓ Aceptar
+						</button>
+						<button
+							class='btn btn-reject'
+							onclick="respondInvitation('reject')"
+						>
+							✗ Rechazar
+						</button>
+					</div>
+				</div>
+
+				<div id='message'></div>
+			</div>
+		{{/if}}
+
+		<script>
+			function respondInvitation(action) { const buttons =
+			document.querySelectorAll('.btn'); const content =
+			document.getElementById('invitation-content'); const messageDiv =
+			document.getElementById('message'); // Disable buttons and show
+			loading state buttons.forEach(btn => btn.classList.add('loading'));
+			const endpoint = window.location.pathname + '/' + action;
+			fetch(endpoint, { method: 'PATCH', headers: { 'Content-Type':
+			'application/json', } }) .then(response => response.json())
+			.then(data => { if (data.status === 'accepted' || data.status ===
+			'rejected') { const messageClass = data.status === 'accepted' ?
+			'success' : 'error'; const messageText = data.status === 'accepted'
+			? '¡Invitación aceptada! Te has unido al viaje exitosamente.' :
+			'Invitación rechazada.'; messageDiv.innerHTML = `<div class="message
+			${messageClass}">${messageText}</div>`; // Hide the invitation
+			content after response setTimeout(() => { content.style.display =
+			'none'; }, 2000); } else { throw new Error(data.message || 'Error
+			desconocido'); } }) .catch(error => { messageDiv.innerHTML = `<div
+			class="message error">Error: ${error.message}</div>`; // Re-enable
+			buttons on error buttons.forEach(btn =>
+			btn.classList.remove('loading')); }); }
+		</script>
+	</body>
+</html>

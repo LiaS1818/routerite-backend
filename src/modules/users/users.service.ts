@@ -23,9 +23,7 @@ export class UsersService {
 		});
 
 		if (existingUser) {
-			throw new ConflictException(
-				'Email is already registered'
-			);
+			throw new ConflictException('Email is already registered');
 		}
 
 		const hashedPassword = await bcrypt.hash(createUserDto.password, 10);
@@ -105,7 +103,10 @@ export class UsersService {
 	 * @param password Password to validate
 	 * @returns User object if credentials are valid, null otherwise
 	 */
-	async validatePassword(email: string, password: string): Promise<User | null> {
+	async validatePassword(
+		email: string,
+		password: string
+	): Promise<User | null> {
 		const user = await this.userModel.findOne({
 			where: { email },
 		});

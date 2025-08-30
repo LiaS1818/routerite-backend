@@ -8,7 +8,8 @@ import { UsersModule } from './modules/users/users.module';
 import { TripsModule } from './modules/trips/trips.module';
 import { ItinerariesModule } from './modules/itineraries/itineraries.module';
 import { ActivityModule } from './modules/activity/activity.module';
-
+import { TripInvitationsModule } from './modules/trip-invitations/trip-invitations.module';
+import { HttpModule } from '@nestjs/axios';
 
 @Module({
 	imports: [
@@ -21,8 +22,12 @@ import { ActivityModule } from './modules/activity/activity.module';
 		UsersModule,
 		TripsModule,
 		ItinerariesModule,
-		ActivityModule
-
+		ActivityModule,
+		TripInvitationsModule,
+		HttpModule.register({
+			timeout: 5000,
+			maxRedirects: 5,
+		}),
 	],
 	controllers: [AppController],
 	providers: [AppService],

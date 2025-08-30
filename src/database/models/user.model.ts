@@ -12,17 +12,17 @@ import {
 	UpdatedAt,
 	DeletedAt,
 	HasMany,
+	BelongsToMany,
 } from 'sequelize-typescript';
 import { Optional } from 'sequelize';
-import { Trip } from './index';
+import { Trip, TripInvitation } from './index';
 
 export interface UserAttributes {
 	id: number;
 	name: string;
 	email: string;
 	password: string;
-	country?: string;
-	city?: string;
+	profile_picture?: string;
 	verified: boolean;
 	active: boolean;
 	created_at: Date;
@@ -36,6 +36,7 @@ export interface UserCreationAttributes
 		| 'id'
 		| 'verified'
 		| 'active'
+		| 'profile_picture'
 		| 'created_at'
 		| 'updated_at'
 		| 'deleted_at'
@@ -70,12 +71,6 @@ export class User extends Model<UserAttributes, UserCreationAttributes> {
 	@Column(DataType.STRING(255))
 	declare password: string;
 
-	@Column(DataType.STRING(100))
-	declare country?: string;
-
-	@Column(DataType.STRING(100))
-	declare city?: string;
-
 	@AllowNull(false)
 	@Default(false)
 	@Column(DataType.BOOLEAN)
@@ -86,6 +81,10 @@ export class User extends Model<UserAttributes, UserCreationAttributes> {
 	@Column(DataType.BOOLEAN)
 	declare active: boolean;
 
+	@AllowNull(true)
+	@Column(DataType.STRING(255))
+	declare profile_picture?: string;
+
 	@CreatedAt
 	declare created_at: Date;
 
@@ -95,6 +94,9 @@ export class User extends Model<UserAttributes, UserCreationAttributes> {
 	@DeletedAt
 	declare deleted_at?: Date;
 
-	@HasMany(() => Trip, { foreignKey: 'user_id', as: 'trips' })
-	declare trips?: Trip[];
+	@HasMany(() => Trip, { foreignKey: 'user_id', as: 'owned_trips' })
+	declare owned_trips?: Trip[];
+
+	@BelongsToMany(() => Trip, () => TripInvitation)
+	trips: Trip[];
 }

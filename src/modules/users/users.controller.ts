@@ -37,13 +37,24 @@ export class UsersController {
 
 	@UseGuards(JwtAuthGuard)
 	@Get('/me')
-	async findOne( @Request() req) {
+	async findOne(@Request() req) {
 		return this.usersService.findOne(req.user.id);
 	}
 
 	@Post()
 	async create(@Body() createUserDto: CreateUserDto) {
 		return this.usersService.create(createUserDto);
+	}
+
+	@Patch('me/profile-picture')
+	@UseGuards(JwtAuthGuard)
+	async updateProfilePicture(
+		@Body('profile_picture') profile_picture: string,
+		@Request() req
+	) {
+		const user = await this.usersService.findOne(req.user.id);
+		await user.update({ profile_picture });
+		return user;
 	}
 
 	@Patch(':id')
@@ -60,10 +71,7 @@ export class UsersController {
 				HttpStatus.FORBIDDEN
 			);
 		}
-		if(updateUserDto.password == null)
-			delete updateUserDto.password;
+		if (updateUserDto.password == null) delete updateUserDto.password;
 		return this.usersService.update(id, updateUserDto);
 	}
-
-
 }

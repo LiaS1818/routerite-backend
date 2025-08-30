@@ -11,11 +11,14 @@ export default tseslint.config(
 		files: ['**/*.{ts,tsx,js,jsx}'],
 		rules: {
 			// Configuración para tabulaciones
-			'indent': ['error', 'tab', { SwitchCase: 1 }],
+			indent: ['error', 'tab', { SwitchCase: 1 }],
 			'@typescript-eslint/indent': ['error', 'tab', { SwitchCase: 1 }],
 
 			// Reglas de TypeScript con severidad reducida para desarrollo
-			'@typescript-eslint/no-unused-vars': ['warn', { argsIgnorePattern: '^_' }],
+			'@typescript-eslint/no-unused-vars': [
+				'warn',
+				{ argsIgnorePattern: '^_' },
+			],
 			'@typescript-eslint/no-explicit-any': 'warn',
 			'@typescript-eslint/no-unsafe-assignment': 'warn',
 			'@typescript-eslint/no-unsafe-member-access': 'warn',
@@ -23,8 +26,8 @@ export default tseslint.config(
 			'@typescript-eslint/no-empty-object-type': 'warn',
 
 			// Reglas de formateo consistentes con Prettier
-			'quotes': ['error', 'single'],
-			'semi': ['error', 'always'],
+			quotes: ['error', 'single'],
+			semi: ['error', 'always'],
 			'comma-dangle': ['error', 'always-multiline'],
 			'object-curly-spacing': ['error', 'always'],
 

@@ -9,5 +9,5 @@ export const databaseConfig: SequelizeModuleOptions = {
 	database: process.env.DB_NAME || 'routerite',
 	autoLoadModels: true,
 	synchronize: true,
-	logging: process.env.NODE_ENV === 'development' ? console.log : false
+	logging: process.env.NODE_ENV === 'development' ? console.log : false,
 };

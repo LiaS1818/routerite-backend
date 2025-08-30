@@ -19,7 +19,6 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
 	}
 
 	async validate(payload: any) {
-		console.log('Validating JWT payload:', payload);
 		const user = await this.usersService.findOne(payload.id);
 
 		if (!user || !user.active) {
