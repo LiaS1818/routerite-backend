@@ -1,9 +1,13 @@
 import { Module } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { HttpModule } from '@nestjs/axios';
 import { createClient } from '@supabase/supabase-js';
+import { SupabaseStorageService } from './supabase-storage.service';
 
 @Module({
+	imports: [HttpModule],
 	providers: [
+		SupabaseStorageService,
 		{
 			provide: 'SUPABASE_CLIENT',
 			inject: [ConfigService],
@@ -21,6 +25,6 @@ import { createClient } from '@supabase/supabase-js';
 			},
 		},
 	],
-	exports: ['SUPABASE_CLIENT'],
+	exports: ['SUPABASE_CLIENT', SupabaseStorageService],
 })
 export class SupabaseModule {}

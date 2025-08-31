@@ -13,6 +13,7 @@ import {
 	FoursquarePlaceDetailsRequest,
 	FoursquarePlaceDetailsExtendedRequest,
 } from './entities/place-details.interface';
+import { FoursquarePlaceInterface } from './entities/foursquare-place.interface';
 
 export interface FoursquareApiError {
 	code: string;
@@ -195,6 +196,8 @@ export class FoursquarePlacesService {
 				fields: fields.join(','),
 			};
 
+			console.log("params: ", params)
+
 			this.logger.debug(
 				`Obteniendo detalles del lugar ${fsqId} con nivel ${fieldsLevel} (${fields.length} campos)`
 			);
@@ -209,14 +212,15 @@ export class FoursquarePlacesService {
 					},
 				})
 			);
+			const obtainedPlace: FoursquarePlaceInterface = response.data;
+			console.log("response place details: ", obtainedPlace)
 
-			const processedResponse = this.processResponse(response.data);
-			this.saveToCache(cacheKey, processedResponse);
+			this.saveToCache(cacheKey, obtainedPlace);
 
 			this.logger.debug(
 				`Detalles obtenidos exitosamente para lugar ${fsqId}`
 			);
-			return processedResponse;
+			return obtainedPlace;
 		} catch (error) {
 			if (error?.response?.status === 404) {
 				throw new HttpException(
@@ -236,7 +240,7 @@ export class FoursquarePlacesService {
 		options: { fieldsLevel?: FoursquareFieldsLevel; customFields?: string[] } = {}
 	): Promise<{ fsqId?: string; photoUrl?: string }> {
 		try {
-			let fsqId: string | undefined;
+			let fsqId: string | undefined = "4d37d5252a7b59413dacfc47";
 			const { lat, lng, name } = location;
 
 			// Search for the place using coordinates and name
@@ -251,10 +255,11 @@ export class FoursquarePlacesService {
 			console.log("Search Response: ", searchResponse)
 
 			if (searchResponse.results?.length > 0) {
-				const place = searchResponse.results[0];
-				// Verify if this is likely the same place
-				if (this.isSimilarPlace(place, location)) {
-					fsqId = place.fsq_id;
+				for (const place of searchResponse.results) {
+					// Verify if this is likely the same place
+					if (this.isSimilarPlace(place, location)) {
+						fsqId = place.fsq_id;
+					}
 				}
 			}
 
@@ -263,20 +268,24 @@ export class FoursquarePlacesService {
 			// If we found a matching place, get its details
 			if (fsqId) {
 				const placeDetails = await this.getPlaceDetails(fsqId, {
-					fieldsLevel: options.fieldsLevel || 'basic',
-					customFields: options.customFields || ['photos']
+					fieldsLevel: 'pro',
+					customFields: ['photos']
 				});
 
-				console.log("Place Details: ", placeDetails)
+				console.log("Selected place details: ", placeDetails)
 				if (placeDetails.photos?.length > 0) {
 					const primaryPhoto = placeDetails.photos[0];
+					const dimensions = '390x360'
 					return {
 						fsqId,
-						photoUrl: `${primaryPhoto.prefix}original${primaryPhoto.suffix}`
+						photoUrl: `${primaryPhoto.prefix}${dimensions}${primaryPhoto.suffix}`
 					};
 				}
+				// Example URL result:
+				// https://fastly.4sqi.net/img/general/390x360/11197279_wsyG_eVS3MpH27-frhDjrEd2I1rcnh5UE5vdwxeEB3Q.jpg
 
 				return { fsqId };
+
 			}
 
 			return {};

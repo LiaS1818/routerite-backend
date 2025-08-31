@@ -22,6 +22,7 @@ import { literal } from 'sequelize';
 import { PostGISPoint } from '../../common/interfaces/PostGISPoint';
 import { FoursquarePhotosService } from '../../common/services/foursquare/foursquare-place-photos.service';
 import { FoursquarePlacesService } from '../../common/services/foursquare/foursquare-place.service';
+import { SupabaseStorageService } from '../supabase/supabase-storage.service';
 
 @Controller('trips')
 @UseGuards(JwtAuthGuard)
@@ -32,7 +33,8 @@ export class TripsController {
 		private readonly tripsService: TripsService,
 		private sequelize: Sequelize,
 		private readonly fsqrPhotosService: FoursquarePhotosService,
-		private readonly fsqrPlaceService: FoursquarePlacesService
+		private readonly fsqrPlaceService: FoursquarePlacesService,
+		private readonly supabaseStorageService: SupabaseStorageService
 	) {}
 
 	@Post()
@@ -92,48 +94,69 @@ export class TripsController {
 				transaction
 			);
 
-			// Try to fetch place details and photo
-			try {
-				// TODO: Test this and also save the returned fsqrId in the tripi
-				const { photoUrl, fsqId } = await this.fsqrPlaceService.findPlaceAndGetDetails(
-					{
-						name: createTripDto.location.name,
-						lat: latitude,
-						lng: longitude,
-					},
-					{
-						fieldsLevel: 'basic',
-						customFields: ['photos'],
-					}
-				);
+			// Buscar el lugar en Foursquare y obtener la imagen principal
+			const { photoUrl, fsqId } = await this.fsqrPlaceService.findPlaceAndGetDetails(
+				{
+					name: createTripDto.location.name,
+					lat: latitude,
+					lng: longitude,
+				},
+				{
+					fieldsLevel: 'pro',
+					customFields: ['photos'],
+				}
+			);
 
-				if (photoUrl) {
-					await this.tripsService.update(
+			this.logger.debug(`Found place: fsqId=${fsqId}, photoUrl=${photoUrl}`);
+
+			// Si se encontró una imagen, subirla a Supabase Storage
+			if (photoUrl && fsqId) {
+				try {
+					// Generar la ruta para la imagen en Supabase
+					const storagePath = this.supabaseStorageService.generateTripCoverPath(
 						createdTrip.id,
-						{ cover_image: photoUrl },
+						photoUrl
+					);
+
+					this.logger.debug(`Uploading image to Supabase: ${storagePath}`);
+
+					// Subir la imagen a Supabase Storage
+					const supabaseImageUrl = await this.supabaseStorageService.uploadImageFromUrl(
+						photoUrl,
+						storagePath
+					);
+
+					// Actualizar el trip con la URL de Supabase
+					 await this.tripsService.update(
+						createdTrip.id,
+						{ cover_image: supabaseImageUrl },
 						transaction
 					);
-					createdTrip.cover_image = photoUrl;
+					createdTrip.cover_image = supabaseImageUrl;
+
+					this.logger.log(`Trip cover image uploaded successfully: ${supabaseImageUrl}`);
+				} catch (imageError) {
+					// Si falla la subida de imagen, loguear el error pero no fallar el viaje
+					this.logger.warn(`Failed to upload trip cover image: ${imageError.message}`);
+					// Opcionalmente, podríamos guardar la URL original como fallback
+					// await this.tripsService.update(createdTrip.id, { cover_image: photoUrl }, transaction);
 				}
-			} catch (error) {
-				this.logger.warn(`Failed to fetch place photo: ${error.message}`);
-				// Don't throw the error, just continue without the photo
+			} else {
+				this.logger.warn(`No image found for place: ${createTripDto.location.name}`);
 			}
 
 			await transaction.commit();
 			return createdTrip;
 		} catch (error) {
 			await transaction.rollback();
+			this.logger.error(`Error creating trip: ${error.message}`, error.stack);
 			throw error;
 		}
 	}
 
-
 	@Get()
 	async findAll(@Request() req) {
-		return await this.tripsService.findByUserId(req.user.id, {
-			attributes: { exclude: ['deleted_at', 'cover_image'] },
-		});
+		return await this.tripsService.findByUserId(req.user.id);
 	}
 
 	@Get('upcoming')

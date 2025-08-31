@@ -119,8 +119,8 @@ export class TripsService {
 			);
 			return uniqueTrips.sort(
 				(a, b) =>
-					new Date(b.start_date).getTime() -
-					new Date(a.start_date).getTime()
+					new Date(a.start_date).getTime() -
+					new Date(b.start_date).getTime()
 			);
 		} catch (error) {
 			this.logger.error(
@@ -308,7 +308,9 @@ export class TripsService {
 		try {
 			this.logger.log(`Updating trip with ID ${id}`);
 
-			const trip = await this.tripModel.findByPk(id);
+			const trip = await this.tripModel.findByPk(id, {
+				transaction
+			});
 
 			if (!trip) {
 				throw new NotFoundException(`Trip with ID ${id} not found`);
@@ -321,7 +323,7 @@ export class TripsService {
 				include: [
 					{
 						model: this.userModel,
-						as: 'user',
+						as: 'owner',
 						attributes: ['id', 'name', 'email'],
 					},
 				],
