@@ -12,6 +12,7 @@ import {
 	HttpException,
 	HttpStatus,
 	BadRequestException,
+	Logger,
 } from '@nestjs/common';
 import { TripsService } from './trips.service';
 import { CreateTripDto, UpdateTripExtendedDto } from './dto';
@@ -20,14 +21,18 @@ import { Sequelize } from 'sequelize-typescript';
 import { literal } from 'sequelize';
 import { PostGISPoint } from '../../common/interfaces/PostGISPoint';
 import { FoursquarePhotosService } from '../../common/services/foursquare/foursquare-place-photos.service';
+import { FoursquarePlacesService } from '../../common/services/foursquare/foursquare-place.service';
 
 @Controller('trips')
 @UseGuards(JwtAuthGuard)
 export class TripsController {
+	private readonly logger = new Logger(TripsController.name);
+
 	constructor(
 		private readonly tripsService: TripsService,
 		private sequelize: Sequelize,
-		private readonly fsqrPhotosService: FoursquarePhotosService
+		private readonly fsqrPhotosService: FoursquarePhotosService,
+		private readonly fsqrPlaceService: FoursquarePlacesService
 	) {}
 
 	@Post()
@@ -86,6 +91,35 @@ export class TripsController {
 				tripData,
 				transaction
 			);
+
+			// Try to fetch place details and photo
+			try {
+				// TODO: Test this and also save the returned fsqrId in the tripi
+				const { photoUrl, fsqId } = await this.fsqrPlaceService.findPlaceAndGetDetails(
+					{
+						name: createTripDto.location.name,
+						lat: latitude,
+						lng: longitude,
+					},
+					{
+						fieldsLevel: 'basic',
+						customFields: ['photos'],
+					}
+				);
+
+				if (photoUrl) {
+					await this.tripsService.update(
+						createdTrip.id,
+						{ cover_image: photoUrl },
+						transaction
+					);
+					createdTrip.cover_image = photoUrl;
+				}
+			} catch (error) {
+				this.logger.warn(`Failed to fetch place photo: ${error.message}`);
+				// Don't throw the error, just continue without the photo
+			}
+
 			await transaction.commit();
 			return createdTrip;
 		} catch (error) {
@@ -93,6 +127,7 @@ export class TripsController {
 			throw error;
 		}
 	}
+
 
 	@Get()
 	async findAll(@Request() req) {

@@ -228,6 +228,157 @@ export class FoursquarePlacesService {
 		}
 	}
 
+	/**
+	 * Busca un lugar específico usando coordenadas y nombre, y obtiene sus detalles con fotos
+	 */
+	async findPlaceAndGetDetails(
+		location: { name: string; lat: string | number; lng: string | number },
+		options: { fieldsLevel?: FoursquareFieldsLevel; customFields?: string[] } = {}
+	): Promise<{ fsqId?: string; photoUrl?: string }> {
+		try {
+			let fsqId: string | undefined;
+			const { lat, lng, name } = location;
+
+			// Search for the place using coordinates and name
+			const searchResponse = await this.searchPlaces({
+				ll: `${lat},${lng}`,
+				query: name,
+				radius: 100, // Search within 100 meters
+				limit: 1,
+				fieldsLevel: 'basic'
+			});
+
+			console.log("Search Response: ", searchResponse)
+
+			if (searchResponse.results?.length > 0) {
+				const place = searchResponse.results[0];
+				// Verify if this is likely the same place
+				if (this.isSimilarPlace(place, location)) {
+					fsqId = place.fsq_id;
+				}
+			}
+
+			console.log("obtained fsqId: ", fsqId)
+
+			// If we found a matching place, get its details
+			if (fsqId) {
+				const placeDetails = await this.getPlaceDetails(fsqId, {
+					fieldsLevel: options.fieldsLevel || 'basic',
+					customFields: options.customFields || ['photos']
+				});
+
+				console.log("Place Details: ", placeDetails)
+				if (placeDetails.photos?.length > 0) {
+					const primaryPhoto = placeDetails.photos[0];
+					return {
+						fsqId,
+						photoUrl: `${primaryPhoto.prefix}original${primaryPhoto.suffix}`
+					};
+				}
+
+				return { fsqId };
+			}
+
+			return {};
+		} catch (error) {
+			this.logger.warn(
+				`Failed to find place or get details: ${error.message}`
+			);
+			return {};
+		}
+	}
+
+	/**
+	 * Compare a Foursquare place with our location data to verify it's the same place
+	 */
+	private isSimilarPlace(
+		fsqPlace: any,
+		ourPlace: { name: string; lat: string | number; lng: string | number }
+	): boolean {
+		// If names are very different, it's probably not the same place
+		const nameSimilarity = this.calculateStringSimilarity(
+			fsqPlace.name.toLowerCase(),
+			ourPlace.name.toLowerCase()
+		);
+
+		// Calculate distance between coordinates
+		const distance = this.calculateDistance(
+			parseFloat(ourPlace.lat.toString()),
+			parseFloat(ourPlace.lng.toString()),
+			fsqPlace.geocodes.main.latitude,
+			fsqPlace.geocodes.main.longitude
+		);
+
+		// Consider it a match if:
+		// 1. Names are at least 60% similar
+		// 2. Location is within 100 meters
+		return nameSimilarity >= 0.6 && distance <= 100;
+	}
+
+	/**
+	 * Calculate similarity between two strings (simplified Levenshtein ratio)
+	 */
+	private calculateStringSimilarity(str1: string, str2: string): number {
+		const maxLength = Math.max(str1.length, str2.length);
+		if (maxLength === 0) return 1.0;
+
+		const distance = this.levenshteinDistance(str1, str2);
+		return 1 - distance / maxLength;
+	}
+
+	/**
+	 * Calculate Levenshtein distance between two strings
+	 */
+	private levenshteinDistance(str1: string, str2: string): number {
+		const m = str1.length;
+		const n = str2.length;
+		const dp: number[][] = Array.from({ length: m + 1 }, () =>
+			Array(n + 1).fill(0)
+		);
+
+		for (let i = 0; i <= m; i++) dp[i][0] = i;
+		for (let j = 0; j <= n; j++) dp[0][j] = j;
+
+		for (let i = 1; i <= m; i++) {
+			for (let j = 1; j <= n; j++) {
+				if (str1[i - 1] === str2[j - 1]) {
+					dp[i][j] = dp[i - 1][j - 1];
+				} else {
+					dp[i][j] = 1 + Math.min(
+						dp[i - 1][j],     // deletion
+						dp[i][j - 1],     // insertion
+						dp[i - 1][j - 1]  // substitution
+					);
+				}
+			}
+		}
+
+		return dp[m][n];
+	}
+
+	/**
+	 * Calculate distance between two points in meters using Haversine formula
+	 */
+	private calculateDistance(
+		lat1: number,
+		lon1: number,
+		lat2: number,
+		lon2: number
+	): number {
+		const R = 6371e3; // Earth's radius in meters
+		const φ1 = (lat1 * Math.PI) / 180;
+		const φ2 = (lat2 * Math.PI) / 180;
+		const Δφ = ((lat2 - lat1) * Math.PI) / 180;
+		const Δλ = ((lon2 - lon1) * Math.PI) / 180;
+
+		const a =
+			Math.sin(Δφ / 2) * Math.sin(Δφ / 2) +
+			Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
+		const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
+		return R * c;
+	}
+
 	/** Genera cache key con nivel de campos */
 	private generateCacheKeyWithFields(
 		params: FoursquarePlaceSearchRequest | FoursquarePlaceDetailsRequest,

@@ -8,12 +8,16 @@ import { User } from '../../database/models/user.model';
 import { Itinerary, TripInvitation } from 'src/database/models';
 import { FoursquareModule } from 'src/common/services/foursquare/foursquare.module';
 import { TripAccessValidatorModule } from '../../common/services/trip-access-validator.module';
+import { HttpModule } from '@nestjs/axios';
+import { ConfigModule } from '@nestjs/config';
 
 @Module({
 	imports: [
 		SequelizeModule.forFeature([Trip, User, Itinerary, TripInvitation]),
 		FoursquareModule,
 		TripAccessValidatorModule,
+		HttpModule,
+		ConfigModule,
 	],
 	controllers: [TripsController],
 	providers: [TripsService],

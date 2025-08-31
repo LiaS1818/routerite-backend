@@ -6,7 +6,7 @@ import {
 	ItineraryAttributes,
 	ItineraryCreationAttributes,
 } from '../../database/models/itinerary.model';
-import { UpdateTripExtendedDto } from './dto/update-trip.dto';
+import { UpdateTripExtendedDto } from './dto';
 import { TripAccessValidatorService } from '../../common/services/trip-access-validator.service';
 
 @Injectable()
@@ -300,7 +300,11 @@ export class TripsService {
 	/**
 	 * Update a trip
 	 */
-	async update(id: number, updateData: Partial<Trip>): Promise<Trip> {
+	async update(
+		id: number,
+		updateData: Partial<Trip>,
+		transaction: Transaction
+	): Promise<Trip> {
 		try {
 			this.logger.log(`Updating trip with ID ${id}`);
 
@@ -310,7 +314,7 @@ export class TripsService {
 				throw new NotFoundException(`Trip with ID ${id} not found`);
 			}
 
-			await trip.update(updateData);
+			await trip.update(updateData, { transaction });
 
 			this.logger.log(`Trip with ID ${id} updated successfully`);
 			return trip.reload({
@@ -505,7 +509,7 @@ export class TripsService {
 						})
 					: [];
 
-			// 7. Cálculos de duración sólo si cambian fechas
+			// 7. Cálculos de duración solo si cambian fechas
 			let oldDuration = 0,
 				newDuration = 0,
 				durationDiff = 0,
@@ -522,7 +526,7 @@ export class TripsService {
 				startDiff = diffDays(requestedStart, trip.start_date);
 			}
 
-			// 8. Actualizar sólo campos cambiados
+			// 8. Actualizar solo campos cambiados
 			const originalBudget = trip.total_budget;
 			if (changedStart) trip.start_date = requestedStart;
 			if (changedEnd) trip.end_date = requestedEnd;
