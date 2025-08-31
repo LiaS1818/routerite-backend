@@ -99,5 +99,5 @@ export class User extends Model<UserAttributes, UserCreationAttributes> {
 	declare owned_trips?: Trip[];
 
 	@BelongsToMany(() => Trip, () => TripInvitation)
-	trips: Trip[];
+	declare trips: Trip[];
 }

@@ -6,6 +6,7 @@ import {
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 import { Trip, User, Itinerary } from '../../database/models';
+import { Op } from 'sequelize';
 
 @Injectable()
 export class TripAccessValidatorService {
@@ -22,6 +23,7 @@ export class TripAccessValidatorService {
 	 * Check if user has access to trip (owner or accepted guest)
 	 */
 	async validateTripAccess(tripId: number, userId: number): Promise<void> {
+		console.log('Validating trip access for tripId:', tripId, ", userId:", userId);
 		const trip = await this.tripModel.findOne({
 			where: { id: tripId },
 			include: [

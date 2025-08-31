@@ -155,5 +155,5 @@ export class Trip extends Model<TripAttributes, TripCreationAttributes> {
 	declare itineraries?: Itinerary[];
 
 	@BelongsToMany(() => User, () => TripInvitation, 'trip_id', 'user_id')
-	guests: User[];
+	declare guests: User[];
 }

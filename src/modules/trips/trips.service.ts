@@ -37,7 +37,6 @@ export class TripsService {
 				transaction,
 			});
 
-			console.log('Itinerary model', this.itineraryModel);
 			// Create trip itineraries
 			const tripDuration = Math.ceil(
 				(trip.end_date.getTime() - trip.start_date.getTime()) /
@@ -129,18 +128,6 @@ export class TripsService {
 				error.stack
 			);
 			throw error;
-		}
-	}
-
-	/**
-	 * Check if user has access to trip (owner or accepted guest)
-	 */
-	async hasAccessToTrip(tripId: number, userId: number): Promise<boolean> {
-		try {
-			await this.tripAccessValidator.validateTripAccess(tripId, userId);
-			return true;
-		} catch {
-			return false;
 		}
 	}
 
