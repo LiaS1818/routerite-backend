@@ -9,11 +9,11 @@ export class CategoriesService {
   constructor(
     @InjectModel(FoursquareCategory)
     private categoryModel: typeof FoursquareCategory
-  ) {}
+  ) { }
 
   async search(q = '', limit = 20) {
     const lim = Math.max(1, Math.min(Number(limit) || 20, 50));
-    
+
     if (!q) {
       return this.categoryModel.findAll({
         limit: lim,
@@ -21,7 +21,6 @@ export class CategoriesService {
       });
     }
 
-    // Búsqueda con Sequelize
     const categories = await this.categoryModel.findAll({
       where: {
         [Op.or]: [
@@ -31,24 +30,23 @@ export class CategoriesService {
       },
       limit: lim,
       order: [
-        // Orden personalizado con Sequelize literal
-        (this.categoryModel.sequelize
+        this.categoryModel.sequelize
           ? this.categoryModel.sequelize.literal(`
-              CASE
-                WHEN lower(name) = lower('${q.replace(/'/g, "''")}') THEN 0
-                WHEN lower(name) LIKE lower('${q.replace(/'/g, "''")}') || '%' THEN 1
-                ELSE 2
-              END
-            `)
-          : ['name', 'ASC']
-        ),
+            CASE
+              WHEN lower(name) = lower('${q.replace(/'/g, "''")}') THEN 0
+              WHEN lower(name) LIKE lower('${q.replace(/'/g, "''")}') || '%' THEN 1
+              ELSE 2
+            END
+          `)
+          : ['name', 'ASC'],
         ['name', 'ASC']
       ],
-      raw: true // Para mejor performance
+      raw: true
     });
 
     return categories;
   }
+
 
   async getPopular(limit = 10) {
     return this.categoryModel.findAll({

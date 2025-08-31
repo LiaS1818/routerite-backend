@@ -6,17 +6,15 @@ import { CategoriesService } from './categories.service';
 export class CategoriesController {
   constructor(private readonly categoriesService: CategoriesService) {}
 
+  // para buscar una category, el endpoint debe ser: 
+
   @Get('search')
   async searchCategories(
     @Query('q') query: string = '',
     @Query('limit') limit: string = '20'
   ) {
     const categories = await this.categoriesService.search(query, parseInt(limit));
-    return {
-      success: true,
-      data: categories,
-      count: categories.length
-    };
+    return categories;
   }
   // Obtener categorías populares
   @Get('popular')
@@ -37,5 +35,6 @@ export class CategoriesController {
       parseInt(limit)
     );
   }
+  
   
 }
