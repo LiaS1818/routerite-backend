@@ -29,7 +29,8 @@ export class UsersService {
 		const hashedPassword = await bcrypt.hash(createUserDto.password, 10);
 		const user = await this.userModel.create({
 			...createUserDto,
-			password: hashedPassword,
+			profile_picture: 'https://lvuodwyfoqekoeadpcyi.supabase.co/storage/v1/object/public/routerite/defaults/profile-pictures/default-profile-picture.png',
+			password: hashedPassword
 		});
 
 		return this.userModel.findByPk(user.id, {

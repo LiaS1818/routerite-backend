@@ -36,7 +36,7 @@ export interface TripInvitationCreationAttributes
 @Table({
 	tableName: 'trip_invitations',
 	timestamps: true,
-	paranoid: true,
+	paranoid: false,
 	underscored: true,
 	freezeTableName: true,
 	createdAt: 'created_at',

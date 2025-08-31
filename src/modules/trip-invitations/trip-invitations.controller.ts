@@ -10,6 +10,8 @@ import {
 	Render,
 	Res,
 	HttpStatus,
+	Delete,
+	Query,
 } from '@nestjs/common';
 import { Response } from 'express';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
@@ -125,5 +127,25 @@ export class TripInvitationsController {
 				message: error.message,
 			});
 		}
+	}
+
+	/**
+	 * Delete a trip invitation (only accessible to trip owner)
+	 */
+	@Delete(':tripId')
+	@UseGuards(JwtAuthGuard)
+	async deleteInvitation(
+		@Param('tripId') tripId: number,
+		@Query('email') email: string,
+		@Request() req: any
+	) {
+		await this.tripInvitationsService.deleteInvitation(
+			tripId,
+			email,
+			req.user.id
+		);
+		return {
+			message: 'Invitation deleted successfully',
+		};
 	}
 }

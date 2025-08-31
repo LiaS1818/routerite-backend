@@ -105,7 +105,6 @@ export class TripsService {
 					},
 				],
 				order: [['start_date', 'DESC']],
-				paranoid: true,
 				...options,
 			});
 
@@ -165,8 +164,12 @@ export class TripsService {
 						as: 'guests',
 						attributes: ['id', 'name', 'email', 'profile_picture'],
 						through: {
-							where: { status: 'accepted' },
-							attributes: [],
+							where: {
+								status: {
+									[Op.or]: ['pending', 'accepted'],
+								},
+							},
+							attributes: ['status'],
 						},
 					},
 					{
