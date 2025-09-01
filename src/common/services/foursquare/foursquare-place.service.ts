@@ -23,20 +23,13 @@ export interface FoursquareApiError {
 
 /**
  * Servicio para interactuar con la API de Foursquare Places
- * Maneja búsqueda de lugares, caché de resultados y manejo de errores
+ * Maneja búsqueda de lugares y manejo de errores
  */
 @Injectable()
 export class FoursquarePlacesService {
 	private readonly logger = new Logger(FoursquarePlacesService.name);
 	private readonly baseUrl = 'https://api.foursquare.com/v3/places';
 	private readonly apiKey: string;
-
-	// Cache temporal en memoria (considerar Redis para producción)
-	private cache = new Map<
-		string,
-		{ data: PlaceSearchResponseInterface; timestamp: number }
-	>();
-	private readonly cacheTTL = 1000 * 60 * 30; // 30 minutos
 
 	/**
 	 * Nivel de campos por defecto (configurable via env FSQR_FIELDS_LEVEL)
@@ -108,18 +101,7 @@ export class FoursquarePlacesService {
 			};
 			// Validar parámetros requeridos
 			this.validateSearchParams(enrichedParams);
-			// Generar cache key con nivel de campos
-			const cacheKey = this.generateCacheKeyWithFields(
-				enrichedParams,
-				fieldsLevel
-			);
-			const cachedResult = this.getFromCache(cacheKey);
-			if (cachedResult) {
-				this.logger.debug(
-					`Retornando resultado desde cache para: ${cacheKey}`
-				);
-				return cachedResult;
-			}
+
 			// Construir query params
 			const queryParams = this.buildQueryParams(enrichedParams);
 			this.logger.debug(
@@ -139,7 +121,6 @@ export class FoursquarePlacesService {
 				)
 			);
 			const processedResponse = this.processResponse(response.data);
-			this.saveToCache(cacheKey, processedResponse);
 			this.logger.debug(
 				`Encontrados ${processedResponse.results.length} lugares (nivel ${fieldsLevel})`
 			);
@@ -158,7 +139,7 @@ export class FoursquarePlacesService {
 	async getPlaceDetails(
 		fsqId: string,
 		params: FoursquarePlaceDetailsExtendedRequest = {}
-	): Promise<any> {
+	): Promise<FoursquarePlaceInterface> {
 		try {
 			// Determinar nivel de campos
 			const fieldsLevel = params.fieldsLevel || this.defaultFieldsLevel;
@@ -179,16 +160,6 @@ export class FoursquarePlacesService {
 						)}. Considera cambiar a nivel: ${validation.suggestedLevel}`
 					);
 				}
-			}
-
-			// Generar cache key
-			const cacheKey = `fsq_place_${fieldsLevel}_${fsqId}`;
-			const cachedResult = this.getFromCache(cacheKey);
-			if (cachedResult) {
-				this.logger.debug(
-					`Retornando detalles desde cache para lugar: ${fsqId}`
-				);
-				return cachedResult;
 			}
 
 			// Construir query params
@@ -214,8 +185,6 @@ export class FoursquarePlacesService {
 			);
 			const obtainedPlace: FoursquarePlaceInterface = response.data;
 			console.log("response place details: ", obtainedPlace)
-
-			this.saveToCache(cacheKey, obtainedPlace);
 
 			this.logger.debug(
 				`Detalles obtenidos exitosamente para lugar ${fsqId}`
@@ -273,7 +242,7 @@ export class FoursquarePlacesService {
 				});
 
 				console.log("Selected place details: ", placeDetails)
-				if (placeDetails.photos?.length > 0) {
+				if (placeDetails.photos && placeDetails.photos.length > 0) {
 					const primaryPhoto = placeDetails.photos[0];
 					const dimensions = '390x360'
 					return {
@@ -386,20 +355,6 @@ export class FoursquarePlacesService {
 		const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 
 		return R * c;
-	}
-
-	/** Genera cache key con nivel de campos */
-	private generateCacheKeyWithFields(
-		params: FoursquarePlaceSearchRequest | FoursquarePlaceDetailsRequest,
-		fieldsLevel: FoursquareFieldsLevel
-	): string {
-		const sortedParams = Object.keys(params)
-			.sort()
-			.reduce((acc, k) => {
-				acc[k] = (params as any)[k];
-				return acc;
-			}, {} as any);
-		return `fsq_${JSON.stringify(sortedParams)}_${fieldsLevel}`;
 	}
 
 	/**
@@ -522,50 +477,6 @@ export class FoursquarePlacesService {
 			...response,
 			results: validResults,
 		};
-	}
-
-	/**
-	 * Obtiene un resultado del cache si existe y no ha expirado
-	 */
-	private getFromCache(key: string): PlaceSearchResponseInterface | null {
-		const cached = this.cache.get(key);
-
-		if (!cached) return null;
-
-		const now = Date.now();
-		if (now - cached.timestamp > this.cacheTTL) {
-			this.cache.delete(key);
-			return null;
-		}
-
-		return cached.data;
-	}
-
-	/**
-	 * Guarda un resultado en el cache
-	 */
-	private saveToCache(
-		key: string,
-		data: any
-	): void {
-		this.cache.set(key, {
-			data,
-			timestamp: Date.now(),
-		});
-
-		// Limpiar cache si es muy grande
-		if (this.cache.size > 100) {
-			const oldestKey = this.cache.keys().next().value;
-			this.cache.delete(oldestKey);
-		}
-	}
-
-	/**
-	 * Limpia el cache completamente
-	 */
-	clearCache(): void {
-		this.cache.clear();
-		this.logger.debug('Cache limpiado');
 	}
 
 	/**
