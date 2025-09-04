@@ -2,7 +2,7 @@ import { Injectable, HttpException, HttpStatus, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { HttpService } from '@nestjs/axios';
 import { firstValueFrom } from 'rxjs';
-import { AxiosError } from 'axios';
+import axios, { AxiosError } from 'axios';
 
 /**
  * Interface para los parámetros de búsqueda de lugares en Foursquare
@@ -587,6 +587,121 @@ export class FoursquarePlacesService {
 			throw new HttpException(
 				'Error inesperado al buscar lugares',
 				HttpStatus.INTERNAL_SERVER_ERROR
+			);
+		}
+	}
+
+	async getAutocomplete(
+		query: string,
+		near?: string,
+		ll?: string,
+		session_token?: string
+	) {
+		try {
+			const params: any = { query, limit: 5 };
+			if (near) params.near = near;
+			if (ll) params.ll = ll;
+			if (session_token) params.session_token = session_token;
+
+			const response = await axios.get(
+				'https://places-api.foursquare.com/autocomplete', // <- endpoint v3 correcto
+				{
+					headers: {
+						Authorization:
+							'Bearer YFBL2TAKQK4KRHMPAH53FNQ0EVI5QB4CWFBLMFCVV4MIZT3F', // <- tu API key correcta
+						Accept: 'application/json',
+						'X-Places-Api-Version': '2025-06-17',
+					},
+					params,
+				}
+			);
+
+			return response.data.results.map(item => {
+				const firstCategory = item.place?.categories?.[0]; // Primera categoría
+				return {
+					type: item.type ?? null,
+					name: item.text?.primary ?? null,
+					fsq_id: item.place?.fsq_id ?? null,
+					description: item.place?.description ?? null,
+					distance: item.place?.distance ?? null,
+					price: item.place?.price ?? null,
+					rating: item.place?.rating ?? null,
+					social_media: item.place?.social_media ?? {},
+					tel: item.place?.tel ?? null,
+					website: item.place?.website ?? null,
+					categories:
+						item.place?.categories?.map(cat => ({
+							id: cat.id ?? null,
+							name: cat.name ?? null,
+							short_name: cat.short_name ?? null,
+							plural_name: cat.plural_name ?? null,
+							icon: cat.icon ?? null,
+						})) ?? [],
+					category_icon: firstCategory
+						? `${firstCategory.icon.prefix}64${firstCategory.icon.suffix}`
+						: null, // URL del icono de la primera categoría
+					geocodes: item.place?.geocodes ?? null,
+					hours: item.place?.hours ?? null,
+					location: item.place?.location ?? null,
+					photos: item.place?.photos ?? [],
+					related_places: item.place?.related_places ?? null,
+					tips: item.place?.tips ?? [],
+					email: item.place?.email ?? null,
+					menu: item.place?.menu ?? null,
+					timezone: item.place?.timezone ?? null,
+				};
+			});
+		} catch (error) {
+			console.error(error.response?.data || error.message);
+			throw new HttpException(
+				error.response?.data ||
+					'Error fetching autocomplete suggestions',
+				error.response?.status || 500
+			);
+		}
+	}
+
+	async searchPlacesNear(
+		query: string,
+		near?: string,
+		ll?: string,
+		limit: number = 10
+	) {
+		const fields = {
+			price: true,
+			description: true,
+			social_media: true,
+			photos: true,
+		};
+
+		// convertir a string separado por comas para enviarlo en la query
+		const fieldsParam = Object.keys(fields)
+			.filter(key => fields[key])
+			.join(',');
+
+		console.log(fieldsParam);
+		try {
+			const params: any = { query, limit, fields: fieldsParam };
+			if (near) params.near = near;
+			if (ll) params.ll = ll;
+			const response = await axios.get(
+				'https://places-api.foursquare.com/places/search', // <- endpoint v3 correcto
+				{
+					headers: {
+						Authorization:
+							'Bearer YFBL2TAKQK4KRHMPAH53FNQ0EVI5QB4CWFBLMFCVV4MIZT3F', // <- tu API key correcta
+						Accept: 'application/json',
+						'X-Places-Api-Version': '2025-06-17',
+					},
+					params,
+				}
+			);
+			return response.data.results;
+		} catch (error) {
+			console.error(error.response?.data || error.message);
+			throw new HttpException(
+				error.response?.data || 'Error fetching search results',
+				error.response?.status || 500
 			);
 		}
 	}

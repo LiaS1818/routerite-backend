@@ -6,9 +6,9 @@ import { SequelizeModule } from '@nestjs/sequelize';
 import { FoursquareCategory } from '../../database/models/foursquare-categories.model';
 
 @Module({
-  imports: [SequelizeModule.forFeature([FoursquareCategory])],
-  controllers: [CategoriesController],
-  providers: [CategoriesService],
-  exports: [CategoriesService],
+	imports: [SequelizeModule.forFeature([FoursquareCategory])],
+	controllers: [CategoriesController],
+	providers: [CategoriesService],
+	exports: [CategoriesService],
 })
 export class CategoriesModule {}

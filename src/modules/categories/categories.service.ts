@@ -17,7 +17,7 @@ export class CategoriesService {
     if (!q) {
       return this.categoryModel.findAll({
         limit: lim,
-        order: [['name', 'ASC']]
+        order: [['name', 'ASC']],
       });
     }
 
@@ -25,8 +25,8 @@ export class CategoriesService {
       where: {
         [Op.or]: [
           { name: { [Op.iLike]: `%${q}%` } },
-          { label: { [Op.iLike]: `%${q}%` } }
-        ]
+          { label: { [Op.iLike]: `%${q}%` } },
+        ],
       },
       limit: lim,
       order: [
@@ -38,21 +38,20 @@ export class CategoriesService {
               ELSE 2
             END
           `)
-          : ['name', 'ASC'],
-        ['name', 'ASC']
+        : ['name', 'ASC'],
+        ['name', 'ASC'],
       ],
-      raw: true
+      raw: true,
     });
 
     return categories;
   }
 
-
   async getPopular(limit = 10) {
     return this.categoryModel.findAll({
       limit: Math.max(1, Math.min(limit, 20)),
       order: [['name', 'ASC']],
-      attributes: ['id', 'name', 'label']
+      attributes: ['id', 'name', 'label'],
     });
   }
 
@@ -63,14 +62,14 @@ export class CategoriesService {
       offset,
       limit: Math.min(limit, 100),
       order: [['name', 'ASC']],
-      attributes: ['id', 'name', 'label']
+      attributes: ['id', 'name', 'label'],
     });
     return categories;
   }
 
   async findById(id: string) {
     return this.categoryModel.findByPk(id, {
-      attributes: ['id', 'name', 'label']
+      attributes: ['id', 'name', 'label'],
     });
   }
 }
