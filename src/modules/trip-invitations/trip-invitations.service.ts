@@ -96,14 +96,6 @@ export class TripInvitationsService {
 		});
 
 		if (invitation) {
-			// If invitation exists but is not pending, throw error
-			if (invitation.status !== 'pending') {
-				throw new BadRequestException(
-					`User invitation already ${invitation.status} for this trip`
-				);
-			}
-
-			// If invitation is pending, regenerate URL without creating new record
 			this.logger.log(
 				`Regenerating share URL for existing pending invitation ${invitation.id}`
 			);
