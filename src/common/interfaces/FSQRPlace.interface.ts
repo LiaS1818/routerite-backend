@@ -12,11 +12,12 @@ export interface FSQRPlace {
 		is_local_holiday: boolean;
 		open_now: boolean;
 		regular: {
+			[x: string]: unknown;
 			close: string;
 			day: number;
 			open: string;
 		}
-	}
+	}[]
 	location: {
 		locality: string;
 		region: string;

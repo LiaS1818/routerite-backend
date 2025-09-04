@@ -1,0 +1,2131 @@
+
+  "metadata": {
+    "allOf": [
+      {
+        "type": "object",
+        "properties": {
+          "query": {
+            "type": "string",
+            "$schema": "http://json-schema.org/draft-04/schema#",
+            "description": "A string to be matched against all content for this place, including but not limited to venue name, category, telephone number, taste, and tips."
+          },
+          "ll": {
+            "type": "string",
+            "$schema": "http://json-schema.org/draft-04/schema#",
+            "description": "The latitude/longitude around which to retrieve place information. This must be specified as latitude,longitude (e.g., ll=41.8781,-87.6298)."
+          },
+          "radius": {
+            "maximum": 100000,
+            "minimum": 0,
+            "type": "integer",
+            "format": "int32",
+            "$schema": "http://json-schema.org/draft-04/schema#",
+            "description": "Sets a radius distance (in meters) used to define an area to bias search results. The maximum allowed radius is 100,000 meters. Radius can be used in combination with ll or ip biased geolocation only. By using radius, global search results will be omitted. If not provided, default radius applied is 22000 meters."
+          },
+          "fsq_category_ids": {
+            "type": "string",
+            "$schema": "http://json-schema.org/draft-04/schema#",
+            "description": "Filters the response and returns FSQ Places matching the specified categories. Supports multiple Category IDs, separated by commas.\n\nFor a complete list of Foursquare Category IDs, refer to the <a href=\"https://docs.foursquare.com/data-products/docs/categories\" target=\"blank\">Category Taxonomy</a> page."
+          },
+          "fsq_chain_ids": {
+            "type": "string",
+            "$schema": "http://json-schema.org/draft-04/schema#",
+            "description": "Filters the response and returns FSQ Places matching the specified chains. Supports multiple chain IDs, separated by commas.\n\nFor more information on Foursquare Chain IDs, refer to the <a href=\"https://docs.foursquare.com/data-products/docs/chains\" target=\"blank\">Chains</a> page."
+          },
+          "exclude_fsq_chain_ids": {
+            "type": "string",
+            "$schema": "http://json-schema.org/draft-04/schema#",
+            "description": "Filters the response and returns FSQ Places not matching any of the specified chains. Supports multiple chain IDs, separated by commas. Cannot be used in conjunction with exclude_all_chains.\n\nFor more information on Foursquare Chain IDs, refer to the <a href=\"https://docs.foursquare.com/data-products/docs/chains\" target=\"blank\">Chains</a> page."
+          },
+          "exclude_all_chains": {
+            "type": "boolean",
+            "$schema": "http://json-schema.org/draft-04/schema#",
+            "description": "Filters the response by only returning FSQ Places that are not known to be part of any chain. Cannot be used in conjunction with exclude_chains."
+          },
+          "fields": {
+            "type": "string",
+            "$schema": "http://json-schema.org/draft-04/schema#",
+            "description": "Indicate which fields to return in the response, separated by commas. If no fields are specified, all <a href=\"response-fields#places-pro\" target=\"_blank\">Pro Fields</a> are returned by default. \n\nFor a complete list of returnable fields, refer to the <a href=\"response-fields\" target=\"_blank\">Places Response Fields</a> page."
+          },
+          "min_price": {
+            "maximum": 4,
+            "minimum": 1,
+            "type": "integer",
+            "format": "int32",
+            "$schema": "http://json-schema.org/draft-04/schema#",
+            "description": "Restricts results to only those places within the specified price range. Valid values range between 1 (most affordable) to 4 (most expensive), inclusive."
+          },
+          "max_price": {
+            "maximum": 4,
+            "minimum": 1,
+            "type": "integer",
+            "format": "int32",
+            "$schema": "http://json-schema.org/draft-04/schema#",
+            "description": "Restricts results to only those places within the specified price range. Valid values range between 1 (most affordable) to 4 (most expensive), inclusive."
+          },
+          "open_at": {
+            "type": "string",
+            "$schema": "http://json-schema.org/draft-04/schema#",
+            "description": "Support local day and local time requests through this parameter. To be specified as DOWTHHMM (e.g., 1T2130), where DOW is the day number 1-7 (Monday = 1, Sunday = 7) and time is in 24 hour format.\n\nPlaces that do not have opening hours will not be returned if this parameter is specified. Cannot be specified in conjunction with `open_now`."
+          },
+          "open_now": {
+            "type": "boolean",
+            "$schema": "http://json-schema.org/draft-04/schema#",
+            "description": "Restricts results to only those places that are open now.\n\nPlaces that do not have opening hours will not be returned if this parameter is specified. Cannot be specified in conjunction with `open_at`."
+          },
+          "tel_format": {
+            "type": "string",
+            "enum": [
+              "NATIONAL",
+              "E164"
+            ],
+            "$schema": "http://json-schema.org/draft-04/schema#",
+            "description": "Specifies the format of the returned telephone number. Possible values are:<ul><li>national (default)</li><li>e164</li></ul>"
+          },
+          "ne": {
+            "type": "string",
+            "$schema": "http://json-schema.org/draft-04/schema#",
+            "description": "The latitude/longitude representing the north/east points of a rectangle. Must be used with sw parameter to specify a rectangular search box. Global search results will be omitted."
+          },
+          "sw": {
+            "type": "string",
+            "$schema": "http://json-schema.org/draft-04/schema#",
+            "description": "The latitude/longitude representing the south/west points of a rectangle. Must be used with ne parameter to specify a rectangular search box. Global search results will be omitted."
+          },
+          "near": {
+            "type": "string",
+            "$schema": "http://json-schema.org/draft-04/schema#",
+            "description": "A string naming a locality in the world (e.g., \"Chicago, IL\"). If the value is not geocodable, returns an error. Global search results will be omitted."
+          },
+          "sort": {
+            "type": "string",
+            "enum": [
+              "RELEVANCE",
+              "RATING",
+              "DISTANCE",
+              "POPULARITY"
+            ],
+            "$schema": "http://json-schema.org/draft-04/schema#",
+            "description": "Specifies the order in which results are listed. Possible values are:<ul><li>relevance (default)</li><li>rating</li><li>distance</li></ul>"
+          },
+          "limit": {
+            "maximum": 50,
+            "minimum": 1,
+            "type": "integer",
+            "format": "int32",
+            "$schema": "http://json-schema.org/draft-04/schema#",
+            "description": "The number of results to return, up to 50. Defaults to 10."
+          }
+        },
+        "required": []
+      },
+      {
+        "type": "object",
+        "properties": {
+          "X-Places-Api-Version": {
+            "type": "string",
+            "default": "2025-06-17",
+            "enum": [
+              "2025-06-17"
+            ],
+            "$schema": "http://json-schema.org/draft-04/schema#",
+            "description": "The version of the API to use."
+          }
+        },
+        "required": [
+          "X-Places-Api-Version"
+        ]
+      }
+    ]
+  },
+  "response": {
+    "200": {
+      "type": "object",
+      "properties": {
+        "results": {
+          "type": "array",
+          "properties": {
+            "traversable_again": {
+              "type": "boolean"
+            }
+          },
+          "items": {
+            "type": "object",
+            "properties": {
+              "fsq_place_id": {
+                "type": "string"
+              },
+              "latitude": {
+                "type": "object",
+                "additionalProperties": true
+              },
+              "longitude": {
+                "type": "object",
+                "additionalProperties": true
+              },
+              "categories": {
+                "type": "array",
+                "properties": {
+                  "traversable_again": {
+                    "type": "boolean"
+                  }
+                },
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "fsq_category_id": {
+                      "type": "string"
+                    },
+                    "name": {
+                      "type": "string"
+                    },
+                    "short_name": {
+                      "type": "string"
+                    },
+                    "plural_name": {
+                      "type": "string"
+                    },
+                    "icon": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "created_at": {
+                          "type": "string",
+                          "format": "date-time"
+                        },
+                        "prefix": {
+                          "type": "string"
+                        },
+                        "suffix": {
+                          "type": "string"
+                        },
+                        "width": {
+                          "type": "integer",
+                          "format": "int32",
+                          "minimum": -2147483648,
+                          "maximum": 2147483647
+                        },
+                        "height": {
+                          "type": "integer",
+                          "format": "int32",
+                          "minimum": -2147483648,
+                          "maximum": 2147483647
+                        },
+                        "classifications": {
+                          "type": "array",
+                          "properties": {
+                            "traversable_again": {
+                              "type": "boolean"
+                            }
+                          },
+                          "items": {
+                            "type": "string"
+                          }
+                        },
+                        "tip": {
+                          "type": "object",
+                          "properties": {
+                            "id": {
+                              "type": "string"
+                            },
+                            "created_at": {
+                              "type": "string",
+                              "format": "date-time"
+                            },
+                            "text": {
+                              "type": "string"
+                            },
+                            "url": {
+                              "type": "string"
+                            },
+                            "photo": {},
+                            "lang": {
+                              "type": "string"
+                            },
+                            "agree_count": {
+                              "type": "integer",
+                              "format": "int32",
+                              "minimum": -2147483648,
+                              "maximum": 2147483647
+                            },
+                            "disagree_count": {
+                              "type": "integer",
+                              "format": "int32",
+                              "minimum": -2147483648,
+                              "maximum": 2147483647
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              "chains": {
+                "type": "array",
+                "properties": {
+                  "traversable_again": {
+                    "type": "boolean"
+                  }
+                },
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "fsq_chain_id": {
+                      "type": "string"
+                    },
+                    "name": {
+                      "type": "string"
+                    },
+                    "logo": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "created_at": {
+                          "type": "string",
+                          "format": "date-time"
+                        },
+                        "prefix": {
+                          "type": "string"
+                        },
+                        "suffix": {
+                          "type": "string"
+                        },
+                        "width": {
+                          "type": "integer",
+                          "format": "int32",
+                          "minimum": -2147483648,
+                          "maximum": 2147483647
+                        },
+                        "height": {
+                          "type": "integer",
+                          "format": "int32",
+                          "minimum": -2147483648,
+                          "maximum": 2147483647
+                        },
+                        "classifications": {
+                          "type": "array",
+                          "properties": {
+                            "traversable_again": {
+                              "type": "boolean"
+                            }
+                          },
+                          "items": {
+                            "type": "string"
+                          }
+                        },
+                        "tip": {
+                          "type": "object",
+                          "properties": {
+                            "id": {
+                              "type": "string"
+                            },
+                            "created_at": {
+                              "type": "string",
+                              "format": "date-time"
+                            },
+                            "text": {
+                              "type": "string"
+                            },
+                            "url": {
+                              "type": "string"
+                            },
+                            "photo": {},
+                            "lang": {
+                              "type": "string"
+                            },
+                            "agree_count": {
+                              "type": "integer",
+                              "format": "int32",
+                              "minimum": -2147483648,
+                              "maximum": 2147483647
+                            },
+                            "disagree_count": {
+                              "type": "integer",
+                              "format": "int32",
+                              "minimum": -2147483648,
+                              "maximum": 2147483647
+                            }
+                          }
+                        }
+                      }
+                    },
+                    "parent_id": {
+                      "type": "string"
+                    }
+                  }
+                }
+              },
+              "date_closed": {
+                "type": "string",
+                "format": "date"
+              },
+              "date_created": {
+                "type": "string"
+              },
+              "date_refreshed": {
+                "type": "string"
+              },
+              "description": {
+                "type": "string"
+              },
+              "distance": {
+                "type": "integer",
+                "format": "int32",
+                "minimum": -2147483648,
+                "maximum": 2147483647
+              },
+              "email": {
+                "type": "string"
+              },
+              "extended_location": {
+                "type": "object",
+                "properties": {
+                  "dma": {
+                    "type": "string"
+                  },
+                  "census_block_id": {
+                    "type": "string"
+                  }
+                }
+              },
+              "attributes": {
+                "type": "object",
+                "properties": {
+                  "restroom": {
+                    "type": "object",
+                    "additionalProperties": true
+                  },
+                  "outdoor_seating": {
+                    "type": "object",
+                    "additionalProperties": true
+                  },
+                  "atm": {
+                    "type": "object",
+                    "additionalProperties": true
+                  },
+                  "has_parking": {
+                    "type": "object",
+                    "additionalProperties": true
+                  },
+                  "wifi": {
+                    "type": "string"
+                  },
+                  "delivery": {
+                    "type": "object",
+                    "additionalProperties": true
+                  },
+                  "reservations": {
+                    "type": "object",
+                    "additionalProperties": true
+                  },
+                  "takes_credit_card": {
+                    "type": "object",
+                    "additionalProperties": true
+                  }
+                }
+              },
+              "hours": {
+                "type": "object",
+                "properties": {
+                  "display": {
+                    "type": "string"
+                  },
+                  "is_local_holiday": {
+                    "type": "boolean"
+                  },
+                  "open_now": {
+                    "type": "boolean"
+                  },
+                  "regular": {
+                    "type": "array",
+                    "properties": {
+                      "traversable_again": {
+                        "type": "boolean"
+                      }
+                    },
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "close": {
+                          "type": "string"
+                        },
+                        "day": {
+                          "type": "integer",
+                          "format": "int32",
+                          "minimum": -2147483648,
+                          "maximum": 2147483647
+                        },
+                        "open": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              "hours_popular": {
+                "type": "array",
+                "properties": {
+                  "traversable_again": {
+                    "type": "boolean"
+                  }
+                },
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "close": {
+                      "type": "string"
+                    },
+                    "day": {
+                      "type": "integer",
+                      "format": "int32",
+                      "minimum": -2147483648,
+                      "maximum": 2147483647
+                    },
+                    "open": {
+                      "type": "string"
+                    }
+                  }
+                }
+              },
+              "link": {
+                "type": "string"
+              },
+              "location": {
+                "type": "object",
+                "properties": {
+                  "address": {
+                    "type": "string"
+                  },
+                  "locality": {
+                    "type": "string"
+                  },
+                  "region": {
+                    "type": "string"
+                  },
+                  "postcode": {
+                    "type": "string"
+                  },
+                  "admin_region": {
+                    "type": "string"
+                  },
+                  "post_town": {
+                    "type": "string"
+                  },
+                  "po_box": {
+                    "type": "string"
+                  },
+                  "country": {
+                    "type": "string"
+                  },
+                  "formatted_address": {
+                    "type": "string"
+                  }
+                }
+              },
+              "menu": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              },
+              "photos": {
+                "type": "array",
+                "properties": {
+                  "traversable_again": {
+                    "type": "boolean"
+                  }
+                },
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "fsq_photo_id": {
+                      "type": "string"
+                    },
+                    "created_at": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "prefix": {
+                      "type": "string"
+                    },
+                    "suffix": {
+                      "type": "string"
+                    },
+                    "width": {
+                      "type": "integer",
+                      "format": "int32",
+                      "minimum": -2147483648,
+                      "maximum": 2147483647
+                    },
+                    "height": {
+                      "type": "integer",
+                      "format": "int32",
+                      "minimum": -2147483648,
+                      "maximum": 2147483647
+                    },
+                    "classifications": {
+                      "type": "array",
+                      "properties": {
+                        "traversable_again": {
+                          "type": "boolean"
+                        }
+                      },
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "tip": {
+                      "type": "object",
+                      "properties": {
+                        "fsq_tip_id": {
+                          "type": "string"
+                        },
+                        "created_at": {
+                          "type": "string",
+                          "format": "date-time"
+                        },
+                        "text": {
+                          "type": "string"
+                        },
+                        "url": {
+                          "type": "string"
+                        },
+                        "photo": {
+                          "type": "object",
+                          "properties": {
+                            "id": {
+                              "type": "string"
+                            },
+                            "created_at": {
+                              "type": "string",
+                              "format": "date-time"
+                            },
+                            "prefix": {
+                              "type": "string"
+                            },
+                            "suffix": {
+                              "type": "string"
+                            },
+                            "width": {
+                              "type": "integer",
+                              "format": "int32",
+                              "minimum": -2147483648,
+                              "maximum": 2147483647
+                            },
+                            "height": {
+                              "type": "integer",
+                              "format": "int32",
+                              "minimum": -2147483648,
+                              "maximum": 2147483647
+                            },
+                            "classifications": {
+                              "type": "array",
+                              "properties": {
+                                "traversable_again": {
+                                  "type": "boolean"
+                                }
+                              },
+                              "items": {
+                                "type": "string"
+                              }
+                            },
+                            "tip": {
+                              "type": "object",
+                              "properties": {
+                                "id": {
+                                  "type": "string"
+                                },
+                                "created_at": {
+                                  "type": "string",
+                                  "format": "date-time"
+                                },
+                                "text": {
+                                  "type": "string"
+                                },
+                                "url": {
+                                  "type": "string"
+                                },
+                                "photo": {},
+                                "lang": {
+                                  "type": "string"
+                                },
+                                "agree_count": {
+                                  "type": "integer",
+                                  "format": "int32",
+                                  "minimum": -2147483648,
+                                  "maximum": 2147483647
+                                },
+                                "disagree_count": {
+                                  "type": "integer",
+                                  "format": "int32",
+                                  "minimum": -2147483648,
+                                  "maximum": 2147483647
+                                }
+                              }
+                            }
+                          }
+                        },
+                        "lang": {
+                          "type": "string"
+                        },
+                        "agree_count": {
+                          "type": "integer",
+                          "format": "int32",
+                          "minimum": -2147483648,
+                          "maximum": 2147483647
+                        },
+                        "disagree_count": {
+                          "type": "integer",
+                          "format": "int32",
+                          "minimum": -2147483648,
+                          "maximum": 2147483647
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              "popularity": {
+                "type": "number",
+                "format": "double",
+                "minimum": -1.7976931348623157e+308,
+                "maximum": 1.7976931348623157e+308
+              },
+              "placemaker_url": {
+                "type": "string"
+              },
+              "price": {
+                "type": "integer",
+                "format": "int32",
+                "minimum": -2147483648,
+                "maximum": 2147483647
+              },
+              "rating": {
+                "type": "number",
+                "format": "double",
+                "minimum": -1.7976931348623157e+308,
+                "maximum": 1.7976931348623157e+308
+              },
+              "related_places": {
+                "type": "object",
+                "properties": {
+                  "parent": {
+                    "type": "object",
+                    "properties": {
+                      "fsq_place_id": {
+                        "type": "string"
+                      },
+                      "latitude": {
+                        "type": "object",
+                        "additionalProperties": true
+                      },
+                      "longitude": {
+                        "type": "object",
+                        "additionalProperties": true
+                      },
+                      "categories": {
+                        "type": "array",
+                        "properties": {
+                          "traversable_again": {
+                            "type": "boolean"
+                          }
+                        },
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "fsq_category_id": {
+                              "type": "string"
+                            },
+                            "name": {
+                              "type": "string"
+                            },
+                            "short_name": {
+                              "type": "string"
+                            },
+                            "plural_name": {
+                              "type": "string"
+                            },
+                            "icon": {
+                              "type": "object",
+                              "properties": {
+                                "id": {
+                                  "type": "string"
+                                },
+                                "created_at": {
+                                  "type": "string",
+                                  "format": "date-time"
+                                },
+                                "prefix": {
+                                  "type": "string"
+                                },
+                                "suffix": {
+                                  "type": "string"
+                                },
+                                "width": {
+                                  "type": "integer",
+                                  "format": "int32",
+                                  "minimum": -2147483648,
+                                  "maximum": 2147483647
+                                },
+                                "height": {
+                                  "type": "integer",
+                                  "format": "int32",
+                                  "minimum": -2147483648,
+                                  "maximum": 2147483647
+                                },
+                                "classifications": {
+                                  "type": "array",
+                                  "properties": {
+                                    "traversable_again": {
+                                      "type": "boolean"
+                                    }
+                                  },
+                                  "items": {
+                                    "type": "string"
+                                  }
+                                },
+                                "tip": {
+                                  "type": "object",
+                                  "properties": {
+                                    "id": {
+                                      "type": "string"
+                                    },
+                                    "created_at": {
+                                      "type": "string",
+                                      "format": "date-time"
+                                    },
+                                    "text": {
+                                      "type": "string"
+                                    },
+                                    "url": {
+                                      "type": "string"
+                                    },
+                                    "photo": {},
+                                    "lang": {
+                                      "type": "string"
+                                    },
+                                    "agree_count": {
+                                      "type": "integer",
+                                      "format": "int32",
+                                      "minimum": -2147483648,
+                                      "maximum": 2147483647
+                                    },
+                                    "disagree_count": {
+                                      "type": "integer",
+                                      "format": "int32",
+                                      "minimum": -2147483648,
+                                      "maximum": 2147483647
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      },
+                      "chains": {
+                        "type": "array",
+                        "properties": {
+                          "traversable_again": {
+                            "type": "boolean"
+                          }
+                        },
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "fsq_chain_id": {
+                              "type": "string"
+                            },
+                            "name": {
+                              "type": "string"
+                            },
+                            "logo": {
+                              "type": "object",
+                              "properties": {
+                                "id": {
+                                  "type": "string"
+                                },
+                                "created_at": {
+                                  "type": "string",
+                                  "format": "date-time"
+                                },
+                                "prefix": {
+                                  "type": "string"
+                                },
+                                "suffix": {
+                                  "type": "string"
+                                },
+                                "width": {
+                                  "type": "integer",
+                                  "format": "int32",
+                                  "minimum": -2147483648,
+                                  "maximum": 2147483647
+                                },
+                                "height": {
+                                  "type": "integer",
+                                  "format": "int32",
+                                  "minimum": -2147483648,
+                                  "maximum": 2147483647
+                                },
+                                "classifications": {
+                                  "type": "array",
+                                  "properties": {
+                                    "traversable_again": {
+                                      "type": "boolean"
+                                    }
+                                  },
+                                  "items": {
+                                    "type": "string"
+                                  }
+                                },
+                                "tip": {
+                                  "type": "object",
+                                  "properties": {
+                                    "id": {
+                                      "type": "string"
+                                    },
+                                    "created_at": {
+                                      "type": "string",
+                                      "format": "date-time"
+                                    },
+                                    "text": {
+                                      "type": "string"
+                                    },
+                                    "url": {
+                                      "type": "string"
+                                    },
+                                    "photo": {},
+                                    "lang": {
+                                      "type": "string"
+                                    },
+                                    "agree_count": {
+                                      "type": "integer",
+                                      "format": "int32",
+                                      "minimum": -2147483648,
+                                      "maximum": 2147483647
+                                    },
+                                    "disagree_count": {
+                                      "type": "integer",
+                                      "format": "int32",
+                                      "minimum": -2147483648,
+                                      "maximum": 2147483647
+                                    }
+                                  }
+                                }
+                              }
+                            },
+                            "parent_id": {
+                              "type": "string"
+                            }
+                          }
+                        }
+                      },
+                      "date_closed": {
+                        "type": "string",
+                        "format": "date"
+                      },
+                      "date_created": {
+                        "type": "string"
+                      },
+                      "date_refreshed": {
+                        "type": "string"
+                      },
+                      "description": {
+                        "type": "string"
+                      },
+                      "distance": {
+                        "type": "integer",
+                        "format": "int32",
+                        "minimum": -2147483648,
+                        "maximum": 2147483647
+                      },
+                      "email": {
+                        "type": "string"
+                      },
+                      "extended_location": {
+                        "type": "object",
+                        "properties": {
+                          "dma": {
+                            "type": "string"
+                          },
+                          "census_block_id": {
+                            "type": "string"
+                          }
+                        }
+                      },
+                      "attributes": {
+                        "type": "object",
+                        "properties": {
+                          "restroom": {
+                            "type": "object",
+                            "additionalProperties": true
+                          },
+                          "outdoor_seating": {
+                            "type": "object",
+                            "additionalProperties": true
+                          },
+                          "atm": {
+                            "type": "object",
+                            "additionalProperties": true
+                          },
+                          "has_parking": {
+                            "type": "object",
+                            "additionalProperties": true
+                          },
+                          "wifi": {
+                            "type": "string"
+                          },
+                          "delivery": {
+                            "type": "object",
+                            "additionalProperties": true
+                          },
+                          "reservations": {
+                            "type": "object",
+                            "additionalProperties": true
+                          },
+                          "takes_credit_card": {
+                            "type": "object",
+                            "additionalProperties": true
+                          }
+                        }
+                      },
+                      "hours": {
+                        "type": "object",
+                        "properties": {
+                          "display": {
+                            "type": "string"
+                          },
+                          "is_local_holiday": {
+                            "type": "boolean"
+                          },
+                          "open_now": {
+                            "type": "boolean"
+                          },
+                          "regular": {
+                            "type": "array",
+                            "properties": {
+                              "traversable_again": {
+                                "type": "boolean"
+                              }
+                            },
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "close": {
+                                  "type": "string"
+                                },
+                                "day": {
+                                  "type": "integer",
+                                  "format": "int32",
+                                  "minimum": -2147483648,
+                                  "maximum": 2147483647
+                                },
+                                "open": {
+                                  "type": "string"
+                                }
+                              }
+                            }
+                          }
+                        }
+                      },
+                      "hours_popular": {
+                        "type": "array",
+                        "properties": {
+                          "traversable_again": {
+                            "type": "boolean"
+                          }
+                        },
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "close": {
+                              "type": "string"
+                            },
+                            "day": {
+                              "type": "integer",
+                              "format": "int32",
+                              "minimum": -2147483648,
+                              "maximum": 2147483647
+                            },
+                            "open": {
+                              "type": "string"
+                            }
+                          }
+                        }
+                      },
+                      "link": {
+                        "type": "string"
+                      },
+                      "location": {
+                        "type": "object",
+                        "properties": {
+                          "address": {
+                            "type": "string"
+                          },
+                          "locality": {
+                            "type": "string"
+                          },
+                          "region": {
+                            "type": "string"
+                          },
+                          "postcode": {
+                            "type": "string"
+                          },
+                          "admin_region": {
+                            "type": "string"
+                          },
+                          "post_town": {
+                            "type": "string"
+                          },
+                          "po_box": {
+                            "type": "string"
+                          },
+                          "country": {
+                            "type": "string"
+                          },
+                          "formatted_address": {
+                            "type": "string"
+                          }
+                        }
+                      },
+                      "menu": {
+                        "type": "string"
+                      },
+                      "name": {
+                        "type": "string"
+                      },
+                      "photos": {
+                        "type": "array",
+                        "properties": {
+                          "traversable_again": {
+                            "type": "boolean"
+                          }
+                        },
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "id": {
+                              "type": "string"
+                            },
+                            "created_at": {
+                              "type": "string",
+                              "format": "date-time"
+                            },
+                            "prefix": {
+                              "type": "string"
+                            },
+                            "suffix": {
+                              "type": "string"
+                            },
+                            "width": {
+                              "type": "integer",
+                              "format": "int32",
+                              "minimum": -2147483648,
+                              "maximum": 2147483647
+                            },
+                            "height": {
+                              "type": "integer",
+                              "format": "int32",
+                              "minimum": -2147483648,
+                              "maximum": 2147483647
+                            },
+                            "tip": {
+                              "type": "object",
+                              "properties": {
+                                "id": {
+                                  "type": "string"
+                                },
+                                "created_at": {
+                                  "type": "string",
+                                  "format": "date-time"
+                                },
+                                "text": {
+                                  "type": "string"
+                                },
+                                "url": {
+                                  "type": "string"
+                                },
+                                "photo": {},
+                                "lang": {
+                                  "type": "string"
+                                },
+                                "agree_count": {
+                                  "type": "integer",
+                                  "format": "int32",
+                                  "minimum": -2147483648,
+                                  "maximum": 2147483647
+                                },
+                                "disagree_count": {
+                                  "type": "integer",
+                                  "format": "int32",
+                                  "minimum": -2147483648,
+                                  "maximum": 2147483647
+                                }
+                              }
+                            }
+                          }
+                        }
+                      },
+                      "popularity": {
+                        "type": "number",
+                        "format": "double",
+                        "minimum": -1.7976931348623157e+308,
+                        "maximum": 1.7976931348623157e+308
+                      },
+                      "placemaker_url": {
+                        "type": "string"
+                      },
+                      "price": {
+                        "type": "integer",
+                        "format": "int32",
+                        "minimum": -2147483648,
+                        "maximum": 2147483647
+                      },
+                      "rating": {
+                        "type": "number",
+                        "format": "double",
+                        "minimum": -1.7976931348623157e+308,
+                        "maximum": 1.7976931348623157e+308
+                      },
+                      "related_places": {},
+                      "social_media": {
+                        "type": "object",
+                        "properties": {
+                          "facebook_id": {
+                            "type": "string"
+                          },
+                          "instagram": {
+                            "type": "string"
+                          },
+                          "twitter": {
+                            "type": "string"
+                          }
+                        }
+                      },
+                      "stats": {
+                        "type": "object",
+                        "properties": {
+                          "total_photos": {
+                            "type": "integer",
+                            "format": "int32",
+                            "minimum": -2147483648,
+                            "maximum": 2147483647
+                          },
+                          "total_ratings": {
+                            "type": "integer",
+                            "format": "int64",
+                            "minimum": -9223372036854776000,
+                            "maximum": 9223372036854776000
+                          },
+                          "total_tips": {
+                            "type": "integer",
+                            "format": "int32",
+                            "minimum": -2147483648,
+                            "maximum": 2147483647
+                          }
+                        }
+                      },
+                      "store_id": {
+                        "type": "string"
+                      },
+                      "tastes": {
+                        "type": "array",
+                        "properties": {
+                          "traversable_again": {
+                            "type": "boolean"
+                          }
+                        },
+                        "items": {
+                          "type": "string"
+                        }
+                      },
+                      "tel": {
+                        "type": "string"
+                      },
+                      "tips": {
+                        "type": "array",
+                        "properties": {
+                          "traversable_again": {
+                            "type": "boolean"
+                          }
+                        },
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "id": {
+                              "type": "string"
+                            },
+                            "created_at": {
+                              "type": "string",
+                              "format": "date-time"
+                            },
+                            "text": {
+                              "type": "string"
+                            },
+                            "url": {
+                              "type": "string"
+                            },
+                            "photo": {},
+                            "lang": {
+                              "type": "string"
+                            },
+                            "agree_count": {
+                              "type": "integer",
+                              "format": "int32",
+                              "minimum": -2147483648,
+                              "maximum": 2147483647
+                            },
+                            "disagree_count": {
+                              "type": "integer",
+                              "format": "int32",
+                              "minimum": -2147483648,
+                              "maximum": 2147483647
+                            }
+                          }
+                        }
+                      },
+                      "verified": {
+                        "type": "boolean"
+                      },
+                      "website": {
+                        "type": "string"
+                      }
+                    }
+                  },
+                  "children": {
+                    "type": "array",
+                    "properties": {
+                      "traversable_again": {
+                        "type": "boolean"
+                      }
+                    },
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "fsq_place_id": {
+                          "type": "string"
+                        },
+                        "latitude": {
+                          "type": "object",
+                          "additionalProperties": true
+                        },
+                        "longitude": {
+                          "type": "object",
+                          "additionalProperties": true
+                        },
+                        "categories": {
+                          "type": "array",
+                          "properties": {
+                            "traversable_again": {
+                              "type": "boolean"
+                            }
+                          },
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "fsq_category_id": {
+                                "type": "string"
+                              },
+                              "name": {
+                                "type": "string"
+                              },
+                              "short_name": {
+                                "type": "string"
+                              },
+                              "plural_name": {
+                                "type": "string"
+                              },
+                              "icon": {
+                                "type": "object",
+                                "properties": {
+                                  "id": {
+                                    "type": "string"
+                                  },
+                                  "created_at": {
+                                    "type": "string",
+                                    "format": "date-time"
+                                  },
+                                  "prefix": {
+                                    "type": "string"
+                                  },
+                                  "suffix": {
+                                    "type": "string"
+                                  },
+                                  "width": {
+                                    "type": "integer",
+                                    "format": "int32",
+                                    "minimum": -2147483648,
+                                    "maximum": 2147483647
+                                  },
+                                  "height": {
+                                    "type": "integer",
+                                    "format": "int32",
+                                    "minimum": -2147483648,
+                                    "maximum": 2147483647
+                                  },
+                                  "classifications": {
+                                    "type": "array",
+                                    "properties": {
+                                      "traversable_again": {
+                                        "type": "boolean"
+                                      }
+                                    },
+                                    "items": {
+                                      "type": "string"
+                                    }
+                                  },
+                                  "tip": {
+                                    "type": "object",
+                                    "properties": {
+                                      "id": {
+                                        "type": "string"
+                                      },
+                                      "created_at": {
+                                        "type": "string",
+                                        "format": "date-time"
+                                      },
+                                      "text": {
+                                        "type": "string"
+                                      },
+                                      "url": {
+                                        "type": "string"
+                                      },
+                                      "photo": {},
+                                      "lang": {
+                                        "type": "string"
+                                      },
+                                      "agree_count": {
+                                        "type": "integer",
+                                        "format": "int32",
+                                        "minimum": -2147483648,
+                                        "maximum": 2147483647
+                                      },
+                                      "disagree_count": {
+                                        "type": "integer",
+                                        "format": "int32",
+                                        "minimum": -2147483648,
+                                        "maximum": 2147483647
+                                      }
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        },
+                        "chains": {
+                          "type": "array",
+                          "properties": {
+                            "traversable_again": {
+                              "type": "boolean"
+                            }
+                          },
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "fsq_chain_id": {
+                                "type": "string"
+                              },
+                              "name": {
+                                "type": "string"
+                              },
+                              "logo": {
+                                "type": "object",
+                                "properties": {
+                                  "id": {
+                                    "type": "string"
+                                  },
+                                  "created_at": {
+                                    "type": "string",
+                                    "format": "date-time"
+                                  },
+                                  "prefix": {
+                                    "type": "string"
+                                  },
+                                  "suffix": {
+                                    "type": "string"
+                                  },
+                                  "width": {
+                                    "type": "integer",
+                                    "format": "int32",
+                                    "minimum": -2147483648,
+                                    "maximum": 2147483647
+                                  },
+                                  "height": {
+                                    "type": "integer",
+                                    "format": "int32",
+                                    "minimum": -2147483648,
+                                    "maximum": 2147483647
+                                  },
+                                  "classifications": {
+                                    "type": "array",
+                                    "properties": {
+                                      "traversable_again": {
+                                        "type": "boolean"
+                                      }
+                                    },
+                                    "items": {
+                                      "type": "string"
+                                    }
+                                  },
+                                  "tip": {
+                                    "type": "object",
+                                    "properties": {
+                                      "id": {
+                                        "type": "string"
+                                      },
+                                      "created_at": {
+                                        "type": "string",
+                                        "format": "date-time"
+                                      },
+                                      "text": {
+                                        "type": "string"
+                                      },
+                                      "url": {
+                                        "type": "string"
+                                      },
+                                      "photo": {},
+                                      "lang": {
+                                        "type": "string"
+                                      },
+                                      "agree_count": {
+                                        "type": "integer",
+                                        "format": "int32",
+                                        "minimum": -2147483648,
+                                        "maximum": 2147483647
+                                      },
+                                      "disagree_count": {
+                                        "type": "integer",
+                                        "format": "int32",
+                                        "minimum": -2147483648,
+                                        "maximum": 2147483647
+                                      }
+                                    }
+                                  }
+                                }
+                              },
+                              "parent_id": {
+                                "type": "string"
+                              }
+                            }
+                          }
+                        },
+                        "date_closed": {
+                          "type": "string",
+                          "format": "date"
+                        },
+                        "date_created": {
+                          "type": "string"
+                        },
+                        "date_refreshed": {
+                          "type": "string"
+                        },
+                        "description": {
+                          "type": "string"
+                        },
+                        "distance": {
+                          "type": "integer",
+                          "format": "int32",
+                          "minimum": -2147483648,
+                          "maximum": 2147483647
+                        },
+                        "email": {
+                          "type": "string"
+                        },
+                        "extended_location": {
+                          "type": "object",
+                          "properties": {
+                            "dma": {
+                              "type": "string"
+                            },
+                            "census_block_id": {
+                              "type": "string"
+                            }
+                          }
+                        },
+                        "attributes": {
+                          "type": "object",
+                          "properties": {
+                            "restroom": {
+                              "type": "object",
+                              "additionalProperties": true
+                            },
+                            "outdoor_seating": {
+                              "type": "object",
+                              "additionalProperties": true
+                            },
+                            "atm": {
+                              "type": "object",
+                              "additionalProperties": true
+                            },
+                            "has_parking": {
+                              "type": "object",
+                              "additionalProperties": true
+                            },
+                            "wifi": {
+                              "type": "string"
+                            },
+                            "delivery": {
+                              "type": "object",
+                              "additionalProperties": true
+                            },
+                            "reservations": {
+                              "type": "object",
+                              "additionalProperties": true
+                            },
+                            "takes_credit_card": {
+                              "type": "object",
+                              "additionalProperties": true
+                            }
+                          }
+                        },
+                        "hours": {
+                          "type": "object",
+                          "properties": {
+                            "display": {
+                              "type": "string"
+                            },
+                            "is_local_holiday": {
+                              "type": "boolean"
+                            },
+                            "open_now": {
+                              "type": "boolean"
+                            },
+                            "regular": {
+                              "type": "array",
+                              "properties": {
+                                "traversable_again": {
+                                  "type": "boolean"
+                                }
+                              },
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "close": {
+                                    "type": "string"
+                                  },
+                                  "day": {
+                                    "type": "integer",
+                                    "format": "int32",
+                                    "minimum": -2147483648,
+                                    "maximum": 2147483647
+                                  },
+                                  "open": {
+                                    "type": "string"
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        },
+                        "hours_popular": {
+                          "type": "array",
+                          "properties": {
+                            "traversable_again": {
+                              "type": "boolean"
+                            }
+                          },
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "close": {
+                                "type": "string"
+                              },
+                              "day": {
+                                "type": "integer",
+                                "format": "int32",
+                                "minimum": -2147483648,
+                                "maximum": 2147483647
+                              },
+                              "open": {
+                                "type": "string"
+                              }
+                            }
+                          }
+                        },
+                        "link": {
+                          "type": "string"
+                        },
+                        "location": {
+                          "type": "object",
+                          "properties": {
+                            "address": {
+                              "type": "string"
+                            },
+                            "locality": {
+                              "type": "string"
+                            },
+                            "region": {
+                              "type": "string"
+                            },
+                            "postcode": {
+                              "type": "string"
+                            },
+                            "admin_region": {
+                              "type": "string"
+                            },
+                            "post_town": {
+                              "type": "string"
+                            },
+                            "po_box": {
+                              "type": "string"
+                            },
+                            "country": {
+                              "type": "string"
+                            },
+                            "formatted_address": {
+                              "type": "string"
+                            }
+                          }
+                        },
+                        "menu": {
+                          "type": "string"
+                        },
+                        "name": {
+                          "type": "string"
+                        },
+                        "photos": {
+                          "type": "array",
+                          "properties": {
+                            "traversable_again": {
+                              "type": "boolean"
+                            }
+                          },
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string"
+                              },
+                              "created_at": {
+                                "type": "string",
+                                "format": "date-time"
+                              },
+                              "prefix": {
+                                "type": "string"
+                              },
+                              "suffix": {
+                                "type": "string"
+                              },
+                              "width": {
+                                "type": "integer",
+                                "format": "int32",
+                                "minimum": -2147483648,
+                                "maximum": 2147483647
+                              },
+                              "height": {
+                                "type": "integer",
+                                "format": "int32",
+                                "minimum": -2147483648,
+                                "maximum": 2147483647
+                              },
+                              "tip": {
+                                "type": "object",
+                                "properties": {
+                                  "id": {
+                                    "type": "string"
+                                  },
+                                  "created_at": {
+                                    "type": "string",
+                                    "format": "date-time"
+                                  },
+                                  "text": {
+                                    "type": "string"
+                                  },
+                                  "url": {
+                                    "type": "string"
+                                  },
+                                  "photo": {},
+                                  "lang": {
+                                    "type": "string"
+                                  },
+                                  "agree_count": {
+                                    "type": "integer",
+                                    "format": "int32",
+                                    "minimum": -2147483648,
+                                    "maximum": 2147483647
+                                  },
+                                  "disagree_count": {
+                                    "type": "integer",
+                                    "format": "int32",
+                                    "minimum": -2147483648,
+                                    "maximum": 2147483647
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        },
+                        "popularity": {
+                          "type": "number",
+                          "format": "double",
+                          "minimum": -1.7976931348623157e+308,
+                          "maximum": 1.7976931348623157e+308
+                        },
+                        "placemaker_url": {
+                          "type": "string"
+                        },
+                        "price": {
+                          "type": "integer",
+                          "format": "int32",
+                          "minimum": -2147483648,
+                          "maximum": 2147483647
+                        },
+                        "rating": {
+                          "type": "number",
+                          "format": "double",
+                          "minimum": -1.7976931348623157e+308,
+                          "maximum": 1.7976931348623157e+308
+                        },
+                        "related_places": {},
+                        "social_media": {
+                          "type": "object",
+                          "properties": {
+                            "facebook_id": {
+                              "type": "string"
+                            },
+                            "instagram": {
+                              "type": "string"
+                            },
+                            "twitter": {
+                              "type": "string"
+                            }
+                          }
+                        },
+                        "stats": {
+                          "type": "object",
+                          "properties": {
+                            "total_photos": {
+                              "type": "integer",
+                              "format": "int32",
+                              "minimum": -2147483648,
+                              "maximum": 2147483647
+                            },
+                            "total_ratings": {
+                              "type": "integer",
+                              "format": "int64",
+                              "minimum": -9223372036854776000,
+                              "maximum": 9223372036854776000
+                            },
+                            "total_tips": {
+                              "type": "integer",
+                              "format": "int32",
+                              "minimum": -2147483648,
+                              "maximum": 2147483647
+                            }
+                          }
+                        },
+                        "store_id": {
+                          "type": "string"
+                        },
+                        "tastes": {
+                          "type": "array",
+                          "properties": {
+                            "traversable_again": {
+                              "type": "boolean"
+                            }
+                          },
+                          "items": {
+                            "type": "string"
+                          }
+                        },
+                        "tel": {
+                          "type": "string"
+                        },
+                        "tips": {
+                          "type": "array",
+                          "properties": {
+                            "traversable_again": {
+                              "type": "boolean"
+                            }
+                          },
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string"
+                              },
+                              "created_at": {
+                                "type": "string",
+                                "format": "date-time"
+                              },
+                              "text": {
+                                "type": "string"
+                              },
+                              "url": {
+                                "type": "string"
+                              },
+                              "photo": {},
+                              "lang": {
+                                "type": "string"
+                              },
+                              "agree_count": {
+                                "type": "integer",
+                                "format": "int32",
+                                "minimum": -2147483648,
+                                "maximum": 2147483647
+                              },
+                              "disagree_count": {
+                                "type": "integer",
+                                "format": "int32",
+                                "minimum": -2147483648,
+                                "maximum": 2147483647
+                              }
+                            }
+                          }
+                        },
+                        "verified": {
+                          "type": "boolean"
+                        },
+                        "website": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              "social_media": {
+                "type": "object",
+                "properties": {
+                  "facebook_id": {
+                    "type": "string"
+                  },
+                  "instagram": {
+                    "type": "string"
+                  },
+                  "twitter": {
+                    "type": "string"
+                  }
+                }
+              },
+              "stats": {
+                "type": "object",
+                "properties": {
+                  "total_photos": {
+                    "type": "integer",
+                    "format": "int32",
+                    "minimum": -2147483648,
+                    "maximum": 2147483647
+                  },
+                  "total_ratings": {
+                    "type": "integer",
+                    "format": "int64",
+                    "minimum": -9223372036854776000,
+                    "maximum": 9223372036854776000
+                  },
+                  "total_tips": {
+                    "type": "integer",
+                    "format": "int32",
+                    "minimum": -2147483648,
+                    "maximum": 2147483647
+                  }
+                }
+              },
+              "store_id": {
+                "type": "string"
+              },
+              "tastes": {
+                "type": "array",
+                "properties": {
+                  "traversable_again": {
+                    "type": "boolean"
+                  }
+                },
+                "items": {
+                  "type": "string"
+                }
+              },
+              "tel": {
+                "type": "string"
+              },
+              "tips": {
+                "type": "array",
+                "properties": {
+                  "traversable_again": {
+                    "type": "boolean"
+                  }
+                },
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "fsq_tip_id": {
+                      "type": "string"
+                    },
+                    "created_at": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "text": {
+                      "type": "string"
+                    },
+                    "url": {
+                      "type": "string"
+                    },
+                    "photo": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "created_at": {
+                          "type": "string",
+                          "format": "date-time"
+                        },
+                        "prefix": {
+                          "type": "string"
+                        },
+                        "suffix": {
+                          "type": "string"
+                        },
+                        "width": {
+                          "type": "integer",
+                          "format": "int32",
+                          "minimum": -2147483648,
+                          "maximum": 2147483647
+                        },
+                        "height": {
+                          "type": "integer",
+                          "format": "int32",
+                          "minimum": -2147483648,
+                          "maximum": 2147483647
+                        },
+                        "classifications": {
+                          "type": "array",
+                          "properties": {
+                            "traversable_again": {
+                              "type": "boolean"
+                            }
+                          },
+                          "items": {
+                            "type": "string"
+                          }
+                        },
+                        "tip": {
+                          "type": "object",
+                          "properties": {
+                            "id": {
+                              "type": "string"
+                            },
+                            "created_at": {
+                              "type": "string",
+                              "format": "date-time"
+                            },
+                            "text": {
+                              "type": "string"
+                            },
+                            "url": {
+                              "type": "string"
+                            },
+                            "photo": {},
+                            "lang": {
+                              "type": "string"
+                            },
+                            "agree_count": {
+                              "type": "integer",
+                              "format": "int32",
+                              "minimum": -2147483648,
+                              "maximum": 2147483647
+                            },
+                            "disagree_count": {
+                              "type": "integer",
+                              "format": "int32",
+                              "minimum": -2147483648,
+                              "maximum": 2147483647
+                            }
+                          }
+                        }
+                      }
+                    },
+                    "lang": {
+                      "type": "string"
+                    },
+                    "agree_count": {
+                      "type": "integer",
+                      "format": "int32",
+                      "minimum": -2147483648,
+                      "maximum": 2147483647
+                    },
+                    "disagree_count": {
+                      "type": "integer",
+                      "format": "int32",
+                      "minimum": -2147483648,
+                      "maximum": 2147483647
+                    }
+                  }
+                }
+              },
+              "verified": {
+                "type": "boolean"
+              },
+              "unresolved_flags": {
+                "uniqueItems": true,
+                "type": "array",
+                "properties": {
+                  "traversable_again": {
+                    "type": "boolean"
+                  }
+                },
+                "items": {
+                  "type": "string"
+                }
+              },
+              "veracity_rating": {
+                "type": "object",
+                "additionalProperties": true
+              },
+              "website": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "context": {
+          "type": "object",
+          "properties": {
+            "geo_bounds": {
+              "type": "object",
+              "properties": {
+                "circle": {
+                  "type": "object",
+                  "properties": {
+                    "center": {
+                      "type": "object",
+                      "properties": {
+                        "latitude": {
+                          "type": "number",
+                          "format": "double",
+                          "minimum": -1.7976931348623157e+308,
+                          "maximum": 1.7976931348623157e+308
+                        },
+                        "longitude": {
+                          "type": "number",
+                          "format": "double",
+                          "minimum": -1.7976931348623157e+308,
+                          "maximum": 1.7976931348623157e+308
+                        }
+                      }i
+                    },
+                    "radius": {
+                      "type": "integer",
+                      "format": "int32",
+                      "minimum": -2147483648,
+                      "maximum": 2147483647
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "$schema": "http://json-schema.org/draft-04/schema#"
+    }
+  }
+}
