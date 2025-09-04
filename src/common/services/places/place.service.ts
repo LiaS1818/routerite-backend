@@ -10,10 +10,10 @@ export class PlaceService implements OnModuleInit {
 	private places: FSQRPlace[] = [];
 
 	async onModuleInit() {
-		this.cargarLugaresDesdeJSON();
+		this.loadPlacesFromJSON();
 	}
 
-	private cargarLugaresDesdeJSON() {
+	private loadPlacesFromJSON() {
 		try {
 			const filePath = join(
 				process.cwd(),
@@ -28,7 +28,7 @@ export class PlaceService implements OnModuleInit {
 		}
 	}
 
-	async filtrarLugares(filter: FilterPlacesDto): Promise<FSQRPlace[]> {
+	async filterPlaces(filter: FilterPlacesDto): Promise<FSQRPlace[]> {
 		let filteredPlaces = [...this.places];
 
 		// Filtrar por categoría

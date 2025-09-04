@@ -16,9 +16,9 @@ export class PlaceController {
 
 	@Get()
 	async filterPlaces(
-		@Query(new ValidationPipe({ transform: true })) filtros: FilterPlacesDto
+		@Query(new ValidationPipe({ transform: true })) filter: FilterPlacesDto
 	): Promise<FSQRPlace[]> {
-		return this.placeService.filtrarLugares(filtros);
+		return this.placeService.filterPlaces(filter);
 	}
 
 	@Get('all')
@@ -33,16 +33,16 @@ export class PlaceController {
 
 	@Get('categories/available')
 	async getAvailableCategories(): Promise<string[]> {
-		const lugares = await this.placeService.getAllPlaces();
-		const categorias = new Set<string>();
+		const places = await this.placeService.getAllPlaces();
+		const categories = new Set<string>();
 
-		lugares.forEach(lugar => {
-			lugar.categories.forEach(cat => {
-				categorias.add(cat.name);
-				categorias.add(cat.plural_name);
+		places.forEach(place => {
+			place.categories.forEach(cat => {
+				categories.add(cat.name);
+				categories.add(cat.plural_name);
 			});
 		});
 
-		return Array.from(categorias).sort();
+		return Array.from(categories).sort();
 	}
 }
