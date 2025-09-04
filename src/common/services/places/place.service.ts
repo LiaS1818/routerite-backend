@@ -2,12 +2,12 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
 import { readFileSync } from 'fs';
 import { join } from 'path';
-import { FiltrosLugarDto } from './dto/filters-place.dto';
-import { Place } from './place.entity';
+import { FilterPlacesDto } from './dto/filters-place.dto';
+import { FSQRPlace } from 'src/common/interfaces/FSQRPlace.interface';
 
 @Injectable()
 export class PlaceService implements OnModuleInit {
-	private places: Place[] = [];
+	private places: FSQRPlace[] = [];
 
 	async onModuleInit() {
 		this.cargarLugaresDesdeJSON();
@@ -28,54 +28,54 @@ export class PlaceService implements OnModuleInit {
 		}
 	}
 
-	async filtrarLugares(filtros: FiltrosLugarDto): Promise<Place[]> {
-		let lugaresFiltrados = [...this.places];
+	async filtrarLugares(filter: FilterPlacesDto): Promise<FSQRPlace[]> {
+		let filteredPlaces = [...this.places];
 
 		// Filtrar por categoría
-		if (filtros.category) {
-			lugaresFiltrados = lugaresFiltrados.filter(lugar =>
-				lugar.categories.some(
+		if (filter.category) {
+			filteredPlaces = filteredPlaces.filter(place =>
+				place.categories.some(
 					cat =>
 						cat.name
 							.toLowerCase()
-							.includes(filtros.category.toLowerCase()) ||
+							.includes(filter.category.toLowerCase()) ||
 						cat.plural_name
 							.toLowerCase()
-							.includes(filtros.category.toLowerCase())
+							.includes(filter.category.toLowerCase())
 				)
 			);
 		}
 
 		//Filtrar por mayor ranking
-		if (filtros.ratingMin !== undefined) {
-			lugaresFiltrados = lugaresFiltrados.filter(
-				lugar => lugar.rating >= filtros.ratingMin
+		if (filter.ratingMin !== undefined) {
+			filteredPlaces = filteredPlaces.filter(
+				place => place.rating >= filter.ratingMin
 			);
 		}
 
-		if (filtros.ratingMax !== undefined) {
-			lugaresFiltrados = lugaresFiltrados.filter(
-				lugar => lugar.rating <= filtros.ratingMax
+		if (filter.ratingMax !== undefined) {
+			filteredPlaces = filteredPlaces.filter(
+				place => place.rating <= filter.ratingMax
 			);
 		}
 
 		// Filtrar por rango de precio
-		if (filtros.priceMin !== undefined) {
-			lugaresFiltrados = lugaresFiltrados.filter(
-				lugar => lugar.price >= filtros.priceMin
+		if (filter.priceMin !== undefined) {
+			filteredPlaces = filteredPlaces.filter(
+				place => place.price >= filter.priceMin
 			);
 		}
 
-		if (filtros.priceMax !== undefined) {
-			lugaresFiltrados = lugaresFiltrados.filter(
-				lugar => lugar.price <= filtros.priceMax
+		if (filter.priceMax !== undefined) {
+			filteredPlaces = filteredPlaces.filter(
+				place => place.price <= filter.priceMax
 			);
 		}
 
 		// Ordenar por precio
-		if (filtros.orderBy) {
-			lugaresFiltrados.sort((a, b) => {
-				if (filtros.orderBy === 'price-asc') {
+		if (filter.orderBy) {
+			filteredPlaces.sort((a, b) => {
+				if (filter.orderBy === 'price-asc') {
 					return a.price - b.price;
 				} else {
 					return b.price - a.price;
@@ -83,16 +83,16 @@ export class PlaceService implements OnModuleInit {
 			});
 		}
 
-		return lugaresFiltrados;
+		return filteredPlaces;
 	}
 
 	// Método adicional para obtener todos los lugares
-	async getAllPlaces(): Promise<Place[]> {
+	async getAllPlaces(): Promise<FSQRPlace[]> {
 		return this.places;
 	}
 
 	// Método para obtener un lugar por ID
-	async getPlaceById(fsq_id: string): Promise<Place | null> {
+	async getPlaceById(fsq_id: string): Promise<FSQRPlace | null> {
 		return this.places.find(place => place.fsq_id === fsq_id) || null;
 	}
 
@@ -100,8 +100,8 @@ export class PlaceService implements OnModuleInit {
 	async getAvailableCategories(): Promise<string[]> {
 		const categorias = new Set<string>();
 
-		this.places.forEach(lugar => {
-			lugar.categories.forEach(cat => {
+		this.places.forEach(place => {
+			place.categories.forEach(cat => {
 				categorias.add(cat.name);
 				categorias.add(cat.plural_name);
 			});

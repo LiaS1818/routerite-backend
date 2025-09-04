@@ -7,8 +7,8 @@ import {
 	ValidationPipe,
 } from '@nestjs/common';
 import { PlaceService } from './place.service';
-import { Place } from './place.entity';
-import { FiltrosLugarDto } from './dto/filters-place.dto';
+import { FSQRPlace } from 'src/common/interfaces/FSQRPlace.interface';
+import { FilterPlacesDto } from './dto/filters-place.dto';
 
 @Controller('places')
 export class PlaceController {
@@ -16,18 +16,18 @@ export class PlaceController {
 
 	@Get()
 	async filterPlaces(
-		@Query(new ValidationPipe({ transform: true })) filtros: FiltrosLugarDto
-	): Promise<Place[]> {
+		@Query(new ValidationPipe({ transform: true })) filtros: FilterPlacesDto
+	): Promise<FSQRPlace[]> {
 		return this.placeService.filtrarLugares(filtros);
 	}
 
 	@Get('all')
-	async getAllPlaces(): Promise<Place[]> {
+	async getAllPlaces(): Promise<FSQRPlace[]> {
 		return this.placeService.getAllPlaces();
 	}
 
 	@Get(':id')
-	async getPlaceById(@Param('id') id: string): Promise<Place | null> {
+	async getPlaceById(@Param('id') id: string): Promise<FSQRPlace | null> {
 		return this.placeService.getPlaceById(id);
 	}
 

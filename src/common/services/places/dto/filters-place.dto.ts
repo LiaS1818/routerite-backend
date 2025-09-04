@@ -1,4 +1,4 @@
-export class FiltrosLugarDto {
+export class FilterPlacesDto {
 	category: string;
 	priceMin: number;
 	priceMax: number;
