@@ -188,6 +188,32 @@
 			}
 		</style>
 	</head>
+	<script>
+		function respondInvitation(action) {
+			const buttons = document.querySelectorAll('.btn');
+			const content = document.getElementById('invitation-content');
+			const messageDiv = document.getElementById('message'); // Disable buttons and show loading state
+			buttons.forEach(btn => btn.classList.add('loading'));
+			const endpoint = window.location.pathname + '/' + action;
+			fetch(endpoint, { method: 'PATCH', headers: { 'Content-Type': 'application/json', } })
+				.then(response => response.json())
+				.then(data => {
+					if (data.status === 'accepted' || data.status === 'rejected') {
+						const messageClass = data.status === 'accepted' ? 'success' : 'error';
+						const messageText = data.status === 'accepted' ? '¡Invitación aceptada! Te has unido al viaje exitosamente.' : 'Invitación rechazada.';
+						messageDiv.innerHTML = `<div class="message ${messageClass}">${messageText}</div>`;
+						content.style.display = 'none';
+				} else {
+						throw new Error(data.message || 'Error desconocido');
+					}
+				})
+				.catch(error => {
+					messageDiv.innerHTML = `<div class="message error">Error: ${error.message}</div>`; // Re-enable buttons on error
+					buttons.forEach(btn =>
+						btn.classList.remove('loading'));
+					});
+		}
+	</script>
 	<body>
 		{{#if error}}
 			<div class='invitation-card error-card'>
@@ -267,27 +293,5 @@
 			</div>
 		{{/if}}
 
-		<script>
-			function respondInvitation(action) { const buttons =
-			document.querySelectorAll('.btn'); const content =
-			document.getElementById('invitation-content'); const messageDiv =
-			document.getElementById('message'); // Disable buttons and show
-			loading state buttons.forEach(btn => btn.classList.add('loading'));
-			const endpoint = window.location.pathname + '/' + action;
-			fetch(endpoint, { method: 'PATCH', headers: { 'Content-Type':
-			'application/json', } }) .then(response => response.json())
-			.then(data => { if (data.status === 'accepted' || data.status ===
-			'rejected') { const messageClass = data.status === 'accepted' ?
-			'success' : 'error'; const messageText = data.status === 'accepted'
-			? '¡Invitación aceptada! Te has unido al viaje exitosamente.' :
-			'Invitación rechazada.'; messageDiv.innerHTML = `<div class="message
-			${messageClass}">${messageText}</div>`; // Hide the invitation
-			content after response setTimeout(() => { content.style.display =
-			'none'; }, 2000); } else { throw new Error(data.message || 'Error
-			desconocido'); } }) .catch(error => { messageDiv.innerHTML = `<div
-			class="message error">Error: ${error.message}</div>`; // Re-enable
-			buttons on error buttons.forEach(btn =>
-			btn.classList.remove('loading')); }); }
-		</script>
 	</body>
 </html>

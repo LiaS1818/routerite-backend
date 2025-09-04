@@ -25,5 +25,5 @@ export interface LocationInterface {
 	city: string;
 	state: string;
 	country: string;
-	zipCode: string;
+	zipCode?: string | null;
 }

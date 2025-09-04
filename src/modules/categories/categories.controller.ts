@@ -15,7 +15,11 @@ export class CategoriesController {
 			query,
 			parseInt(limit)
 		);
-		return categories;
+		return {
+			success: true,
+			data: categories,
+			count: categories.length,
+		};
 	}
 	// Obtener categorías populares
 	@Get('popular')
@@ -27,7 +31,7 @@ export class CategoriesController {
 	@Get()
 	async getAllCategories(
 		@Query('page') page: string = '1',
-		@Query('limit') limit: string = '10'
+		@Query('limit') limit: string = '50'
 	) {
 		return this.categoriesService.getAll(parseInt(page), parseInt(limit));
 	}

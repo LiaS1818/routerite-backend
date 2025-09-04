@@ -108,6 +108,8 @@ export class Trip extends Model<TripAttributes, TripCreationAttributes> {
 	})
 	declare total_budget: number;
 
+	@AllowNull(false)
+	@Default('https://lvuodwyfoqekoeadpcyi.supabase.co/storage/v1/object/public/routerite/defaults/trip-covers/default-trip-cover.png')
 	@Column(DataType.TEXT)
 	declare cover_image?: string | null;
 
@@ -155,5 +157,5 @@ export class Trip extends Model<TripAttributes, TripCreationAttributes> {
 	declare itineraries?: Itinerary[];
 
 	@BelongsToMany(() => User, () => TripInvitation, 'trip_id', 'user_id')
-	guests: User[];
+	declare guests: User[];
 }

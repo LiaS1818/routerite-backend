@@ -1,4 +1,3 @@
-// filepath: /home/cardonapablo/Documentos/Proyectos/RouteRite/routerite-backend/src/modules/trips/dto/create-trip.dto.ts
 import {
 	IsString,
 	IsNotEmpty,
@@ -14,6 +13,7 @@ import {
 } from 'class-validator';
 import { Transform, Type } from 'class-transformer';
 import { LocationInterface } from '../trip.interfaces';
+import { Optional } from '@nestjs/common';
 
 export class LocationDto implements LocationInterface {
 	@IsString()
@@ -41,7 +41,7 @@ export class LocationDto implements LocationInterface {
 	country: string;
 
 	@IsString()
-	@IsNotEmpty()
+	@Optional()
 	zipCode: string;
 }
 

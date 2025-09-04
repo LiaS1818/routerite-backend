@@ -23,7 +23,14 @@ import { FoursquareCategory } from './models/foursquare-categories.model';
 				autoLoadModels: true,
 				synchronize: true,
 				alter: true,
-				models: [User, Trip, Itinerary, Activity, TripInvitation, FoursquareCategory],
+				models: [
+					User,
+					Trip,
+					Itinerary,
+					Activity,
+					TripInvitation,
+					FoursquareCategory,
+				],
 				logging:
 					configService.get('NODE_ENV') === 'development'
 						? console.log
@@ -37,7 +44,7 @@ import { FoursquareCategory } from './models/foursquare-categories.model';
 			Itinerary,
 			Activity,
 			TripInvitation,
-      FoursquareCategory
+			FoursquareCategory,
 		]),
 	],
 	exports: [SequelizeModule],

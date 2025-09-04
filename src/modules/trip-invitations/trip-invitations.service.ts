@@ -3,6 +3,7 @@ import {
 	NotFoundException,
 	BadRequestException,
 	Logger,
+	ForbiddenException,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 import { TripInvitation } from '../../database/models/trip-invitation.model';
@@ -245,5 +246,46 @@ export class TripInvitationsService {
 
 		this.logger.log(`User ${userId} rejected invitation to trip ${tripId}`);
 		return invitation;
+	}
+
+	/**
+	 * Delete a trip invitation (only by trip owner)
+	 */
+	async deleteInvitation(
+		tripId: number,
+		email: string,
+		requestUserId: number
+	): Promise<void> {
+		const invitation = await this.tripInvitationModel.findOne({
+			include: [
+				{
+					model: Trip,
+					attributes: ['id', 'user_id'],
+					as: 'trip',
+					where: { id: tripId }
+				},
+				{
+					model: User,
+					attributes: ['id', 'email'],
+					as: 'invitedUser',
+					where: { email: email }
+				}
+			],
+		});
+
+		if (!invitation) {
+			throw new NotFoundException('Invitation not found');
+		}
+
+		if (requestUserId !== invitation.trip?.user_id) {
+			throw new ForbiddenException(
+				'Only the trip owner can delete invitations'
+			);
+		}
+
+		await invitation.destroy();
+		this.logger.log(
+			`Invitation deleted by user ${requestUserId}`
+		);
 	}
 }

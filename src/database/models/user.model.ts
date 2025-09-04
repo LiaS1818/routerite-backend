@@ -45,7 +45,7 @@ export interface UserCreationAttributes
 @Table({
 	tableName: 'users',
 	timestamps: true,
-	paranoid: true,
+	paranoid: false,
 	underscored: true,
 	freezeTableName: true,
 	createdAt: 'created_at',
@@ -81,7 +81,8 @@ export class User extends Model<UserAttributes, UserCreationAttributes> {
 	@Column(DataType.BOOLEAN)
 	declare active: boolean;
 
-	@AllowNull(true)
+	@AllowNull(false)
+	@Default('https://lvuodwyfoqekoeadpcyi.supabase.co/storage/v1/object/public/routerite/defaults/profile-pictures/default-profile-picture.png')
 	@Column(DataType.STRING(255))
 	declare profile_picture?: string;
 
@@ -98,5 +99,5 @@ export class User extends Model<UserAttributes, UserCreationAttributes> {
 	declare owned_trips?: Trip[];
 
 	@BelongsToMany(() => Trip, () => TripInvitation)
-	trips: Trip[];
+	declare trips: Trip[];
 }

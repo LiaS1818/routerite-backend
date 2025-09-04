@@ -3,17 +3,21 @@ import { Module } from '@nestjs/common';
 import { SequelizeModule } from '@nestjs/sequelize';
 import { TripsController } from './trips.controller';
 import { TripsService } from './trips.service';
-import { Trip } from '../../database/models/trip.model';
-import { User } from '../../database/models/user.model';
-import { Itinerary, TripInvitation } from 'src/database/models';
+import { Trip, User, Itinerary, TripInvitation } from '../../database/models';
 import { FoursquareModule } from 'src/common/services/foursquare/foursquare.module';
 import { TripAccessValidatorModule } from '../../common/services/trip-access-validator.module';
+import { HttpModule } from '@nestjs/axios';
+import { ConfigModule } from '@nestjs/config';
+import { SupabaseModule } from '../supabase/supabase.module';
 
 @Module({
 	imports: [
 		SequelizeModule.forFeature([Trip, User, Itinerary, TripInvitation]),
 		FoursquareModule,
 		TripAccessValidatorModule,
+		HttpModule,
+		ConfigModule,
+		SupabaseModule,
 	],
 	controllers: [TripsController],
 	providers: [TripsService],

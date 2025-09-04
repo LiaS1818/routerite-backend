@@ -1,5 +1,5 @@
 import { Module } from '@nestjs/common';
-import { HttpModule } from '@nestjs/axios';
+import { HttpModule, HttpService } from '@nestjs/axios';
 import { ConfigModule } from '@nestjs/config';
 import { FoursquarePlacesService } from './foursquare-place.service';
 import { FoursquarePhotosService } from './foursquare-place-photos.service';

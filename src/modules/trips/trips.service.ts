@@ -6,7 +6,7 @@ import {
 	ItineraryAttributes,
 	ItineraryCreationAttributes,
 } from '../../database/models/itinerary.model';
-import { UpdateTripExtendedDto } from './dto/update-trip.dto';
+import { UpdateTripExtendedDto } from './dto';
 import { TripAccessValidatorService } from '../../common/services/trip-access-validator.service';
 
 @Injectable()
@@ -37,7 +37,6 @@ export class TripsService {
 				transaction,
 			});
 
-			console.log('Itinerary model', this.itineraryModel);
 			// Create trip itineraries
 			const tripDuration = Math.ceil(
 				(trip.end_date.getTime() - trip.start_date.getTime()) /
@@ -105,7 +104,6 @@ export class TripsService {
 					},
 				],
 				order: [['start_date', 'DESC']],
-				paranoid: true,
 				...options,
 			});
 
@@ -121,8 +119,8 @@ export class TripsService {
 			);
 			return uniqueTrips.sort(
 				(a, b) =>
-					new Date(b.start_date).getTime() -
-					new Date(a.start_date).getTime()
+					new Date(a.start_date).getTime() -
+					new Date(b.start_date).getTime()
 			);
 		} catch (error) {
 			this.logger.error(
@@ -130,18 +128,6 @@ export class TripsService {
 				error.stack
 			);
 			throw error;
-		}
-	}
-
-	/**
-	 * Check if user has access to trip (owner or accepted guest)
-	 */
-	async hasAccessToTrip(tripId: number, userId: number): Promise<boolean> {
-		try {
-			await this.tripAccessValidator.validateTripAccess(tripId, userId);
-			return true;
-		} catch {
-			return false;
 		}
 	}
 
@@ -165,8 +151,12 @@ export class TripsService {
 						as: 'guests',
 						attributes: ['id', 'name', 'email', 'profile_picture'],
 						through: {
-							where: { status: 'accepted' },
-							attributes: [],
+							where: {
+								status: {
+									[Op.or]: ['pending', 'accepted'],
+								},
+							},
+							attributes: ['status'],
 						},
 					},
 					{
@@ -310,24 +300,30 @@ export class TripsService {
 	/**
 	 * Update a trip
 	 */
-	async update(id: number, updateData: Partial<Trip>): Promise<Trip> {
+	async update(
+		id: number,
+		updateData: Partial<Trip>,
+		transaction: Transaction
+	): Promise<Trip> {
 		try {
 			this.logger.log(`Updating trip with ID ${id}`);
 
-			const trip = await this.tripModel.findByPk(id);
+			const trip = await this.tripModel.findByPk(id, {
+				transaction
+			});
 
 			if (!trip) {
 				throw new NotFoundException(`Trip with ID ${id} not found`);
 			}
 
-			await trip.update(updateData);
+			await trip.update(updateData, { transaction });
 
 			this.logger.log(`Trip with ID ${id} updated successfully`);
 			return trip.reload({
 				include: [
 					{
 						model: this.userModel,
-						as: 'user',
+						as: 'owner',
 						attributes: ['id', 'name', 'email'],
 					},
 				],
@@ -515,7 +511,7 @@ export class TripsService {
 						})
 					: [];
 
-			// 7. Cálculos de duración sólo si cambian fechas
+			// 7. Cálculos de duración solo si cambian fechas
 			let oldDuration = 0,
 				newDuration = 0,
 				durationDiff = 0,
@@ -532,7 +528,7 @@ export class TripsService {
 				startDiff = diffDays(requestedStart, trip.start_date);
 			}
 
-			// 8. Actualizar sólo campos cambiados
+			// 8. Actualizar solo campos cambiados
 			const originalBudget = trip.total_budget;
 			if (changedStart) trip.start_date = requestedStart;
 			if (changedEnd) trip.end_date = requestedEnd;
