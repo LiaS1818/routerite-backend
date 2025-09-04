@@ -20,9 +20,13 @@ import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { Sequelize } from 'sequelize-typescript';
 import { literal } from 'sequelize';
 import { PostGISPoint } from '../../common/interfaces/PostGISPoint';
-import { FoursquarePhotosService } from '../../common/services/foursquare/foursquare-place-photos.service';
-import { FoursquarePlacesService } from '../../common/services/foursquare/foursquare-place.service';
 import { SupabaseStorageService } from '../supabase/supabase-storage.service';
+import fsqDevelopersPlaces, {
+	PlaceSearchMetadataParam,
+	PlaceSearchResponse200,
+} from '@api/fsq-developers-places';
+import { ConfigService } from '@nestjs/config';
+import { FSQRPlace } from '../../common/interfaces/FSQRPlace.interface';
 
 @Controller('trips')
 @UseGuards(JwtAuthGuard)
@@ -32,9 +36,8 @@ export class TripsController {
 	constructor(
 		private readonly tripsService: TripsService,
 		private sequelize: Sequelize,
-		private readonly fsqrPhotosService: FoursquarePhotosService,
-		private readonly fsqrPlaceService: FoursquarePlacesService,
-		private readonly supabaseStorageService: SupabaseStorageService
+		private readonly supabaseStorageService: SupabaseStorageService,
+		private readonly configService: ConfigService,
 	) {}
 
 	@Post()
@@ -94,19 +97,28 @@ export class TripsController {
 				transaction
 			);
 
-			// Buscar el lugar en Foursquare y obtener la imagen principal
-			const { photoUrl, fsqId } = await this.fsqrPlaceService.findPlaceAndGetDetails(
-				{
-					name: createTripDto.location.name,
-					lat: latitude,
-					lng: longitude,
-				},
-				{
-					fieldsLevel: 'pro',
-					customFields: ['photos'],
-				}
-			);
+			const params: PlaceSearchMetadataParam = {
+				query: createdTrip.location.name,
+				ll: `${createdTrip.lat},${createdTrip.lng}`,
+				limit: 1,
+				radius: 100,
+				'X-Places-Api-Version': "2025-06-17",
+				sort: "RELEVANCE"
+			}
 
+			const fsqrApiKey = this.configService.get<string>('FSQR_API_KEY') || " ";
+			fsqDevelopersPlaces.auth(fsqrApiKey);
+			const placesResponse =  await fsqDevelopersPlaces.placeSearch(params)
+			const results = placesResponse.data.results || [];
+
+			let photoUrl, fsqId: unknown;
+			for(const result of results){
+				// @ts-ignore
+				const place: FSQRPlace = result as FSQRPlace;
+				fsqId = place.fsq_id;
+				if(place.photos && place.photos.length > 0)
+					photoUrl = place.photos[0].prefix + "360x390" + place.photos[0].suffix;
+			}
 			this.logger.debug(`Found place: fsqId=${fsqId}, photoUrl=${photoUrl}`);
 
 			// Si se encontró una imagen, subirla a Supabase Storage

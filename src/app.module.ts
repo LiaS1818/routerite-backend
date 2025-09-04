@@ -11,8 +11,6 @@ import { ActivityModule } from './modules/activity/activity.module';
 import { TripInvitationsModule } from './modules/trip-invitations/trip-invitations.module';
 import { HttpModule } from '@nestjs/axios';
 import { CategoriesModule } from './modules/categories/categories.module';
-import { FoursquareModule } from './common/services/foursquare/foursquare.module';
-import { PlaceModule } from './common/services/places/place.module';
 
 @Module({
 	imports: [
@@ -32,8 +30,6 @@ import { PlaceModule } from './common/services/places/place.module';
 			maxRedirects: 5,
 		}),
 		CategoriesModule,
-		FoursquareModule,
-		PlaceModule,
 	],
 	controllers: [AppController],
 	providers: [AppService],
