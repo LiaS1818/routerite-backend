@@ -14,15 +14,16 @@ import {
 import { ActivityService } from './activity.service';
 import { CreateActivityDto } from './dto/create-activity.dto';
 import { Activity } from 'src/database/models';
-import { FoursquarePlacesService } from '../../common/services/foursquare/foursquare-place.service';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
+import fsqDevelopersPlaces from '@api/fsq-developers-places';
+import { ConfigService } from '@nestjs/config';
 
 @Controller('activities')
 @UseGuards(JwtAuthGuard)
 export class ActivityController {
 	constructor(
 		private readonly activityService: ActivityService,
-		private readonly foursquarePlacesService: FoursquarePlacesService
+		private configService: ConfigService
 	) {}
 
 	@Post()
@@ -59,10 +60,12 @@ export class ActivityController {
 		// Validate access to itinerary first
 		await this.activityService.findByItinerary(itinerary_id, req.user.id);
 
-		return this.foursquarePlacesService.searchPlaces({
+		const fsqrApiKey = this.configService.get<string>('FSQR_API_KEY') || " ";
+		fsqDevelopersPlaces.auth(fsqrApiKey);
+		return fsqDevelopersPlaces.placeSearch({
 			ll: '40.748817,-73.985428', // Example: Latitude and Longitude of the Empire State Building
-			query: '',
 			radius: 1000,
+			'X-Places-Api-Version': "2025-06-17"
 		});
 	}
 

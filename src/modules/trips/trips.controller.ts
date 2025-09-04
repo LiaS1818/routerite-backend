@@ -103,7 +103,7 @@ export class TripsController {
 				limit: 1,
 				radius: 100,
 				'X-Places-Api-Version': "2025-06-17",
-				sort: "RELEVANCE"
+				sort: "RELEVANCE",
 			}
 
 			const fsqrApiKey = this.configService.get<string>('FSQR_API_KEY') || " ";
