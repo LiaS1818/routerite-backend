@@ -18,7 +18,6 @@ export class FoursquareMockService {
 	private readonly logger = new Logger(FoursquareMockService.name);
 
 	constructor() {
-		this.loadPlacesJSON();
 	}
 
 	private places: any[] = [];
@@ -28,9 +27,16 @@ export class FoursquareMockService {
 		this.places = places.results;
 	}
 
+	auth(token): void {
+		this.loadPlacesJSON();
+	}
+
 	async placeSearch(
 		params: PlaceSearchMetadataParam
 	): Promise<FetchResponse<200, types.PlaceSearchResponse200>> {
+
+		if(!this.places.length) throw new NotFoundException("Missing auth token, call auth first")
+
 		const { limit = 10 } = params;
 		// Generate n - non repeating random indexes
 		const indexes: number[] = [];
