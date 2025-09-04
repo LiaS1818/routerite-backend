@@ -163,7 +163,7 @@ export class ItinerariesController {
 	}
 
 	//update itinerary. receiving itinerary id in body json
-	@Put(':id')
+	@Patch(':id')
 	async updateItinerary(
 		@Param('id', ParseIntPipe) id: number,
 		@Body() updateItineraryDto: UpdateItineraryDto

@@ -8,6 +8,7 @@ import {
 	IsDateString,
 	IsArray,
 	ValidateNested,
+	IsBoolean,
 } from 'class-validator';
 import { ExperienceTypeDto } from './experience_type.dto';
 
@@ -36,4 +37,8 @@ export class UpdateItineraryDto {
 	@IsArray()
 	@Type(() => String)
 	experience_type_ids?: string[];
+
+	@IsOptional()
+	@IsBoolean()
+	is_configured?: boolean;
 }
