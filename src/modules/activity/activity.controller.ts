@@ -15,7 +15,7 @@ import { ActivityService } from './activity.service';
 import { CreateActivityDto } from './dto/create-activity.dto';
 import { Activity } from 'src/database/models';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
-import fsqDevelopersPlaces from '@api/fsq-developers-places';
+// import fsqDevelopersPlaces from '@api/fsq-developers-places';
 import { ConfigService } from '@nestjs/config';
 
 @Controller('activities')
@@ -23,7 +23,7 @@ import { ConfigService } from '@nestjs/config';
 export class ActivityController {
 	constructor(
 		private readonly activityService: ActivityService,
-		private configService: ConfigService
+		private configService: ConfigService,
 	) {}
 
 	@Post()
@@ -47,28 +47,6 @@ export class ActivityController {
 		}
 	}
 
-	@Get()
-	async getPlacesByItineraryParams(
-		@Query('itinerary_id', ParseIntPipe) itinerary_id: number,
-		@Request() req
-	): Promise<any> {
-		console.log(
-			'Intentando obtener actividades por itinerario_id:',
-			itinerary_id
-		);
-
-		// Validate access to itinerary first
-		await this.activityService.findByItinerary(itinerary_id, req.user.id);
-
-		const fsqrApiKey = this.configService.get<string>('FSQR_API_KEY') || " ";
-		fsqDevelopersPlaces.auth(fsqrApiKey);
-		return fsqDevelopersPlaces.placeSearch({
-			ll: '40.748817,-73.985428', // Example: Latitude and Longitude of the Empire State Building
-			radius: 1000,
-			'X-Places-Api-Version': "2025-06-17"
-		});
-	}
-
 	@Get(':id')
 	async findOne(@Param('id', ParseIntPipe) id: number, @Request() req) {
 		return this.activityService.findOne(id, req.user.id);
@@ -80,11 +58,4 @@ export class ActivityController {
 		return { message: 'Activity deleted successfully' };
 	}
 
-	@Get('itinerary/:itineraryId')
-	async findByItinerary(
-		@Param('itineraryId', ParseIntPipe) itineraryId: number,
-		@Request() req
-	) {
-		return this.activityService.findByItinerary(itineraryId, req.user.id);
-	}
 }

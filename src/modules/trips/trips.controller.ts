@@ -27,6 +27,7 @@ import fsqDevelopersPlaces, {
 } from '@api/fsq-developers-places';
 import { ConfigService } from '@nestjs/config';
 import { FSQRPlace } from '../../common/interfaces/FSQRPlace.interface';
+import { FoursquareMockService } from '../../common/services/foursquare/foursquare-mock.service';
 
 @Controller('trips')
 @UseGuards(JwtAuthGuard)
@@ -38,6 +39,7 @@ export class TripsController {
 		private sequelize: Sequelize,
 		private readonly supabaseStorageService: SupabaseStorageService,
 		private readonly configService: ConfigService,
+		private fsqDevelopersPlaces: FoursquareMockService
 	) {}
 
 	@Post()
@@ -107,8 +109,8 @@ export class TripsController {
 			}
 
 			const fsqrApiKey = this.configService.get<string>('FSQR_API_KEY') || " ";
-			fsqDevelopersPlaces.auth(fsqrApiKey);
-			const placesResponse =  await fsqDevelopersPlaces.placeSearch(params)
+			this.fsqDevelopersPlaces.auth(fsqrApiKey);
+			const placesResponse =  await this.fsqDevelopersPlaces.placeSearch(params)
 			const results = placesResponse.data.results || [];
 
 			let photoUrl, fsqId: unknown;
