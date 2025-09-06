@@ -28,7 +28,7 @@ export class FoursquareMockService {
 	private places: any[] = [];
 
 	private loadPlacesJSON() {
-		const fileContent= fs.readFileSync('assets/places_mock.json', 'utf-8')
+		const fileContent= fs.readFileSync('assets/places.json', 'utf-8')
 		const parsed = JSON.parse(fileContent);
 		this.places = parsed.results.map((place: any) => {
 			return {

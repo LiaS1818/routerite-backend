@@ -18,18 +18,19 @@ import { Itinerary } from './index';
 
 export interface ActivityAttributes {
 	id: number;
-	name: string;
+	name: string;// <- this
 	description: string;
-	time: Date;
-	lat: string; // Changed from number to string
-	lng: string; // Changed from number to string
+	start_time: string; // <- this
+	end_time: string; // <- this
+	lat: string;
+	lng: string;
 	category_name: string;
 	category_fsqr_id: string;
 	distance_to_start: number;
-	budget: number;
+	budget: number;// <- this
 	price: number;
 	location: any; // JSON type
-	transportation_mode: string;
+	transportation_mode: string; // <- this
 	img_url?: string | null; // Added null type for nullable field
 	itinerary_id: number;
 	created_at: Date;
@@ -70,9 +71,13 @@ export class Activity extends Model<
 	@Column(DataType.STRING)
 	declare description: string;
 
-	@AllowNull(false)
-	@Column(DataType.DATE)
-	declare time: Date;
+	@AllowNull(true)
+	@Column(DataType.TIME)
+	declare start_time: string;
+
+	@AllowNull(true)
+	@Column(DataType.TIME)
+	declare end_time: string;
 
 	@AllowNull(false)
 	@Column(DataType.STRING)

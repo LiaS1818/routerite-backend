@@ -66,6 +66,7 @@ export class ItinerariesController {
 
 	@Get(':id/place')
 	async getMockPlaceForTesting() {
+		this.fsqDevelopersPlaces.auth("token")
 		return this.fsqDevelopersPlaces.getRandomPlace()
 	}
 

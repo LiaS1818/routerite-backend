@@ -7,6 +7,7 @@ import {
 	IsIn,
 	IsNotEmpty,
 	IsObject,
+	IsMilitaryTime,
 } from 'class-validator';
 import { Transform, Type } from 'class-transformer';
 
@@ -22,8 +23,12 @@ export class CreateActivityDto {
 	description: string;
 
 	@IsNotEmpty({ message: 'Time is required' })
-	@IsDateString({}, { message: 'Time must be a valid date string' })
-	time: Date;
+	@IsMilitaryTime({ message: 'Start time must be in HH:MM format' })
+	start_time: string;
+
+	@IsNotEmpty({ message: 'Time is required' })
+	@IsMilitaryTime({ message: 'Start time must be in HH:MM format' })
+	end_time: string;
 
 	@IsNotEmpty({ message: 'Latitude is required' })
 	@IsString({ message: 'Latitude must be a string' })

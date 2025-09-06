@@ -88,7 +88,8 @@ export class ItinerariesService {
 						attributes: [
 							'id',
 							'itinerary_id',
-							'time',
+							'start_time',
+							'end_time',
 							'name',
 							'description',
 							'location',

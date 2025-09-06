@@ -5,7 +5,7 @@ export interface ActivityAttributes {
 	id: number;
 	name: string;
 	description: string;
-	time: Date;
+	start_time: Date;
 	lat: string; // Changed from number to string
 	lng: string; // Changed from number to string
 	category_name: string;
