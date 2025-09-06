@@ -7,6 +7,7 @@ import {
 import { PlaceSearchMetadataParam } from '../../../../.api/apis/fsq-developers-places';
 import type * as types from '../../../../.api/apis/fsq-developers-places/types';
 import { FSQRPlace } from '../../interfaces/FSQRPlace.interface';
+import * as fs from 'node:fs';
 
 interface FetchResponse<T, U> {
 	status: T;
@@ -23,8 +24,15 @@ export class FoursquareMockService {
 	private places: any[] = [];
 
 	private loadPlacesJSON() {
-		const places = require('../../../../assets/places_mock.json');
-		this.places = places.results;
+		const fileContent= fs.readFileSync('assets/places_mock.json', 'utf-8')
+		const parsed = JSON.parse(fileContent);
+		this.places = parsed.results.map((place: any) => {
+			return {
+				fsq_place_id: "mock-place-id",
+				...place
+			}
+		})
+		this.logger.log("Places loaded")
 	}
 
 	auth(token): void {
@@ -37,10 +45,21 @@ export class FoursquareMockService {
 
 		if(!this.places.length) throw new NotFoundException("Missing auth token, call auth first")
 
-		const { limit = 10 } = params;
-		// Generate n - non repeating random indexes
-		const indexes: number[] = [];
+		let { limit = 10, query } = params;
+
 		const places: FSQRPlace[] = [];
+		const indexes: number[] = [];
+
+		if(query) {
+			const place = this.places.find(place => place.name.toLowerCase().includes(query.toLowerCase()));
+			if(place) {
+				places.push(place)
+				indexes.push(this.places.indexOf(place))
+				limit -= 1;
+			}
+		}
+
+		// Generate n - non repeating random indexes
 		while(indexes.length < limit) {
 			const randomIndex = Math.floor(Math.random() * this.places.length);
 			if(!indexes.includes(randomIndex)) {

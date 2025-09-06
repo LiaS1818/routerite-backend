@@ -93,7 +93,7 @@ export class PlaceService implements OnModuleInit {
 
 	// Método para obtener un lugar por ID
 	async getPlaceById(fsq_id: string): Promise<FSQRPlace | null> {
-		return this.places.find(place => place.fsq_id === fsq_id) || null;
+		return this.places.find(place => place.fsq_place_id === fsq_id) || null;
 	}
 
 	// Obtener lista de categorías disponibles

@@ -117,7 +117,7 @@ export class TripsController {
 			for(const result of results){
 				// @ts-ignore
 				const place: FSQRPlace = result as FSQRPlace;
-				fsqId = place.fsq_id;
+				fsqId = place.fsq_place_id;
 				if(place.photos && place.photos.length > 0)
 					photoUrl = place.photos[0].prefix + "360x390" + place.photos[0].suffix;
 			}

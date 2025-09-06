@@ -5,11 +5,13 @@ import { ConfigModule } from '@nestjs/config';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { join } from 'path';
 import * as hbs from 'hbs';
+import { __express } from 'hbs';
 
 async function bootstrap() {
 	const app = await NestFactory.create<NestExpressApplication>(AppModule);
 
 	// Configure Handlebars
+	console.log("Dirname is ", __dirname)
 	app.setBaseViewsDir(join(__dirname, '..', 'views'));
 	app.setViewEngine('hbs');
 

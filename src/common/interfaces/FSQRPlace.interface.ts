@@ -1,5 +1,5 @@
 export interface FSQRPlace {
-	fsq_id: string;
+	fsq_place_id: string;
 	description: string;
 	distance: number;
 	name: string;
