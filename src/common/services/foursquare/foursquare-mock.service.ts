@@ -4,7 +4,10 @@ import {
 	ForbiddenException,
 	Logger,
 } from '@nestjs/common';
-import { PlaceSearchMetadataParam } from '../../../../.api/apis/fsq-developers-places';
+import {
+	PlaceDetailsMetadataParam,
+	PlaceSearchMetadataParam,
+} from '../../../../.api/apis/fsq-developers-places';
 import type * as types from '../../../../.api/apis/fsq-developers-places/types';
 import { FSQRPlace } from '../../interfaces/FSQRPlace.interface';
 import * as fs from 'node:fs';
@@ -21,6 +24,7 @@ export class FoursquareMockService {
 	constructor() {
 	}
 
+	private readonly fields = "fsq_place_id,name,description,distance,price,rating,social_media,tel,website,categories,hours,location,photos,related_places,stats,latitude,longitude".split(",");
 	private places: any[] = [];
 
 	private loadPlacesJSON() {
@@ -85,5 +89,25 @@ export class FoursquareMockService {
 			},
 			status: 200
 		}
+	}
+
+	async placeDetails(params: PlaceDetailsMetadataParam): Promise<FetchResponse<200, types.PlaceDetailsResponse200>> {
+		if(!this.places.length) throw new NotFoundException("Missing auth token, call auth first")
+
+		let { fsq_place_id } = params;
+		if(!fsq_place_id) throw new NotFoundException("Missing fsq_place_id")
+
+		const place = this.places.find(place => place.fsq_place_id === fsq_place_id);
+		if(!place) throw new NotFoundException("Place not found")
+
+		return {
+			data: place,
+			status: 200
+		}
+	}
+
+	async getRandomPlace(): Promise<FSQRPlace> {
+		if(!this.places.length) throw new NotFoundException("Missing auth token, call auth first")
+		return this.places[Math.floor(Math.random() * this.places.length)];
 	}
 }

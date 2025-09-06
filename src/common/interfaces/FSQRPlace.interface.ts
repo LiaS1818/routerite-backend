@@ -69,5 +69,7 @@ export interface FSQRPlace {
 		total_ratings: number;
 		total_tips: number;
 	};
+	latitude: number;
+	longitude: number;
 
 }

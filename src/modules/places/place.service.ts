@@ -17,10 +17,10 @@ export class PlaceService implements OnModuleInit {
 		try {
 			const filePath = join(
 				process.cwd(),
-				'guadalajara_places_50_real.json'
+				'assets/places.json'
 			);
 			const data = readFileSync(filePath, 'utf8');
-			this.places = JSON.parse(data);
+			this.places = JSON.parse(data).results;
 			console.log(`✅ Cargados ${this.places.length} lugares desde JSON`);
 		} catch (error) {
 			console.error('❌ Error al cargar el archivo JSON:', error.message);
