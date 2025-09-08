@@ -7,7 +7,6 @@ import {
 import { InjectModel } from '@nestjs/sequelize';
 import { Itinerary, Activity, Trip, User } from '../../database/models';
 import { Op, WhereOptions } from 'sequelize';
-import { ActivityAttributes } from '../activity/entities/activity.interface';
 import { CreateItineraryDto } from './dto/create-itinerary.dto';
 import { UpdateItineraryDto } from './dto/update-itinerary.dto';
 import { Logger } from '@nestjs/common';
@@ -85,17 +84,6 @@ export class ItinerariesService {
 					{
 						model: Activity,
 						as: 'activities',
-						attributes: [
-							'id',
-							'itinerary_id',
-							'start_time',
-							'end_time',
-							'name',
-							'description',
-							'location',
-							'created_at',
-							'updated_at',
-						],
 						where: {
 							deleted_at: { [Op.is]: null },
 						},

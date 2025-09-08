@@ -9,12 +9,14 @@ import { SignupDto, LoginDto } from './dto/singup.dto';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { ResetPasswordDto } from './dto/resert-password.dto';
 import * as bcrypt from 'bcrypt';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class AuthService {
 	constructor(
 		private usersService: UsersService,
-		private jwtService: JwtService
+		private jwtService: JwtService,
+		private configService: ConfigService
 	) {}
 
 	async signup(signupDto: SignupDto) {
@@ -22,7 +24,9 @@ export class AuthService {
 			const user = await this.usersService.create(signupDto);
 
 			const payload = { email: user.email, id: user.id };
-			const access_token = this.jwtService.sign(payload);
+			const access_token = this.jwtService.sign(payload, {
+				secret: this.configService.get('JWT_SECRET') || 'secret-key',
+			});
 
 			return {
 				access_token,
@@ -56,7 +60,9 @@ export class AuthService {
 		}
 
 		const payload = { id: user.id };
-		const access_token = this.jwtService.sign(payload);
+		const access_token = this.jwtService.sign(payload, {
+			secret: this.configService.get('JWT_SECRET') || 'secret-key'
+		});
 
 		return {
 			access_token,

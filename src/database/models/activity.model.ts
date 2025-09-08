@@ -22,14 +22,11 @@ export interface ActivityAttributes {
 	description: string;
 	start_time: string; // <- this
 	end_time: string; // <- this
-	lat: string;
-	lng: string;
-	category_name: string;
-	category_fsqr_id: string;
+	lat: number;
+	lng: number;
 	distance_to_start: number;
 	budget: number;// <- this
-	price: number;
-	location: any; // JSON type
+	place: any; // JSON type
 	transportation_mode: string; // <- this
 	img_url?: string | null; // Added null type for nullable field
 	itinerary_id: number;
@@ -41,7 +38,7 @@ export interface ActivityAttributes {
 export interface ActivityCreationAttributes
 	extends Optional<
 		ActivityAttributes,
-		'id' | 'created_at' | 'updated_at' | 'deleted_at' | 'img_url'
+		'id' | 'created_at' | 'updated_at' | 'deleted_at'
 	> {}
 
 @Table({
@@ -80,20 +77,12 @@ export class Activity extends Model<
 	declare end_time: string;
 
 	@AllowNull(false)
-	@Column(DataType.STRING)
-	declare lat: string; // Changed from number to string
+	@Column(DataType.DOUBLE)
+	declare lat: number; // Changed from number to string
 
 	@AllowNull(false)
-	@Column(DataType.STRING)
-	declare lng: string; // Changed from number to string
-
-	@AllowNull(false)
-	@Column(DataType.STRING())
-	declare category_name: string;
-
-	@AllowNull(false)
-	@Column(DataType.STRING())
-	declare category_fsqr_id: string;
+	@Column(DataType.DOUBLE)
+	declare lng: number; // Changed from number to string
 
 	@AllowNull(false)
 	@Column(DataType.FLOAT())
@@ -104,12 +93,8 @@ export class Activity extends Model<
 	declare budget: number;
 
 	@AllowNull(false)
-	@Column(DataType.DOUBLE())
-	declare price: number;
-
-	@AllowNull(false)
 	@Column(DataType.JSON())
-	declare location: any;
+	declare place: any;
 
 	@AllowNull(false)
 	@Column(DataType.STRING)

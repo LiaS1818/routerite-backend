@@ -108,6 +108,8 @@ export class FoursquareMockService {
 
 	async getRandomPlace(): Promise<FSQRPlace> {
 		if(!this.places.length) throw new NotFoundException("Missing auth token, call auth first")
-		return this.places[Math.floor(Math.random() * this.places.length)];
+		const placesWithHours = this.places.filter(place => place.hours && place.hours.regular && place.hours.regular.length > 0);
+		return placesWithHours[Math.floor(Math.random() * placesWithHours.length)];
+		// return this.places[Math.floor(Math.random() * this.places.length)];
 	}
 }

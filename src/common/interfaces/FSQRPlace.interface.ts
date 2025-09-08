@@ -16,8 +16,8 @@ export interface FSQRPlace {
 			close: string;
 			day: number;
 			open: string;
-		}
-	}[]
+		}[]
+	}
 	location: {
 		locality: string;
 		region: string;

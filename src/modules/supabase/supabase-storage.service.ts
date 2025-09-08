@@ -107,4 +107,17 @@ export class SupabaseStorageService {
 
 		return `trips/${tripId}/cover.${extension}`;
 	}
+
+	/**
+	 * Genera la ruta para guardar la imagen de cobertura de un viaje
+	 * @param tripId ID del viaje
+	 * @param originalUrl URL original para extraer extensión
+	 * @returns Ruta para el archivo
+	 */
+	generateActivityImagePath(activityId: number, originalUrl: string): string {
+		// Extraer extensión de la URL original
+		const urlParts = originalUrl.split('.');
+		const extension = urlParts[urlParts.length - 1]?.split('?')[0] || 'jpg';
+		return `activities/${activityId}/cover.${extension}`;
+	}
 }
