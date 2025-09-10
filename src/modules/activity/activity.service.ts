@@ -8,13 +8,16 @@ import { Activity, Itinerary, Trip, User } from 'src/database/models';
 import { CreateActivityDto } from './dto/create-activity.dto';
 import { WhereOptions } from 'sequelize';
 import { TripAccessValidatorService } from '../../common/services/trip-access-validator.service';
+import { ActivityAttributes } from '../../database/models/activity.model';
+import { SupabaseStorageService } from '../supabase/supabase-storage.service';
 
 @Injectable()
 export class ActivityService {
 	constructor(
 		@InjectModel(Activity)
 		private readonly activityModel: typeof Activity,
-		private readonly tripAccessValidator: TripAccessValidatorService
+		private readonly tripAccessValidator: TripAccessValidatorService,
+		private readonly supabaseStorageService: SupabaseStorageService
 	) {}
 
 	async create(
@@ -29,7 +32,26 @@ export class ActivityService {
 			);
 		}
 
-		return this.activityModel.create(createActivityDto);
+		let { place, ...restOfActivity } = createActivityDto;
+		const photo = place.photos[0];
+		let activity = {
+			...restOfActivity,
+			lat: place.latitude,
+			lng: place.longitude,
+			place,
+			distance_to_start: 0,
+			transportation_mode: "auto"
+		}
+
+		const createdAct = await this.activityModel.create(activity);
+		const photoUrl = photo.prefix + "390x360" + photo.suffix;
+
+		// Update photo to supabase
+		const activityImagePath = this.supabaseStorageService.generateActivityImagePath(createdAct.id, photoUrl);
+		const generatedPhotoURL = await this.supabaseStorageService.uploadImageFromUrl(photoUrl, activityImagePath);
+		await createdAct.update({ img_url: generatedPhotoURL });
+
+		return createdAct;
 	}
 
 	async findAll(): Promise<Activity[]> {

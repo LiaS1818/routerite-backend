@@ -6,9 +6,13 @@ import {
 } from '@nestjs/common';
 import * as path from 'path';
 import * as fs from 'fs';
-import { PlaceSearchMetadataParam } from '../../../../.api/apis/fsq-developers-places';
+import {
+	PlaceDetailsMetadataParam,
+	PlaceSearchMetadataParam,
+} from '../../../../.api/apis/fsq-developers-places';
 import type * as types from '../../../../.api/apis/fsq-developers-places/types';
 import { FSQRPlace } from '../../interfaces/FSQRPlace.interface';
+
 
 type FilterParams = {
 	/** ids de categorias de Foursquare; acepta string o number */
@@ -32,28 +36,19 @@ export class FoursquareMockService {
 
 	constructor() {}
 
+	private readonly fields = "fsq_place_id,name,description,distance,price,rating,social_media,tel,website,categories,hours,location,photos,related_places,stats,latitude,longitude".split(",");
 	private places: any[] = [];
 
 	private loadPlacesJSON() {
-		const candidates = [
-			// 1) raíz del proyecto: <repo>/assets/places_mock.json
-			path.join(process.cwd(), 'assets', 'places_mock.json'),
-			// 2) cuando corre compilado en dist (ajusta niveles si cambias estructura)
-			path.resolve(__dirname, '../../../../assets/places_mock.json'),
-			path.resolve(__dirname, '../../../assets/places_mock.json'),
-		];
-
-		const file = candidates.find(p => fs.existsSync(p));
-
-		if (!file) {
-			throw new NotFoundException(
-				`places_mock.json not found. Looked in:\n${candidates.join('\n')}`
-			);
-		}
-
-		const raw = fs.readFileSync(file, 'utf8');
-		const json = JSON.parse(raw);
-		this.places = Array.isArray(json?.results) ? json.results : json;
+		const fileContent= fs.readFileSync('assets/places.json', 'utf-8')
+		const parsed = JSON.parse(fileContent);
+		this.places = parsed.results.map((place: any) => {
+			return {
+				fsq_place_id: "mock-place-id",
+				...place
+			}
+		})
+		this.logger.log("Places loaded")
 	}
 
 	auth(token): void {
@@ -66,10 +61,21 @@ export class FoursquareMockService {
 		if (!this.places.length)
 			throw new NotFoundException('Missing auth token, call auth first');
 
-		const { limit = 10 } = params;
-		// Generate n - non repeating random indexes
-		const indexes: number[] = [];
+		let { limit = 10, query } = params;
+
 		const places: FSQRPlace[] = [];
+		const indexes: number[] = [];
+
+		if(query) {
+			const place = this.places.find(place => place.name.toLowerCase().includes(query.toLowerCase()));
+			if(place) {
+				places.push(place)
+				indexes.push(this.places.indexOf(place))
+				limit -= 1;
+			}
+		}
+
+		// Generate n - non repeating random indexes
 		while (indexes.length < limit) {
 			const randomIndex = Math.floor(Math.random() * this.places.length);
 			if (!indexes.includes(randomIndex)) {
@@ -95,6 +101,28 @@ export class FoursquareMockService {
 			},
 			status: 200,
 		};
+	}
+
+	async placeDetails(params: PlaceDetailsMetadataParam): Promise<FetchResponse<200, types.PlaceDetailsResponse200>> {
+		if(!this.places.length) throw new NotFoundException("Missing auth token, call auth first")
+
+		let { fsq_place_id } = params;
+		if(!fsq_place_id) throw new NotFoundException("Missing fsq_place_id")
+
+		const place = this.places.find(place => place.fsq_place_id === fsq_place_id);
+		if(!place) throw new NotFoundException("Place not found")
+
+		return {
+			data: place,
+			status: 200
+		}
+	}
+
+	async getRandomPlace(): Promise<FSQRPlace> {
+		if(!this.places.length) throw new NotFoundException("Missing auth token, call auth first")
+		const placesWithHours = this.places.filter(place => place.hours && place.hours.regular && place.hours.regular.length > 0);
+		return placesWithHours[Math.floor(Math.random() * placesWithHours.length)];
+		// return this.places[Math.floor(Math.random() * this.places.length)];
 	}
 
 	// --- helper: haversine (m) ---

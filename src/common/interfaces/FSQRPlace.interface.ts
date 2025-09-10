@@ -1,5 +1,5 @@
 export interface FSQRPlace {
-	fsq_id: string;
+	fsq_place_id: string;
 	description: string;
 	distance: number;
 	name: string;
@@ -16,8 +16,8 @@ export interface FSQRPlace {
 			close: string;
 			day: number;
 			open: string;
-		}
-	}[]
+		}[]
+	}
 	location: {
 		locality: string;
 		region: string;
@@ -69,5 +69,7 @@ export interface FSQRPlace {
 		total_ratings: number;
 		total_tips: number;
 	};
+	latitude: number;
+	longitude: number;
 
 }

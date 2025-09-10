@@ -12,6 +12,7 @@ import { TripInvitationsModule } from './modules/trip-invitations/trip-invitatio
 import { HttpModule } from '@nestjs/axios';
 import { CategoriesModule } from './modules/categories/categories.module';
 import { PlacesModule } from './modules/places/places.module';
+import { FoursquareMockModule } from './common/services/foursquare/foursquare-mock.module';
 
 @Module({
 	imports: [
@@ -32,6 +33,7 @@ import { PlacesModule } from './modules/places/places.module';
 		}),
 		CategoriesModule,
 		PlacesModule,
+		FoursquareMockModule
 	],
 	controllers: [AppController],
 	providers: [AppService],

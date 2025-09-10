@@ -8,7 +8,6 @@ import { TripAccessValidatorModule } from '../../common/services/trip-access-val
 import { HttpModule } from '@nestjs/axios';
 import { ConfigModule } from '@nestjs/config';
 import { SupabaseModule } from '../supabase/supabase.module';
-import { FoursquareMockService } from '../../common/services/foursquare/foursquare-mock.service';
 
 @Module({
 	imports: [
@@ -19,7 +18,7 @@ import { FoursquareMockService } from '../../common/services/foursquare/foursqua
 		SupabaseModule,
 	],
 	controllers: [TripsController],
-	providers: [TripsService, FoursquareMockService],
+	providers: [TripsService],
 	exports: [TripsService],
 })
 export class TripsModule {}
