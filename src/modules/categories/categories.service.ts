@@ -1,77 +1,93 @@
-// src/categories/categories.service.ts
+// categories.service.ts
 import { Injectable } from '@nestjs/common';
-import { InjectModel } from '@nestjs/sequelize';
-import { Op } from 'sequelize';
 import { FoursquareCategory } from '../../database/models/foursquare-categories.model';
+import { Op, WhereOptions } from 'sequelize';
+
+type ListParams = {
+	q?: string;
+	sort?: 'name' | 'label';
+	order?: 'ASC' | 'DESC';
+	page: number;
+	limit: number;
+	parentName?: string;
+};
 
 @Injectable()
 export class CategoriesService {
-	constructor(
-		@InjectModel(FoursquareCategory)
-		private categoryModel: typeof FoursquareCategory
-	) {}
+	async list({
+		q,
+		sort = 'name',
+		order = 'ASC',
+		page,
+		limit,
+		parentName,
+	}: ListParams) {
+		const where: WhereOptions = {};
 
-	async search(q = '', limit = 20) {
-		const lim = Math.max(1, Math.min(Number(limit) || 20, 50));
-
-		if (!q) {
-			return this.categoryModel.findAll({
-				limit: lim,
-				order: [['name', 'ASC']],
-			});
-		}
-
-		// Búsqueda con Sequelize
-		const categories = await this.categoryModel.findAll({
-			where: {
+		if (q) {
+			Object.assign(where, {
 				[Op.or]: [
 					{ name: { [Op.iLike]: `%${q}%` } },
 					{ label: { [Op.iLike]: `%${q}%` } },
 				],
-			},
-			limit: lim,
-			order: [
-				// Orden personalizado con Sequelize literal
-				this.categoryModel.sequelize
-					? this.categoryModel.sequelize.literal(`
-              CASE
-                WHEN lower(name) = lower('${q.replace(/'/g, "''")}') THEN 0
-                WHEN lower(name) LIKE lower('${q.replace(/'/g, "''")}') || '%' THEN 1
-                ELSE 2
-              END
-            `)
-					: ['name', 'ASC'],
-				['name', 'ASC'],
-			],
-			raw: true, // Para mejor performance
-		});
+			});
+		}
 
-		return categories;
-	}
+		// filtro jerarquico opcional por padre
+		if (parentName) {
+			(where as any)[Op.and] = [
+				...((where as any)[Op.and] ?? []),
+				{ label: { [Op.iLike]: `${parentName} > %` } }, // hijos directos
+			];
+		}
 
-	async getPopular(limit = 10) {
-		return this.categoryModel.findAll({
-			limit: Math.max(1, Math.min(limit, 20)),
-			order: [['name', 'ASC']],
-			attributes: ['id', 'name', 'label'],
-		});
-	}
-
-	async getAll(page = 1, limit = 50) {
 		const offset = (page - 1) * limit;
-		// Cambiar para devolver un arreglo
-		const categories = await this.categoryModel.findAll({
-			offset,
-			limit: Math.min(limit, 100),
-			order: [['name', 'ASC']],
-			attributes: ['id', 'name', 'label'],
-		});
-		return categories;
-	}
 
-	async findById(id: string) {
-		return this.categoryModel.findByPk(id, {
+		const { rows, count } = await FoursquareCategory.findAndCountAll({
+			where,
+			order: [[sort, order]],
+			limit,
+			offset,
+			// ⬇⬇⬇ IMPORTANTE: trae name y label
 			attributes: ['id', 'name', 'label'],
+			raw: true,
 		});
+
+		const data = rows.map(r => {
+			const label = r.label ?? '';
+			const breadcrumbs = label
+				.split('>')
+				.map(s => s.trim())
+				.filter(Boolean);
+
+			const level = breadcrumbs.length ? breadcrumbs.length - 1 : 0;
+			const parent =
+				breadcrumbs.length > 1
+					? breadcrumbs[breadcrumbs.length - 2]
+					: null;
+
+			// retornar solo breadcrumbs en la posicion 1 y 2
+			return {
+				id: r.id,
+				name: r.name,
+				label: r.label,
+				breadcrumbs: breadcrumbs.slice(1, 3),
+				level,
+				parent,
+			};
+		});
+
+		return {
+			data,
+			meta: {
+				total: count,
+				page,
+				limit,
+				totalPages: Math.ceil(count / limit),
+				sort,
+				order,
+				q: q ?? null,
+			},
+		};
 	}
 }

@@ -53,12 +53,7 @@ export class PlaceService implements OnModuleInit {
 			);
 		}
 
-		if (filter.ratingMax !== undefined) {
-			filteredPlaces = filteredPlaces.filter(
-				place => place.rating <= filter.ratingMax
-			);
-		}
-
+	
 		// Filtrar por rango de precio
 		if (filter.priceMin !== undefined) {
 			filteredPlaces = filteredPlaces.filter(

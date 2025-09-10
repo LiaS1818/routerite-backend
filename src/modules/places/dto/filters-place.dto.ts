@@ -4,5 +4,4 @@ export class FilterPlacesDto {
 	priceMax: number;
 	orderBy: 'price-asc' | 'price-desc';
 	ratingMin: number;
-	ratingMax: number;
 }
