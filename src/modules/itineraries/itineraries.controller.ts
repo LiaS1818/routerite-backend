@@ -11,12 +11,14 @@ import {
 	UseGuards,
 	Request,
 	Patch,
+	Inject,
 } from '@nestjs/common';
 import { ItinerariesService } from './itineraries.service';
 import { CreateItineraryDto } from './dto/create-itinerary.dto';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { UpdateItineraryDto } from './dto/update-itinerary.dto';
 import { FoursquareMockService } from '../../common/services/foursquare/foursquare-mock.service';
+import { ActivityService } from '../activity/activity.service';
 
 @Controller('itineraries')
 @UseGuards(JwtAuthGuard)
@@ -64,19 +66,12 @@ export class ItinerariesController {
 		}
 	}
 
+	// To get itinerary by st
+
 	@Get(':id/place')
 	async getMockPlaceForTesting() {
 		this.fsqDevelopersPlaces.auth("token")
 		return this.fsqDevelopersPlaces.getRandomPlace()
-	}
-
-	//update itinerary. receiving itinerary id in body json
-	@Patch(':id')
-	async updateItinerary(
-		@Param('id', ParseIntPipe) id: number,
-		@Body() updateItineraryDto: UpdateItineraryDto
-	) {
-		return this.itinerariesService.updateItinerary(id, updateItineraryDto);
 	}
 
 	//delete itinerary
@@ -84,4 +79,18 @@ export class ItinerariesController {
 	async deleteItinerary(@Param('id', ParseIntPipe) id: number) {
 		return this.itinerariesService.remove(id);
 	}
+
+	@Patch(':id')
+	async updateItinerary(
+		@Param('id', ParseIntPipe) id: number,
+		@Body() updateItineraryDto: UpdateItineraryDto,
+		@Request() req
+	) {
+		return this.itinerariesService.updateItinerary(
+			id,
+			updateItineraryDto,
+		);
+	}
+	
+
 }

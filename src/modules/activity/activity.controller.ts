@@ -23,7 +23,7 @@ import { ConfigService } from '@nestjs/config';
 export class ActivityController {
 	constructor(
 		private readonly activityService: ActivityService,
-		private configService: ConfigService,
+		private configService: ConfigService
 	) {}
 
 	@Post()
@@ -47,6 +47,9 @@ export class ActivityController {
 		}
 	}
 
+	// To get all activities of an itinerary by trip Id
+	
+
 	@Get(':id')
 	async findOne(@Param('id', ParseIntPipe) id: number, @Request() req) {
 		return this.activityService.findOne(id, req.user.id);
@@ -56,6 +59,20 @@ export class ActivityController {
 	async remove(@Param('id', ParseIntPipe) id: number, @Request() req) {
 		await this.activityService.remove(id, req.user.id);
 		return { message: 'Activity deleted successfully' };
+	}
+
+	@Get()
+	async itineraryActivities(
+		@Query('trip_id', ParseIntPipe) tripId: number,
+		@Query('date') date: string,
+		@Request() req,
+	) {
+
+		const activities = await this.activityService.findByTripDate(11, '2025-09-29', req.user.id);
+		// imprimir respuesta
+		console.log('Activities found:', activities);
+		return activities;
+
 	}
 
 }

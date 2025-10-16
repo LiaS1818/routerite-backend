@@ -5,7 +5,7 @@ import { Default } from 'sequelize-typescript';
 
 @Controller('categories')
 export class CategoriesController {
-	constructor(private readonly categoriesService: CategoriesService) {}
+	constructor(private readonly categoriesService: CategoriesService) { }
 
 	// @Get('search')
 	// async searchCategories(
@@ -40,12 +40,12 @@ export class CategoriesController {
 	@Get()
 	async list(
 		@Query('q') q?: string,
-		@Query('sort') sort:'name' | 'label' = 'name',
+		@Query('sort') sort: 'name' | 'label' = 'name',
 		@Query('order') order: 'ASC' | 'DESC' = 'ASC',
 		@Query('page', new DefaultValuePipe(1), ParseIntPipe) page = 1,
-		@Query('limit', new DefaultValuePipe(50), ParseIntPipe) limit= 50
+		@Query('limit', new DefaultValuePipe(50), ParseIntPipe) limit = 50
 	) {
-		return this.categoriesService.list({q, sort, order, page, limit});
+		return this.categoriesService.list({ q, sort, order, page, limit });
 	}
-	
+
 }
