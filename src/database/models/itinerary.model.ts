@@ -33,6 +33,9 @@ export interface ItineraryAttributes {
 	experience_type_ids: string;
 	experience_types: string;
 	configured?: boolean;
+	max_activities?: number | null; // Nuevo campo añadido
+	is_generated?: boolean; // Nuevo campo añadido
+	generation_metadata?: object | null; // Nuevo campo añadido
 	created_at: Date;
 	updated_at: Date;
 	deleted_at?: Date | null; // Added null type for nullable field
@@ -103,20 +106,6 @@ export class Itinerary extends Model<ItineraryCreationAttributes> {
 	})
 	declare experience_type_ids: string; // 52e928d0bcbc57f1066b7e9b,52e928d0bcbc57f1066b7e9b
 
-	// @AllowNull(true)
-	// @Column({
-	// 	type: DataType.STRING(255),
-	// 	get() {
-	// 		const rawValue = this.getDataValue('experience_types');
-	// 		return rawValue ? rawValue.split(',') : null;
-	// 	},
-	// 	set(value: string[]) {
-	// 		if(value)
-	// 			this.setDataValue('experience_types', value.join(','));
-	// 	},
-	// })
-	// declare experience_types: string; // 52e928d0bcbc57f1066b7e9b,52e928d0bcbc57f1066b7e9b
-
 	@AllowNull(true)
 	@Column(DataType.STRING(255))
 	declare cover_image?: string;
@@ -142,6 +131,18 @@ export class Itinerary extends Model<ItineraryCreationAttributes> {
 		},
 	})
 	declare configured?: boolean;
+
+	@AllowNull(true)
+	@Column(DataType.INTEGER)
+	declare max_activities?: number;
+
+	@AllowNull(true)
+	@Column(DataType.BOOLEAN)
+	declare is_generated?: boolean;
+
+	@AllowNull(true)
+	@Column(DataType.JSONB)
+	declare generation_metadata?: object;
 
 	@CreatedAt
 	declare created_at: Date;

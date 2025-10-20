@@ -123,12 +123,6 @@ export class Trip extends Model<TripAttributes, TripCreationAttributes> {
 	@Column(DataType.JSON)
 	declare location: LocationInterface;
 
-	// @Column({
-	// 	type: DataType.GEOMETRY('POINT', 4326),
-	// 	allowNull: true
-	// })
-	declare location_point: PostGISPoint;
-
 	@AllowNull(false)
 	@Column({
 		type: DataType.STRING(),

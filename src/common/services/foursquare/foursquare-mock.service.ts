@@ -177,7 +177,7 @@ export class FoursquareMockService {
 		const photos = Array.isArray(p?.photos) ? p.photos : [];
 
 		return {
-			fsq_id: p?.fsq_id ?? null,
+			fsq_place_id: p?.fsq_place_id ?? null,
 			name: p?.name ?? null,
 			description:
 				p?.description ?? p?.location?.formatted_address ?? null,
@@ -303,7 +303,7 @@ export class FoursquareMockService {
 		}
 	  ): Promise<FetchResponse<200, types.PlaceSearchResponse200>> {
 		this.ensureLoaded();
-	  
+
 		const {
 		  categoryIds,
 		  minRating,
@@ -340,7 +340,7 @@ export class FoursquareMockService {
 	  
 		// Si el usuario pasó 500, esto terminará como 5
 		// y si pasó 0 o negativo, terminará como 1.
-	  
+
 		let filtered: FSQRPlace[] = this.places.filter((p: any) =>
 		  this.matchesFilters(p, {
 			catSet,
@@ -358,17 +358,17 @@ export class FoursquareMockService {
 			return rb - ra;
 		  });
 		}
-	  
+
 		// aplica limite
 		const limited = filtered.slice(0, lim);
 	  
 		// mapea al formato requerido
-		const results = limited.map((p: any) => this.mapToClientPlace(p, originLL));
+		const results = limited;
 	  
 		this.logger.debug(
 		  `placeSearchFiltered: filtered=${filtered.length} limit=${lim} returned=${results.length}`
 		);
-	  
+
 		return {
 		  data: {
 			// @ts-ignore

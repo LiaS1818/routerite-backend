@@ -14,7 +14,7 @@ import {
 	ForeignKey,
 } from 'sequelize-typescript';
 import { Optional } from 'sequelize';
-import { Itinerary } from './index';
+import { Itinerary} from './index';
 
 export interface ActivityAttributes {
 	id: number;
@@ -27,7 +27,10 @@ export interface ActivityAttributes {
 	distance_to_start: number;
 	budget: number;// <- this
 	place: any; // JSON type
+	sequence?: number | null; // Nuevo campo añadido
 	transportation_mode: string; // <- this
+	transportation_duration?: number | null; // Nuevo campo añadido
+	notes?: string | null; // Nuevo campo añadido
 	img_url?: string | null; // Added null type for nullable field
 	itinerary_id: number;
 	created_at: Date;
@@ -123,4 +126,16 @@ export class Activity extends Model<
 
 	@BelongsTo(() => Itinerary, { foreignKey: 'itinerary_id' })
 	declare itinerary?: Itinerary;
+
+	@AllowNull(true)
+	@Column(DataType.SMALLINT)
+	declare sequence?: number | null;
+
+	@AllowNull(true)
+	@Column(DataType.INTEGER)
+	declare transportation_duration?: number | null;
+
+	@AllowNull(true)
+	@Column(DataType.TEXT)
+	declare notes?: string | null;
 }
