@@ -10,6 +10,7 @@ import { TripAccessValidatorModule } from '../../common/services/trip-access-val
 import { FoursquareMockModule } from '../../common/services/foursquare/foursquare-mock.module';
 import { OptimizerModule } from '../optimizer/optimizer.module';
 import { PlacesModule } from '../places/places.module';
+import { ActivityModule } from '../activity/activity.module';
 
 @Module({
 	imports: [
@@ -19,6 +20,7 @@ import { PlacesModule } from '../places/places.module';
 		FoursquareMockModule,
 		OptimizerModule,
 		PlacesModule,
+		ActivityModule
 	],
 	providers: [
 		ItinerariesService,

@@ -1,0 +1,6 @@
+export enum SortEnum {
+  RELEVANCE = 'RELEVANCE',
+  RATING = 'RATING',
+  DISTANCE = 'DISTANCE',
+  POPULARITY = 'POPULARITY',
+}

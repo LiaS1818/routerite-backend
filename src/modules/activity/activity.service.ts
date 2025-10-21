@@ -6,7 +6,7 @@ import {
 import { InjectModel } from '@nestjs/sequelize';
 import { Activity, Itinerary, Trip, User } from 'src/database/models';
 import { CreateActivityDto } from './dto/create-activity.dto';
-import { WhereOptions } from 'sequelize';
+import { cast, col, literal, Op, WhereOptions, where } from 'sequelize';
 import { TripAccessValidatorService } from '../../common/services/trip-access-validator.service';
 import { ActivityAttributes } from '../../database/models/activity.model';
 import { SupabaseStorageService } from '../supabase/supabase-storage.service';
@@ -14,11 +14,16 @@ import { SupabaseStorageService } from '../supabase/supabase-storage.service';
 @Injectable()
 export class ActivityService {
 	constructor(
+		@InjectModel(Trip)
+		private readonly tripModel: typeof Trip,
 		@InjectModel(Activity)
 		private readonly activityModel: typeof Activity,
+		@InjectModel(Itinerary)
+		private readonly itineraryModel: typeof Itinerary,
+
 		private readonly tripAccessValidator: TripAccessValidatorService,
 		private readonly supabaseStorageService: SupabaseStorageService
-	) {}
+	) {}	
 
 	async create(
 		createActivityDto: CreateActivityDto,
@@ -89,21 +94,37 @@ export class ActivityService {
 		await activity.destroy();
 	}
 
-	async findByItinerary(
-		itineraryId: number,
-		userId?: number
-	): Promise<Activity[]> {
-		// Validate access to itinerary
-		if (userId) {
-			await this.tripAccessValidator.validateTripAccessThroughItinerary(
-				itineraryId,
-				userId
-			);
-		}
-
-		return this.activityModel.findAll({
-			where: { itinerary_id: itineraryId } as WhereOptions<Activity>,
-			order: [['created_at', 'ASC']],
-		});
+	// activity.service.ts
+	async findByTripDate(tripId: number, date: string, userId: number) {
+		const tz = 'America/Mexico_City';
+	return this.activityModel.findAll({
+		attributes: { exclude: ['itinerary_id'] },
+		include: [
+		{
+			model: this.itineraryModel,
+			as: 'itinerary',
+			required: true,                 // INNER JOIN
+			where: {
+			trip_id: tripId,
+			[Op.and]: literal(`(itinerary.date AT TIME ZONE 'America/Mexico_City')::date = DATE '${date}'`)
+			},
+			attributes: ['id', 'date', 'trip_id'],
+			include: [
+			{
+				model: this.tripModel,
+				as: 'trip',
+				required: true,             // INNER JOIN
+				where: { user_id: userId },
+				attributes: ['id', 'user_id', 'destination'],
+			},
+			],
+		},
+		],
+		order: [['start_time', 'ASC']],
+		subQuery: false,                    // fuerza JOIN directo (evita subconsulta)
+	});
 	}
+
+
+
 }

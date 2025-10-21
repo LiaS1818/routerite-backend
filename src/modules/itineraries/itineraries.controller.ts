@@ -16,12 +16,14 @@ import {
 	BadRequestException,
 	UnprocessableEntityException,
 	ServiceUnavailableException,
+	Inject,
 } from '@nestjs/common';
 import { ItinerariesService } from './itineraries.service';
 import { CreateItineraryDto } from './dto/create-itinerary.dto';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { UpdateItineraryDto } from './dto/update-itinerary.dto';
 import { FoursquareMockService } from '../../common/services/foursquare/foursquare-mock.service';
+import { ActivityService } from '../activity/activity.service';
 import { GenerateItineraryDto } from './dto/generate-itinerary.dto';
 import { GenerationResponseDto } from './dto/generation-response.dto';
 import { ItineraryGeneratorService } from './services/itinerary-generator.service';
@@ -81,15 +83,6 @@ export class ItinerariesController {
 	async getMockPlaceForTesting() {
 		this.fsqDevelopersPlaces.auth("token")
 		return this.fsqDevelopersPlaces.getRandomPlace()
-	}
-
-	//update itinerary. receiving itinerary id in body json
-	@Patch(':id')
-	async updateItinerary(
-		@Param('id', ParseIntPipe) id: number,
-		@Body() updateItineraryDto: UpdateItineraryDto
-	) {
-		return this.itinerariesService.updateItinerary(id, updateItineraryDto);
 	}
 
 	//delete itinerary
@@ -199,4 +192,18 @@ export class ItinerariesController {
 			});
 		}
 	}
+
+	@Patch(':id')
+	async updateItinerary(
+		@Param('id', ParseIntPipe) id: number,
+		@Body() updateItineraryDto: UpdateItineraryDto,
+		@Request() req
+	) {
+		return this.itinerariesService.updateItinerary(
+			id,
+			updateItineraryDto,
+		);
+	}
+
+
 }
