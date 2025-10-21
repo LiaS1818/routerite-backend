@@ -20,6 +20,7 @@ import { Sequelize } from 'sequelize-typescript';
 import { OptimizationPayload } from '../../optimizer/dto/optimization-payload.dto';
 import { FoursquareMockService } from '../../../common/services/foursquare/foursquare-mock.service';
 import { PlaceSearchMetadataParam } from '../../../../.api/apis/fsq-developers-places';
+import { SupabaseStorageService } from '../../supabase/supabase-storage.service';
 
 interface ActivityLimits {
 	min: number;
@@ -94,6 +95,7 @@ export class ItineraryGeneratorService {
 		private readonly placesSearchService: PlacesSearchService,
 		private readonly placesProcessorService: PlacesProcessorService,
 		private readonly fsqrMockService: FoursquareMockService,
+		private readonly supabaseStorageService: SupabaseStorageService,
 	) {}
 
 	async generateItinerary(
@@ -133,6 +135,9 @@ export class ItineraryGeneratorService {
 			transaction = await this.sequelize.transaction();
 			await this.persistOptimizationResult(itinerary, optimizationResult, options, transaction, requestId);
 			await transaction.commit();
+
+			// PASO 6.5: OBTENER Y SUBIR FOTOS DE ACTIVIDADES
+			await this.populateActivityImages(itineraryId, requestId);
 
 			// PASO 7: CONSTRUCCIÓN DE RESPUESTA
 			const finalResponse = await this.buildFinalResponse(itineraryId, optimizationResult, startTime, requestId);
@@ -542,6 +547,8 @@ export class ItineraryGeneratorService {
 					// Si hay coordenadas, buscar el más cercano
 					let bestMatch: any = null;
 					let minDistance = Number.MAX_VALUE;
+					// TODO: Remove when debugging is finished
+					bestMatch = places[0];
 					if (places.length > 0 && itinerary.starting_location.latLng) {
 						const [latStr, lngStr] = itinerary.starting_location.latLng.split(',');
 						const lat = parseFloat(latStr);
@@ -577,8 +584,8 @@ export class ItineraryGeneratorService {
 							fsq_place_id: fsqrPlace.fsq_place_id || '',
 							name: fsqrPlace.name || '',
 							location: {
-								lat: bestMatch.lat,
-								lng: bestMatch.lng,
+								lat: bestMatch.latitude,
+								lng: bestMatch.longitude
 							},
 							category: {
 								id: category.fsq_category_id || '',
@@ -658,6 +665,84 @@ export class ItineraryGeneratorService {
 		} catch (error) {
 			this.logger.error(`[${requestId}] Error obtaining candidate places: ${error.message}`);
 			throw error;
+		}
+	}
+
+	/**
+	 * PASO 6.5: Obtener y subir fotos de actividades desde Foursquare a Supabase
+	 */
+	private async populateActivityImages(itineraryId: number, requestId: string): Promise<void> {
+		this.logger.log(`[${requestId}] PASO 6.5: Populating activity images from Foursquare`);
+
+		try {
+			// Obtener todas las actividades del itinerario
+			const activities = await this.activityModel.findAll({
+				where: { itinerary_id: itineraryId }
+			});
+
+			this.logger.log(`[${requestId}] Found ${activities.length} activities to process images`);
+
+			// Autenticar el servicio Foursquare
+			this.fsqrMockService.auth('token');
+
+			// Procesar cada actividad en paralelo (con límite para no sobrecargar)
+			const imagePromises = activities.map(async (activity) => {
+				try {
+					// Obtener fsq_place_id del objeto place guardado
+					const fsqPlaceId = activity.place?.fsq_place_id;
+					
+					if (!fsqPlaceId) {
+						this.logger.warn(`[${requestId}] Activity ${activity.id} doesn't have fsq_place_id, skipping image`);
+						return;
+					}
+
+					this.logger.debug(`[${requestId}] Processing images for activity ${activity.id} (${activity.name})`);
+
+					// Obtener fotos del lugar desde Foursquare
+					const photosResponse = await this.fsqrMockService.placePhotos({
+						fsq_place_id: fsqPlaceId,
+						"X-Places-Api-Version": "2025-06-17"
+					});
+
+					const photos = photosResponse.data;
+					
+					if (!photos || photos.length === 0) {
+						this.logger.warn(`[${requestId}] No photos found for activity ${activity.id} (${fsqPlaceId})`);
+						return;
+					}
+
+					// Tomar la primera foto disponible
+					const firstPhoto = photos[0];
+					const photoUrl = `${firstPhoto.prefix}390x360${firstPhoto.suffix}`;
+					
+					this.logger.debug(`[${requestId}] Found photo for activity ${activity.id}: ${photoUrl}`);
+
+					// Generar ruta para Supabase usando el método del SupabaseStorageService
+					const activityImagePath = this.supabaseStorageService.generateActivityImagePath(activity.id, photoUrl);
+					
+					// Subir imagen a Supabase
+					const supabaseImageUrl = await this.supabaseStorageService.uploadImageFromUrl(photoUrl, activityImagePath);
+					
+					// Actualizar el campo img_url en la base de datos
+					await activity.update({ img_url: supabaseImageUrl });
+					
+					this.logger.debug(`[${requestId}] Successfully updated activity ${activity.id} with image: ${supabaseImageUrl}`);
+
+				} catch (error) {
+					// Log error but don't fail the entire process
+					this.logger.warn(`[${requestId}] Failed to process image for activity ${activity.id}: ${error.message}`);
+				}
+			});
+
+			// Esperar que todas las imágenes se procesen
+			await Promise.all(imagePromises);
+			
+			this.logger.log(`[${requestId}] Completed image population for ${activities.length} activities`);
+
+		} catch (error) {
+			// Log error but don't fail the entire generation process
+			this.logger.error(`[${requestId}] Error populating activity images: ${error.message}`);
+			// No re-lanzamos el error para que la generación continúe
 		}
 	}
 

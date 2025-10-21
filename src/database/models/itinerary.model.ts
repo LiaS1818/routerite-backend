@@ -118,7 +118,8 @@ export class Itinerary extends Model<ItineraryCreationAttributes> {
 				this.getDataValue('experience_types') !== null &&
 				this.getDataValue('lat') !== null &&
 				this.getDataValue('lng') !== null &&
-				this.getDataValue('start_time') !== null
+				this.getDataValue('start_time') !== null &&
+				this.getDataValue('starting_location') !== null
 			);
 		},
 		set() {

@@ -190,6 +190,8 @@ export class ItinerariesService {
 				updateItineraryDto.experience_type_ids.join(',');
 		if (updateItineraryDto.is_configured !== undefined)
 			itinerary.configured = updateItineraryDto.is_configured;
+		if(updateItineraryDto.starting_location)
+			itinerary.starting_location = updateItineraryDto.starting_location;
 
 		// Guardar los cambios en el itinerario
 		await itinerary.save();

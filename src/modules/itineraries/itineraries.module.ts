@@ -11,6 +11,7 @@ import { FoursquareMockModule } from '../../common/services/foursquare/foursquar
 import { OptimizerModule } from '../optimizer/optimizer.module';
 import { PlacesModule } from '../places/places.module';
 import { ActivityModule } from '../activity/activity.module';
+import { SupabaseModule } from '../supabase/supabase.module';
 
 @Module({
 	imports: [
@@ -20,7 +21,8 @@ import { ActivityModule } from '../activity/activity.module';
 		FoursquareMockModule,
 		OptimizerModule,
 		PlacesModule,
-		ActivityModule
+		ActivityModule,
+		SupabaseModule
 	],
 	providers: [
 		ItinerariesService,
