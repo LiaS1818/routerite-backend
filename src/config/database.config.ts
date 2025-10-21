@@ -8,6 +8,5 @@ export const databaseConfig: SequelizeModuleOptions = {
 	password: process.env.DB_PASSWORD || 'backend_agent',
 	database: process.env.DB_NAME || 'routerite',
 	autoLoadModels: true,
-	synchronize: true,
 	logging: process.env.NODE_ENV === 'development' ? console.log : false,
 };
