@@ -19,6 +19,7 @@ import {
 } from 'sequelize-typescript';
 import { Op, Optional } from 'sequelize';
 import { Trip, Activity } from './index';
+import { LocationInterface } from '../../modules/trips/trip.interfaces';
 
 export interface ItineraryAttributes {
 	id: number;
@@ -40,6 +41,7 @@ export interface ItineraryAttributes {
 	deleted_at?: Date | null; // Added null type for nullable field
 	activities?: Activity[];
 	trip?: Trip;
+	starting_location?: LocationInterface; // Nuevo campo añadido
 }
 
 export interface ItineraryCreationAttributes
@@ -138,6 +140,10 @@ export class Itinerary extends Model<ItineraryCreationAttributes> {
 	@AllowNull(true)
 	@Column(DataType.JSONB)
 	declare generation_metadata?: object;
+
+	@AllowNull(true)
+	@Column(DataType.JSONB)
+	declare starting_location?: LocationInterface;
 
 	@CreatedAt
 	declare created_at: Date;

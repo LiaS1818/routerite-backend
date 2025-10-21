@@ -21,12 +21,12 @@ import { FoursquareCategory } from './models/foursquare-categories.model';
 				password: configService.get('DB_PASSWORD') || '1234',
 				database: configService.get('DB_NAME') || 'routerite',
 				autoLoadModels: true,
-				synchronize: true,
-				define: {
-					schema: 'routerite',
-					timestamps: true,
-					underscored: true,
-				},
+				// synchronize: true,
+				// define: {
+				// 	schema: 'routerite',
+				// 	timestamps: true,
+				// 	underscored: true,
+				// },
 				alter: true,
 				models: [
 					User,

@@ -6,11 +6,9 @@ import { GenerationResponseDto, GenerationMetadataDto, ItineraryWithActivitiesDt
 import { ItinerariesService } from '../itineraries.service';
 import { TripsService } from '../../trips/trips.service';
 import { ItineraryValidatorService } from './itinerary-validator.service';
-import { FoursquareMockService } from '../../../common/services/foursquare/foursquare-mock.service';
 import { OptimizerClientService } from '../../optimizer/optimizer-client.service';
 import { OptimizationResponse, OptimizationSuccessResponse, OptimizationErrorResponse } from '../../optimizer/dto/optimization-response.dto';
 import { OptimizerPayloadBuilder, CalculatedParams } from '../../optimizer/helpers/optimizer-payload.builder';
-import { PlaceService } from '../../places/place.service';
 import { PlacesSearchService } from '../../places/services/places-search.service';
 import { PlacesProcessorService } from '../../places/services/places-processor.service';
 import { PlaceSearchParams } from '../../places/dto/place-search.dto';
@@ -20,6 +18,8 @@ import { GenerationConstants } from '../../../shared/constants/generation.consta
 import { Itinerary, Activity, Trip } from '../../../database/models';
 import { Sequelize } from 'sequelize-typescript';
 import { OptimizationPayload } from '../../optimizer/dto/optimization-payload.dto';
+import { FoursquareMockService } from '../../../common/services/foursquare/foursquare-mock.service';
+import { PlaceSearchMetadataParam } from '../../../../.api/apis/fsq-developers-places';
 
 interface ActivityLimits {
 	min: number;
@@ -90,11 +90,10 @@ export class ItineraryGeneratorService {
 		private readonly sequelize: Sequelize,
 		private readonly itinerariesService: ItinerariesService,
 		private readonly itineraryValidatorService: ItineraryValidatorService,
-		private readonly foursquareMockService: FoursquareMockService,
 		private readonly optimizerClientService: OptimizerClientService,
-		private readonly placeService: PlaceService,
 		private readonly placesSearchService: PlacesSearchService,
 		private readonly placesProcessorService: PlacesProcessorService,
+		private readonly fsqrMockService: FoursquareMockService,
 	) {}
 
 	async generateItinerary(
@@ -465,7 +464,7 @@ export class ItineraryGeneratorService {
 		);
 
 		const maxActivities = Math.min(options.max_activities || 5, maxActivitiesByTime);
-		const minActivities = Math.min(minActivitiesByTime, maxActivities);
+		const minActivities = Math.max(options.min_activities || 3, minActivitiesByTime);
 		const targetActivities = Math.max(minActivities, Math.min(maxActivities, 4));
 
 		const activities: ActivityLimits = {
@@ -523,13 +522,94 @@ export class ItineraryGeneratorService {
 		this.logger.log(`[${requestId}] PASO 3: Obtaining candidate places using PlacesSearchService and PlacesProcessorService`);
 
 		try {
-			// 3.1. Preparar parámetros de búsqueda
+			const candidates: ProcessedPlace[] = [];
+			// 1. Si existe starting_location, buscar el mejor match en FSQR
+			if (itinerary.starting_location) {
+				this.logger.log(`[${requestId}] Searching FSQR place for starting_location: ${JSON.stringify(itinerary.starting_location)}`);
+				try {
+					this.fsqrMockService.auth('token');
+					// Buscar por nombre si está disponible
+					let searchParams: PlaceSearchMetadataParam = {
+						limit: 10,
+						query: itinerary.starting_location.name,
+						ll: `${itinerary.lat},${itinerary.lng}`,
+						radius: 1000,
+						sort: 'DISTANCE',
+						"X-Places-Api-Version": "2025-06-17"
+					};
+					const searchResult = await this.fsqrMockService.placeSearch(searchParams);
+					const places = (searchResult.data.results || []) as any[];
+					// Si hay coordenadas, buscar el más cercano
+					let bestMatch: any = null;
+					let minDistance = Number.MAX_VALUE;
+					if (places.length > 0 && itinerary.starting_location.latLng) {
+						const [latStr, lngStr] = itinerary.starting_location.latLng.split(',');
+						const lat = parseFloat(latStr);
+						const lng = parseFloat(lngStr);
+						for (const place of places) {
+							const plat = place.geocodes && place.geocodes.main ? place.geocodes.main.latitude : 0;
+							const plng = place.geocodes && place.geocodes.main ? place.geocodes.main.longitude : 0;
+							const dist = Math.sqrt(Math.pow(plat - lat, 2) + Math.pow(plng - lng, 2));
+							if (dist < minDistance) {
+								minDistance = dist;
+								bestMatch = place;
+							}
+						}
+					} else if (places.length > 0) {
+						bestMatch = places[0];
+					}
+					if (bestMatch && bestMatch.fsq_place_id) {
+						// TODO: Reduce to only necessary fields (fsq_place_id)
+						const placeDetailsResp = await this.fsqrMockService.placeDetails({
+							fsq_place_id: String(bestMatch.fsq_place_id),
+							"X-Places-Api-Version": "2025-06-17",
+							fields: "fsq_place_id"
+						});
+						const fsqrPlace = placeDetailsResp.data;
+						const category = (fsqrPlace.categories && fsqrPlace.categories.length > 0) ? fsqrPlace.categories[0] : { fsq_category_id: '', name: '' };
+						const hours = fsqrPlace.hours ? {
+							display: fsqrPlace.hours.display || '',
+							is_open: fsqrPlace.hours.open_now || false,
+							opening_time: fsqrPlace.hours.regular && fsqrPlace.hours.regular[0] ? fsqrPlace.hours.regular[0].open : undefined,
+							closing_time: fsqrPlace.hours.regular && fsqrPlace.hours.regular[0] ? fsqrPlace.hours.regular[0].close : undefined,
+						} : null;
+						const processed: ProcessedPlace = {
+							fsq_place_id: fsqrPlace.fsq_place_id || '',
+							name: fsqrPlace.name || '',
+							location: {
+								lat: bestMatch.lat,
+								lng: bestMatch.lng,
+							},
+							category: {
+								id: category.fsq_category_id || '',
+								name: category.name || '',
+							},
+							rating: typeof fsqrPlace.rating === 'number' ? fsqrPlace.rating : null,
+							price_level: typeof fsqrPlace.price === 'number' ? fsqrPlace.price : 1,
+							photos: Array.isArray(fsqrPlace.photos) ? fsqrPlace.photos.map((p: any) => `${p.prefix}original${p.suffix}`) : [],
+							distance_from_origin: 0,
+							score: 100,
+							estimated_cost: typeof fsqrPlace.price === 'number' ? fsqrPlace.price : 0,
+							estimated_duration: 30,
+							hours: hours,
+							description: fsqrPlace.description || '',
+						};
+						candidates.push(processed);
+					} else {
+						this.logger.warn(`[${requestId}] No FSQR match found for starting_location`);
+					}
+				} catch (e) {
+					this.logger.warn(`[${requestId}] Could not fetch FSQR place for starting_location: ${e.message}`);
+				}
+			}
+
+			// 2. Obtener el resto de candidatos (24 si hay lugar de inicio, 25 si no)
 			const searchParams: PlaceSearchParams = {
 				lat: itinerary.lat,
 				lng: itinerary.lng,
 				radius: options.search_radius || GenerationConstants.DEFAULT_SEARCH_RADIUS,
-				categories: calculations.experienceTypeIds, // Array de category IDs
-				limit: GenerationConstants.MAX_SEARCH_RESULTS,
+				categories: calculations.experienceTypeIds,
+				limit: candidates.length > 0 ? 24 : 25,
 				date: new Date(itinerary.date),
 				time_window: {
 					start: calculations.timeConstraints.start,
@@ -545,23 +625,20 @@ export class ItineraryGeneratorService {
 				limit: searchParams.limit
 			});
 
-			// 3.2. Llamar al servicio de búsqueda
 			const rawPlaces = await this.placesSearchService.searchPlaces(searchParams, requestId);
 			this.logger.log(`[${requestId}] Found ${rawPlaces.length} raw places from PlacesSearchService`);
 
-			// 3.3. Procesar lugares usando el nuevo PlacesProcessorService
 			const processedPlaces = await this.placesProcessorService.processPlaces(rawPlaces, searchParams);
 			this.logger.log(`[${requestId}] Processed ${processedPlaces.length} valid places using PlacesProcessorService`);
 
-			// 3.4. Validar que hay suficientes lugares
-			if (processedPlaces.length < calculations.activities.min) {
+			if (processedPlaces.length + candidates.length < calculations.activities.min) {
 				throw new UnprocessableEntityException({
 					success: false,
 					message: 'No se encontraron suficientes lugares que cumplan los criterios',
 					error: {
 						code: GenerationConstants.ERROR_CODES.INSUFFICIENT_PLACES,
 						type: GenerationConstants.ERROR_TYPES.OPTIMIZATION_ERROR,
-						details: `Se encontraron ${processedPlaces.length} lugares, pero se necesitan al menos ${calculations.activities.min}`
+						details: `Se encontraron ${processedPlaces.length + candidates.length} lugares, pero se necesitan al menos ${calculations.activities.min}`
 					},
 					suggestions: [
 						'Amplía el radio de búsqueda',
@@ -576,7 +653,7 @@ export class ItineraryGeneratorService {
 				});
 			}
 
-			return processedPlaces;
+			return [...candidates, ...processedPlaces];
 
 		} catch (error) {
 			this.logger.error(`[${requestId}] Error obtaining candidate places: ${error.message}`);

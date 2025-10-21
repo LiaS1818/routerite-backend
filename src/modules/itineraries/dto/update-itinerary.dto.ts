@@ -11,6 +11,7 @@ import {
 	IsBoolean,
 } from 'class-validator';
 import { ExperienceTypeDto } from './experience_type.dto';
+import { LocationInterface } from '../../trips/trip.interfaces';
 
 export class UpdateItineraryDto {
 	@IsOptional()
@@ -41,4 +42,9 @@ export class UpdateItineraryDto {
 	@IsOptional()
 	@IsBoolean()
 	is_configured?: boolean;
+
+	@IsOptional()
+	@ValidateNested()
+	@Type(() => Object)
+	starting_location?: LocationInterface;
 }

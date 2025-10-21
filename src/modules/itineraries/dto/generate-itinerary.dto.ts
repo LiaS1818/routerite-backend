@@ -12,7 +12,13 @@ export class GenerateItineraryDto {
 	@IsOptional()
 	@IsInt()
 	@Min(3)
-	@Max(7)
+	@Max(10)
+	min_activities?: number = 5;
+
+	@IsOptional()
+	@IsInt()
+	@Min(3)
+	@Max(10)
 	max_activities?: number = 5;
 
 
@@ -24,8 +30,8 @@ export class GenerateItineraryDto {
 
 	@IsOptional()
 	@IsNumber()
-	@Min(0)
-	@Max(10)
+	@Min(3)
+	@Max(15)
 	min_rating?: number = 6.5;
 
 	@IsOptional()
