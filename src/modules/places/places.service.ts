@@ -13,7 +13,9 @@ export class PlacesService {
 
   constructor() {
     const p = path.resolve(process.cwd(), 'assets/places_mock.json');
-    this.places = JSON.parse(fs.readFileSync(p, 'utf8'));
+    const raw = JSON.parse(fs.readFileSync(p, 'utf8'));
+    // el archivo tiene un objeto { results: [...] }
+    this.places = Array.isArray(raw.results) ? raw.results : [];
   }
 
   search(params: SearchPlacesDto) {
@@ -33,25 +35,30 @@ export class PlacesService {
 
     // Paso 1: filtro geográfico
     let rows = this.places.filter(p => {
-      const lat = p.location?.lat, lng = p.location?.lng;
-      if (typeof lat !== 'number' || typeof lng !== 'number') return false;
+      // tu mock NO tiene lat/lng
+      const lat = p.location?.lat;
+      const lng = p.location?.lng;
+      const hasDistance = typeof p.distance === 'number';
 
-      if (center && rad != null) {
+      // si hay lat/lng, usamos haversine
+      if (typeof lat === 'number' && typeof lng === 'number' && center && rad != null) {
         const d = haversineMeters(center, { lat, lng });
         (p as any).__distance = d;
         if (d > rad) return false;
-      } else if (bbox) {
-        const { ne, sw } = bbox;
-        const inLat = lat <= ne.lat && lat >= sw.lat;
-        const inLng = lng <= ne.lng && lng >= sw.lng;
-        if (!inLat || !inLng) return false;
-        (p as any).__distance = center ? haversineMeters(center, { lat, lng }) : undefined;
-      } else if (center) {
-        // Si hay ll pero no radius, aún calculamos distancia para poder ordenar por DISTANCE
-        (p as any).__distance = haversineMeters(center, { lat, lng });
       }
+      // si no hay coordenadas, pero sí "distance", usamos ese campo
+      else if (hasDistance && rad != null) {
+        if (p.distance > rad) return false;
+        (p as any).__distance = p.distance;
+      }
+      // si no hay ni lat/lng ni distance, lo dejamos pasar
+      else {
+        (p as any).__distance = undefined;
+      }
+
       return true;
     });
+
 
     // Paso 2: filtro por texto
     if (query?.trim()) {
@@ -73,7 +80,7 @@ export class PlacesService {
     // Paso 3: filtro por categorías
     if (wantCats.length) {
       rows = rows.filter(p => {
-        const ids = (p.categories ?? []).map(c => String(c.id ?? '').toLowerCase());
+        const ids = (p.categories ?? []).map(c => String(c.fsq_category_id ?? '').toLowerCase());
         const names = (p.categories ?? []).map(c => (c.name ?? '').toLowerCase());
         return wantCats.some(w => ids.includes(w) || names.includes(w));
       });
