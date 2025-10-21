@@ -22,7 +22,7 @@ export class OptimizerClientService {
 		// Configuración desde environment
 		this.flaskUrl = this.configService.get<string>('FLASK_SERVICE_URL') || 'http://localhost:5000';
 		this.apiKey = this.configService.get<string>('FLASK_API_KEY') || 'default-api-key';
-		this.optimizerTimeout = this.configService.get<number>('OPTIMIZER_TIMEOUT') || 90000;
+		this.optimizerTimeout = this.configService.get<number>('OPTIMIZER_TIMEOUT') || 180000;
 		this.maxRetries = this.configService.get<number>('OPTIMIZER_MAX_RETRIES') || 1;
 
 		this.logger.log(`Optimizer Client initialized: ${this.flaskUrl}, timeout: ${this.optimizerTimeout}ms, retries: ${this.maxRetries}`);

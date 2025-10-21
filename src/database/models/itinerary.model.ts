@@ -26,7 +26,6 @@ export interface ItineraryAttributes {
 	date: Date;
 	start_time: string | null; // Properly reflect nullable field
 	end_time: string | null; // Properly reflect nullable field
-	cover_image?: string | null;
 	lat: number;
 	lng: number;
 	budget: number;
@@ -105,10 +104,6 @@ export class Itinerary extends Model<ItineraryCreationAttributes> {
 		type: DataType.STRING(255),
 	})
 	declare experience_type_ids: string; // 52e928d0bcbc57f1066b7e9b,52e928d0bcbc57f1066b7e9b
-
-	@AllowNull(true)
-	@Column(DataType.STRING(255))
-	declare cover_image?: string;
 
 	@Column({
 		type: DataType.VIRTUAL(DataType.BOOLEAN),

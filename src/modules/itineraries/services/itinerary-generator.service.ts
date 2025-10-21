@@ -253,28 +253,7 @@ export class ItineraryGeneratorService {
 		const successResponse = optimizationResult as OptimizationSuccessResponse;
 
 		try {
-			// 6.2. Guardar o actualizar lugares
-			const placeMappings = new Map<string, number>();
-
-			for (const activity of successResponse.optimized_activities) {
-				// Mapear desde OptimizedActivity al formato esperado por PlaceService
-				const placeData = {
-					fsq_place_id: activity.place.fsq_place_id,
-					name: activity.place.name,
-					lat: activity.place.location.lat,
-					lng: activity.place.location.lng,
-					category_id: activity.place.category.id,
-					estimated_cost: activity.cost.estimated,
-					estimated_duration: activity.timing.visit_duration_minutes
-				};
-
-				const place = await this.placeService.findOrCreatePlace(placeData, transaction);
-				placeMappings.set(activity.place.fsq_place_id, place.id);
-			}
-
-			this.logger.log(`[${requestId}] Created/found ${placeMappings.size} places`);
-
-			// 6.3. Eliminar actividades existentes
+			// 6.2. Eliminar actividades existentes
 			const deletedCount = await this.activityModel.destroy({
 				where: { itinerary_id: itinerary.id },
 				transaction
@@ -282,17 +261,17 @@ export class ItineraryGeneratorService {
 
 			this.logger.log(`[${requestId}] Deleted ${deletedCount} existing activities`);
 
-			// 6.4. Crear nuevas actividades usando la estructura mejorada
+			// 6.3. Crear nuevas actividades
 			const newActivities: Activity[] = [];
 
 			for (const activity of successResponse.optimized_activities) {
-				const placeId = placeMappings.get(activity.place.fsq_place_id);
-				if (!placeId) {
-					throw new Error(`Place ID not found for fsq_place_id: ${activity.place.fsq_place_id}`);
-				}
-
 				const activityData = {
 					itinerary_id: itinerary.id,
+					name: activity.place.name,
+					description: activity.place.category.name, // Usando el nombre de la categoría como descripción por defecto
+					lat: activity.place.location.lat,
+					lng: activity.place.location.lng,
+					place: activity.place, // Guardar el objeto de lugar completo como JSON
 					sequence: activity.sequence,
 					start_time: activity.timing.arrival_time,
 					end_time: activity.timing.departure_time,
@@ -300,6 +279,7 @@ export class ItineraryGeneratorService {
 					transportation_mode: 'driving', // Default por ahora
 					transportation_duration: activity.timing.travel_time_from_previous,
 					notes: Array.isArray(activity.notes) ? activity.notes.join('; ') : activity.notes || '',
+					distance_to_start: 0
 				};
 
 				// @ts-ignore
@@ -309,7 +289,7 @@ export class ItineraryGeneratorService {
 
 			this.logger.log(`[${requestId}] Created ${newActivities.length} new activities`);
 
-			// 6.5. Actualizar metadata del itinerario con información rica
+			// 6.4. Actualizar metadata del itinerario con información rica
 			const updateData = {
 				is_generated: true,
 				max_activities: options.max_activities || 5,
@@ -330,25 +310,6 @@ export class ItineraryGeneratorService {
 					request_id: requestId
 				}
 			};
-
-			// Intentar obtener cover_image de la primera actividad
-			if (successResponse.optimized_activities.length > 0) {
-				const firstActivity = successResponse.optimized_activities[0];
-				try {
-					const placeDetails = await this.foursquareMockService.placeDetails({
-						fsq_place_id: firstActivity.place.fsq_place_id,
-						fields: 'photos',
-						'X-Places-Api-Version': '2025-06-17'
-					});
-
-					const firstPhoto = placeDetails.data?.photos?.[0];
-					if (firstPhoto?.prefix && firstPhoto?.suffix) {
-						updateData['cover_image'] = `${firstPhoto.prefix}300x300${firstPhoto.suffix}`;
-					}
-				} catch (error) {
-					this.logger.warn(`[${requestId}] Could not get cover image: ${error.message}`);
-				}
-			}
 
 			await this.itineraryModel.update(updateData, {
 				where: { id: itinerary.id },
