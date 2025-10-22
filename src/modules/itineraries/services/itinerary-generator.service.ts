@@ -517,8 +517,8 @@ export class ItineraryGeneratorService {
 		this.logger.log(`[${requestId}] PASO 3: Obtaining candidate places using PlacesSearchService and PlacesProcessorService`);
 
 		const fsqrApiKey = this.configService.get<string>('FSQR_API_KEY') || " ";
-		const useFSQRMock = this.configService.get<boolean>('USE_FSQR_MOCK', true);
-		const fsqrService = useFSQRMock ? this.fsqDevelopersPlaces : fsqDevelopersPlaces;
+		const useFSQRMock = this.configService.get('USE_FSQR_MOCK', true);
+		const fsqrService =  useFSQRMock != "false" ? this.fsqDevelopersPlaces : fsqDevelopersPlaces;
 
 		try {
 			const candidates: ProcessedPlace[] = [];
@@ -530,15 +530,30 @@ export class ItineraryGeneratorService {
 				try {
 					fsqrService.auth(fsqrApiKey);
 					// Buscar por nombre si está disponible
+					const { latLng } = itinerary.starting_location;
+					const longitudeMatch = latLng.match(/lng:\s*([-+]?\d*\.\d+|\d+)/) || [
+						null,
+						'0.0',
+					];
+					const longitude = longitudeMatch[1];
+					const latitudeMatch = latLng.match(/lat:\s*([-+]?\d*\.\d+|\d+),/) || [
+						null,
+						'0.0',
+					];
+					const latitude = latitudeMatch[1];
 					let searchParams: PlaceSearchMetadataParam = {
 						limit: 10,
 						query: itinerary.starting_location.name,
-						ll: `${itinerary.lat},${itinerary.lng}`,
-						radius: 1000,
+						ll: `${latitude},${longitude}`,
+						fields: "fsq_place_id,name,description,distance,rating,tel,website,social_media,latitude,longitude,categories,hours,location,stats",
+						radius: 2500,
 						sort: 'DISTANCE',
 						"X-Places-Api-Version": "2025-06-17",
-						fields: "fsq_place_id,name,description,distance,rating,tel,website,social_media,latitude,longitude,categories,hours,location,stats"
 					};
+
+					// DEBUG: Log the exact parameters being sent
+					this.logger.debug(`[${requestId}] Calling fsqrService.placeSearch with params:`, JSON.stringify(searchParams, null, 2));
+					this.logger.debug(`[${requestId}] fsqrService type: ${fsqrService.constructor.name}`);
 					/*
 					{
 					"fsq_place_id":"4bc1ee90920eb713894e1b2c",
@@ -568,8 +583,8 @@ export class ItineraryGeneratorService {
 						const lat = parseFloat(latStr);
 						const lng = parseFloat(lngStr);
 						for (const place of places) {
-							const plat = place.geocodes && place.geocodes.main ? place.geocodes.main.latitude : 0;
-							const plng = place.geocodes && place.geocodes.main ? place.geocodes.main.longitude : 0;
+							const plat = place.latitude;
+							const plng = place.longitude;
 							const dist = Math.sqrt(Math.pow(plat - lat, 2) + Math.pow(plng - lng, 2));
 							if (dist < minDistance) {
 								minDistance = dist;
@@ -712,8 +727,8 @@ export class ItineraryGeneratorService {
 
 			// Autenticar el servicio Foursquare
 			const fsqrApiKey = this.configService.get<string>('FSQR_API_KEY') || " ";
-			const useFSQRMock = this.configService.get<boolean>('USE_FSQR_MOCK', true);
-			const fsqrService = useFSQRMock ? this.fsqDevelopersPlaces : fsqDevelopersPlaces;
+			const useFSQRMock = this.configService.get('USE_FSQR_MOCK', true);
+			const fsqrService =  useFSQRMock != "false" ? this.fsqDevelopersPlaces : fsqDevelopersPlaces;
 			fsqrService.auth(fsqrApiKey);
 
 			// Procesar cada actividad en paralelo (con límite para no sobrecargar)

@@ -110,8 +110,8 @@ export class TripsController {
 			}
 
 			const fsqrApiKey = this.configService.get<string>('FSQR_API_KEY') || " ";
-			const useFSQRMock = this.configService.get<boolean>('USE_FSQR_MOCK', true);
-			const fsqrService = useFSQRMock ? this.fsqDevelopersPlaces : fsqDevelopersPlaces;
+			const useFSQRMock = this.configService.get('USE_FSQR_MOCK', true);
+			const fsqrService =  useFSQRMock != "false"  ? this.fsqDevelopersPlaces : fsqDevelopersPlaces;
 			fsqrService.auth(fsqrApiKey);
 			const placesResponse =  await fsqrService.placeSearch(params)
 			const results = placesResponse.data.results || [];

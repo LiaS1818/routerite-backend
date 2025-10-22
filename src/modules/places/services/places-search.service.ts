@@ -83,7 +83,7 @@ export class PlacesSearchService {
 			// Radio de búsqueda
 			radius: params.radius,
 			// Categorías como string separado por comas
-			fsqr_category_ids: params.categories.join(','),
+			fsq_category_ids: params.categories.join(','),
 			// Límite de resultados
 			limit: params.limit,
 			// Ordenamiento (configurable)
@@ -104,8 +104,8 @@ export class PlacesSearchService {
 
 			// Asegurar autenticación del mock service
 			const fsqrApiKey = this.configService.get<string>('FSQR_API_KEY') || " ";
-			const useFSQRMock = this.configService.get<boolean>('USE_FSQR_MOCK', true);
-			const fsqrService = useFSQRMock ? this.fsqDevelopersPlaces : fsqDevelopersPlaces;
+			const useFSQRMock = this.configService.get('USE_FSQR_MOCK', true);
+			const fsqrService =  useFSQRMock != "false"  ? this.fsqDevelopersPlaces : fsqDevelopersPlaces;
 
 			fsqrService.auth(fsqrApiKey);
 			const response = await fsqrService.placeSearch({
