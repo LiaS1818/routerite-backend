@@ -3,7 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { FoursquareMockService } from '../../../common/services/foursquare/foursquare-mock.service';
 import { PlaceSearchParams } from '../dto/place-search.dto';
 import { FSQRPlace } from '../../../common/interfaces/FSQRPlace.interface';
-// import fsqDevelopersPlaces from '@api/fsq-developers-places';
+import fsqDevelopersPlaces from '@api/fsq-developers-places';
 
 @Injectable()
 export class PlacesSearchService {
@@ -57,13 +57,7 @@ export class PlacesSearchService {
 			const queryParams = this.buildQueryParameters(params);
 
 			// Ejecutar búsqueda según configuración
-			let rawPlaces: FSQRPlace[];
-
-			if (this.useMock) {
-				rawPlaces = await this.searchWithMockService(queryParams, requestId);
-			} else {
-				rawPlaces = await this.searchWithRealService(queryParams, requestId);
-			}
+			let rawPlaces: FSQRPlace[] = await this.searchWithService(queryParams, requestId);
 
 			// Validar respuesta
 			this.validateResponse(rawPlaces, requestId);
@@ -132,17 +126,19 @@ export class PlacesSearchService {
 	/**
 	 * Ejecuta búsqueda usando el servicio mock
 	 */
-	private async searchWithMockService(queryParams: any, requestId?: string): Promise<FSQRPlace[]> {
+	private async searchWithService(queryParams: any, requestId?: string): Promise<FSQRPlace[]> {
 		const logPrefix = requestId ? `[${requestId}]` : '';
 
 		try {
-			this.logger.log(`${logPrefix} Using Foursquare MOCK service`);
+			this.logger.log(`${logPrefix} Using Foursquare service`);
 
 			// Asegurar autenticación del mock service
-			this.fsqDevelopersPlaces.auth('mock_token');
+			const fsqrApiKey = this.configService.get<string>('FSQR_API_KEY') || " ";
+			const useFSQRMock = this.configService.get<boolean>('USE_FSQR_MOCK', true);
+			const fsqrService = useFSQRMock ? this.fsqDevelopersPlaces : fsqDevelopersPlaces;
 
-			// Llamar al método de búsqueda filtrada del mock
-			const response = await this.fsqDevelopersPlaces.placeSearch({
+			fsqrService.auth(fsqrApiKey);
+			const response = await fsqrService.placeSearch({
 				ll: queryParams.ll,
 				limit: queryParams.limit,
 				categoryIds: queryParams.categoryIds,
@@ -154,41 +150,12 @@ export class PlacesSearchService {
 			// Extraer lugares de la respuesta
 			const places = response.data?.results || [];
 
-			this.logger.log(`${logPrefix} Mock service returned ${places.length} places`);
+			this.logger.log(`${logPrefix} service returned ${places.length} places`);
 			// @ts-ignore
 			return places;
 
 		} catch (error) {
-			this.logger.error(`${logPrefix} Mock service error: ${error.message}`);
-			throw error;
-		}
-	}
-
-	/**
-	 * Ejecuta búsqueda usando el servicio real de Foursquare
-	 */
-	private async searchWithRealService(queryParams: any, requestId?: string): Promise<FSQRPlace[]> {
-		const logPrefix = requestId ? `[${requestId}]` : '';
-
-		try {
-			this.logger.log(`${logPrefix} Using Foursquare REAL service`);
-
-			// TODO: Implementar integración con servicio real
-			// const response = await this.fsqDevelopersPlaces.placeSearch({
-			//   ll: queryParams.ll,
-			//   radius: queryParams.radius,
-			//   categories: queryParams.categories,
-			//   limit: queryParams.limit,
-			//   sort: queryParams.sort,
-			//   fields: queryParams.fields,
-			//   open_now: queryParams.open_now
-			// });
-
-			// Por ahora, lanzar error indicando que no está implementado
-			throw new Error('Real Foursquare service not yet implemented. Please use mock service.');
-
-		} catch (error) {
-			this.logger.error(`${logPrefix} Real service error: ${error.message}`);
+			this.logger.error(`${logPrefix} service error: ${error.message}`);
 			throw error;
 		}
 	}
@@ -246,7 +213,6 @@ export class PlacesSearchService {
 		try {
 			if (this.useMock) {
 				// Para mock, verificar que podemos hacer auth
-				this.fsqDevelopersPlaces.auth('health_check_token');
 				return true;
 			} else {
 				// TODO: Implementar health check para servicio real

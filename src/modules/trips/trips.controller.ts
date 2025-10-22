@@ -106,11 +106,14 @@ export class TripsController {
 				radius: 100,
 				'X-Places-Api-Version': "2025-06-17",
 				sort: "RELEVANCE",
+				fields: "fsq_place_id,photos"
 			}
 
 			const fsqrApiKey = this.configService.get<string>('FSQR_API_KEY') || " ";
-			this.fsqDevelopersPlaces.auth(fsqrApiKey);
-			const placesResponse =  await this.fsqDevelopersPlaces.placeSearch(params)
+			const useFSQRMock = this.configService.get<boolean>('USE_FSQR_MOCK', true);
+			const fsqrService = useFSQRMock ? this.fsqDevelopersPlaces : fsqDevelopersPlaces;
+			fsqrService.auth(fsqrApiKey);
+			const placesResponse =  await fsqrService.placeSearch(params)
 			const results = placesResponse.data.results || [];
 
 			let photoUrl, fsqId: unknown;

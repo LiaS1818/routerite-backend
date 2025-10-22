@@ -20,7 +20,8 @@ import { OptimizationPayload } from '../../optimizer/dto/optimization-payload.dt
 import { FoursquareMockService } from '../../../common/services/foursquare/foursquare-mock.service';
 import { PlaceSearchMetadataParam } from '../../../../.api/apis/fsq-developers-places';
 import { SupabaseStorageService } from '../../supabase/supabase-storage.service';
-// import fsqDevelopersPlaces from '@api/fsq-developers-places';
+import { ConfigService } from '@nestjs/config';
+import fsqDevelopersPlaces from '@api/fsq-developers-places';
 
 interface ActivityLimits {
 	min: number;
@@ -75,6 +76,7 @@ export class ItineraryGeneratorService {
 		private readonly placesProcessorService: PlacesProcessorService,
 		private readonly fsqDevelopersPlaces: FoursquareMockService,
 		private readonly supabaseStorageService: SupabaseStorageService,
+		private readonly configService: ConfigService
 	) {}
 
 	async generateItinerary(
@@ -113,10 +115,10 @@ export class ItineraryGeneratorService {
 			// PASO 6: PERSISTENCIA EN BASE DE DATOS
 			transaction = await this.sequelize.transaction();
 			await this.persistOptimizationResult(itinerary, optimizationResult, options, transaction, requestId);
-			await transaction.commit();
 
 			// PASO 6.5: OBTENER Y SUBIR FOTOS DE ACTIVIDADES
-			// await this.populateActivityImages(itineraryId, requestId);
+			await this.populateActivityImages(itineraryId, requestId, transaction);
+			await transaction.commit();
 
 			// PASO 7: CONSTRUCCIÓN DE RESPUESTA
 			const finalResponse = await this.buildFinalResponse(itineraryId, optimizationResult, startTime, requestId);
@@ -505,13 +507,17 @@ export class ItineraryGeneratorService {
 	private async obtainCandidatePlaces(itinerary: any, calculations: any, requestId: string, options: GenerateItineraryDto): Promise<ProcessedPlace[]> {
 		this.logger.log(`[${requestId}] PASO 3: Obtaining candidate places using PlacesSearchService and PlacesProcessorService`);
 
+		const fsqrApiKey = this.configService.get<string>('FSQR_API_KEY') || " ";
+		const useFSQRMock = this.configService.get<boolean>('USE_FSQR_MOCK', true);
+		const fsqrService = useFSQRMock ? this.fsqDevelopersPlaces : fsqDevelopersPlaces;
+
 		try {
 			const candidates: ProcessedPlace[] = [];
 			// 1. Si existe starting_location, buscar el mejor match en FSQR
 			if (itinerary.starting_location) {
 				this.logger.log(`[${requestId}] Searching FSQR place for starting_location: ${JSON.stringify(itinerary.starting_location)}`);
 				try {
-					this.fsqDevelopersPlaces.auth('token');
+					fsqrService.auth(fsqrApiKey);
 					// Buscar por nombre si está disponible
 					let searchParams: PlaceSearchMetadataParam = {
 						limit: 10,
@@ -521,13 +527,11 @@ export class ItineraryGeneratorService {
 						sort: 'DISTANCE',
 						"X-Places-Api-Version": "2025-06-17"
 					};
-					const searchResult = await this.fsqDevelopersPlaces.placeSearch(searchParams);
+					const searchResult = await fsqrService.placeSearch(searchParams);
 					const places = (searchResult.data.results || []) as any[];
-					// Si hay coordenadas, buscar el más cercano
-					let bestMatch: any = null;
-					let minDistance = Number.MAX_VALUE;
 					// TODO: Remove when debugging is finished
-					bestMatch = places[0];
+					let bestMatch: any = places[0];
+					let minDistance = Number.MAX_VALUE;
 					if (places.length > 0 && itinerary.starting_location.latLng) {
 						const [latStr, lngStr] = itinerary.starting_location.latLng.split(',');
 						const lat = parseFloat(latStr);
@@ -545,11 +549,10 @@ export class ItineraryGeneratorService {
 						bestMatch = places[0];
 					}
 					if (bestMatch && bestMatch.fsq_place_id) {
-						// TODO: Reduce to only necessary fields (fsq_place_id)
-						const placeDetailsResp = await this.fsqDevelopersPlaces.placeDetails({
+						const placeDetailsResp = await fsqrService.placeDetails({
 							fsq_place_id: String(bestMatch.fsq_place_id),
+							fields: "fsq_place_id,name,categories,rating,price,photos,hours,description,latitude,longitude",
 							"X-Places-Api-Version": "2025-06-17",
-							fields: "fsq_place_id"
 						});
 						const fsqrPlace = placeDetailsResp.data;
 						const category = (fsqrPlace.categories && fsqrPlace.categories.length > 0) ? fsqrPlace.categories[0] : { fsq_category_id: '', name: '' };
@@ -650,7 +653,7 @@ export class ItineraryGeneratorService {
 	/**
 	 * PASO 6.5: Obtener y subir fotos de actividades desde Foursquare a Supabase
 	 */
-	private async populateActivityImages(itineraryId: number, requestId: string): Promise<void> {
+	private async populateActivityImages(itineraryId: number, requestId: string, transaction: Transaction): Promise<void> {
 		this.logger.log(`[${requestId}] PASO 6.5: Populating activity images from Foursquare`);
 
 		try {
@@ -662,7 +665,10 @@ export class ItineraryGeneratorService {
 			this.logger.log(`[${requestId}] Found ${activities.length} activities to process images`);
 
 			// Autenticar el servicio Foursquare
-			this.fsqDevelopersPlaces.auth('token');
+			const fsqrApiKey = this.configService.get<string>('FSQR_API_KEY') || " ";
+			const useFSQRMock = this.configService.get<boolean>('USE_FSQR_MOCK', true);
+			const fsqrService = useFSQRMock ? this.fsqDevelopersPlaces : fsqDevelopersPlaces;
+			fsqrService.auth(fsqrApiKey);
 
 			// Procesar cada actividad en paralelo (con límite para no sobrecargar)
 			const imagePromises = activities.map(async (activity) => {
@@ -678,7 +684,7 @@ export class ItineraryGeneratorService {
 					this.logger.debug(`[${requestId}] Processing images for activity ${activity.id} (${activity.name})`);
 
 					// Obtener fotos del lugar desde Foursquare
-					const photosResponse = await this.fsqDevelopersPlaces.placePhotos({
+					const photosResponse = await fsqrService.placePhotos({
 						fsq_place_id: fsqPlaceId,
 						"X-Places-Api-Version": "2025-06-17"
 					});
@@ -703,7 +709,7 @@ export class ItineraryGeneratorService {
 					const supabaseImageUrl = await this.supabaseStorageService.uploadImageFromUrl(photoUrl, activityImagePath);
 					
 					// Actualizar el campo img_url en la base de datos
-					await activity.update({ img_url: supabaseImageUrl });
+					await activity.update({ img_url: supabaseImageUrl }, { transaction });
 					
 					this.logger.debug(`[${requestId}] Successfully updated activity ${activity.id} with image: ${supabaseImageUrl}`);
 

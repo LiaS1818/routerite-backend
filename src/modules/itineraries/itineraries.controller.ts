@@ -27,7 +27,6 @@ import { GenerateItineraryDto } from './dto/generate-itinerary.dto';
 import { GenerationResponseDto } from './dto/generation-response.dto';
 import { ItineraryGeneratorService } from './services/itinerary-generator.service';
 import { ItineraryValidatorService } from './services/itinerary-validator.service';
-// import fsqDevelopersPlaces from '@api/fsq-developers-places';
 
 @Controller('itineraries')
 @UseGuards(JwtAuthGuard)

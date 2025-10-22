@@ -15,7 +15,6 @@ import { ActivityService } from './activity.service';
 import { CreateActivityDto } from './dto/create-activity.dto';
 import { Activity } from 'src/database/models';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
-// import fsqDevelopersPlaces from '@api/fsq-developers-places';
 import { ConfigService } from '@nestjs/config';
 
 @Controller('activities')
