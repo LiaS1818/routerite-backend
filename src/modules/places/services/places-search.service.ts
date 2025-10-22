@@ -9,7 +9,7 @@ import fsqDevelopersPlaces from '@api/fsq-developers-places';
 export class PlacesSearchService {
 	private readonly logger = new Logger(PlacesSearchService.name);
 	private readonly useMock: boolean;
-	private readonly defaultFields: string[];
+	private readonly defaultFields: string;
 
 	constructor(
 		private readonly configService: ConfigService,
@@ -19,20 +19,7 @@ export class PlacesSearchService {
 		this.useMock = this.configService.get<boolean>('USE_FOURSQUARE_MOCK', true);
 
 		// Lista completa de campos necesarios
-		this.defaultFields = [
-			'fsq_place_id',
-			'name',
-			'geocodes',
-			'categories',
-			'rating',
-			'price',
-			'hours',
-			'photos',
-			'distance',
-			'description',
-			'location',
-			'stats'
-		];
+		this.defaultFields = "fsq_place_id,name,description,distance,rating,tel,website,social_media,latitude,longitude,categories,hours,location,stats"
 
 		this.logger.log(`Initialized with ${this.useMock ? 'MOCK' : 'REAL'} Foursquare service`);
 	}
@@ -93,33 +80,16 @@ export class PlacesSearchService {
 		return {
 			// Coordenadas en formato requerido
 			ll: `${params.lat},${params.lng}`,
-
 			// Radio de búsqueda
 			radius: params.radius,
-
 			// Categorías como string separado por comas
-			categories: params.categories.join(','),
-			categoryIds: params.categories, // Para compatibilidad con mock
-
+			fsqr_category_ids: params.categories.join(','),
 			// Límite de resultados
 			limit: params.limit,
-
 			// Ordenamiento (configurable)
 			sort: this.configService.get<string>('FOURSQUARE_SORT', 'RELEVANCE'),
-
 			// Campos a incluir
-			fields: this.defaultFields.join(','),
-
-			// Parámetros adicionales para filtros temporales
-			date: params.date.toISOString().split('T')[0], // YYYY-MM-DD
-			time_start: params.time_window.start,
-			time_end: params.time_window.end,
-
-			// Rating mínimo (si está configurado)
-			minRating: this.configService.get<number>('MIN_PLACE_RATING', 6.0),
-
-			// Filtrar solo lugares abiertos
-			open_now: true
+			fields: this.defaultFields
 		};
 	}
 
@@ -139,11 +109,7 @@ export class PlacesSearchService {
 
 			fsqrService.auth(fsqrApiKey);
 			const response = await fsqrService.placeSearch({
-				ll: queryParams.ll,
-				limit: queryParams.limit,
-				categoryIds: queryParams.categoryIds,
-				minRating: queryParams.minRating,
-				sortByRatingDesc: true,
+				...queryParams,
 				'X-Places-Api-Version': '2025-06-17'
 			});
 

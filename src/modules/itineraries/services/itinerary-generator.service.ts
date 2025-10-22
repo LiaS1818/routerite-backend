@@ -18,10 +18,11 @@ import { Itinerary, Activity, Trip } from '../../../database/models';
 import { Sequelize } from 'sequelize-typescript';
 import { OptimizationPayload } from '../../optimizer/dto/optimization-payload.dto';
 import { FoursquareMockService } from '../../../common/services/foursquare/foursquare-mock.service';
-import { PlaceSearchMetadataParam } from '../../../../.api/apis/fsq-developers-places';
+import { PlaceSearchMetadataParam } from '@api/fsq-developers-places';
 import { SupabaseStorageService } from '../../supabase/supabase-storage.service';
 import { ConfigService } from '@nestjs/config';
 import fsqDevelopersPlaces from '@api/fsq-developers-places';
+import { FSQRPlace } from '../../../common/interfaces/FSQRPlace.interface';
 
 interface ActivityLimits {
 	min: number;
@@ -98,7 +99,7 @@ export class ItineraryGeneratorService {
 			const derivedCalculations = this.calculateDerivedParameters(itinerary, options, requestId);
 
 			// PASO 3: OBTENCIÓN DE LUGARES CANDIDATOS
-			const candidatePlaces = await this.obtainCandidatePlaces(itinerary, derivedCalculations, requestId, options);
+			const { candidatePlaces, fsqrPlacesMap } = await this.obtainCandidatePlaces(itinerary, derivedCalculations, requestId, options);
 
 			// PASO 4: PREPARACIÓN DE PAYLOAD PARA FLASK
 			const optimizationPayload = this.prepareOptimizationPayload(
@@ -114,7 +115,7 @@ export class ItineraryGeneratorService {
 
 			// PASO 6: PERSISTENCIA EN BASE DE DATOS
 			transaction = await this.sequelize.transaction();
-			await this.persistOptimizationResult(itinerary, optimizationResult, options, transaction, requestId);
+			await this.persistOptimizationResult(itinerary, optimizationResult, options, transaction, requestId, fsqrPlacesMap);
 
 			// PASO 6.5: OBTENER Y SUBIR FOTOS DE ACTIVIDADES
 			await this.populateActivityImages(itineraryId, requestId, transaction);
@@ -225,7 +226,8 @@ export class ItineraryGeneratorService {
 		optimizationResult: OptimizationResponse,
 		options: GenerateItineraryDto,
 		transaction: Transaction,
-		requestId: string
+		requestId: string,
+		fsqrPlacesMap: Map<string, FSQRPlace>
 	): Promise<void> {
 		this.logger.log(`[${requestId}] PASO 6: Persisting optimization result to database`);
 
@@ -250,13 +252,20 @@ export class ItineraryGeneratorService {
 			const newActivities: Activity[] = [];
 
 			for (const activity of successResponse.optimized_activities) {
+				// Recuperar la respuesta completa de FSQR usando el fsq_place_id
+				const fsqrPlace = fsqrPlacesMap.get(activity.place.fsq_place_id);
+
+				if (!fsqrPlace) {
+					this.logger.warn(`[${requestId}] No FSQR place found in map for fsq_place_id: ${activity.place.fsq_place_id}, using simplified version`);
+				}
+
 				const activityData = {
 					itinerary_id: itinerary.id,
 					name: activity.place.name,
 					description: activity.place.category.name, // Usando el nombre de la categoría como descripción por defecto
 					lat: activity.place.location.lat,
 					lng: activity.place.location.lng,
-					place: activity.place, // Guardar el objeto de lugar completo como JSON
+					place: fsqrPlace || activity.place, // Guardar la respuesta completa de FSQR si está disponible, sino la simplificada
 					sequence: activity.sequence,
 					start_time: activity.timing.arrival_time,
 					end_time: activity.timing.departure_time,
@@ -504,7 +513,7 @@ export class ItineraryGeneratorService {
 	/**
 	 * PASO 3: Obtención de Lugares Candidatos usando PlacesSearchService y PlacesProcessorService
 	 */
-	private async obtainCandidatePlaces(itinerary: any, calculations: any, requestId: string, options: GenerateItineraryDto): Promise<ProcessedPlace[]> {
+	private async obtainCandidatePlaces(itinerary: any, calculations: any, requestId: string, options: GenerateItineraryDto): Promise<{ candidatePlaces: ProcessedPlace[], fsqrPlacesMap: Map<string, FSQRPlace> }> {
 		this.logger.log(`[${requestId}] PASO 3: Obtaining candidate places using PlacesSearchService and PlacesProcessorService`);
 
 		const fsqrApiKey = this.configService.get<string>('FSQR_API_KEY') || " ";
@@ -513,6 +522,8 @@ export class ItineraryGeneratorService {
 
 		try {
 			const candidates: ProcessedPlace[] = [];
+			const fsqrPlacesMap = new Map<string, FSQRPlace>();
+
 			// 1. Si existe starting_location, buscar el mejor match en FSQR
 			if (itinerary.starting_location) {
 				this.logger.log(`[${requestId}] Searching FSQR place for starting_location: ${JSON.stringify(itinerary.starting_location)}`);
@@ -525,8 +536,28 @@ export class ItineraryGeneratorService {
 						ll: `${itinerary.lat},${itinerary.lng}`,
 						radius: 1000,
 						sort: 'DISTANCE',
-						"X-Places-Api-Version": "2025-06-17"
+						"X-Places-Api-Version": "2025-06-17",
+						fields: "fsq_place_id,name,description,distance,rating,tel,website,social_media,latitude,longitude,categories,hours,location,stats"
 					};
+					/*
+					{
+					"fsq_place_id":"4bc1ee90920eb713894e1b2c",
+					"name":"Parque Metropolitano",
+					"description":"",
+					"distance":9612,
+					"rating":9.5,
+					"tel":"33 3673 9489",
+					"website":"http://www.parquemetropolitano.com.mx",
+					"social_media":{"twitter":"parquemetro_gdl"},
+					"latitude":20.671264141548797,
+					"longitude":-103.44051178844823,
+					"categories":[{"fsq_category_id":"4bf58dd8d48988d163941735","name":"Park","short_name":"Park","plural_name":"Parks","icon":{"prefix":"https://ss3.4sqi.net/img/categories_v2/parks_outdoors/park_","suffix":".png"}},{"fsq_category_id":"4bf58dd8d48988d1e5941735","name":"Dog Park","short_name":"Dog Park","plural_name":"Dog Parks","icon":{"prefix":"https://ss3.4sqi.net/img/categories_v2/parks_outdoors/dogrun_","suffix":".png"}},{"fsq_category_id":"4bf58dd8d48988d1e7941735","name":"Playground","short_name":"Playground","plural_name":"Playgrounds","icon":{"prefix":"https://ss3.4sqi.net/img/categories_v2/parks_outdoors/playground_","suffix":".png"}}],
+					"hours":{"display":"Mon–Sun: 6:00 AM–10:00 PM","is_local_holiday":false,"open_now":true,"regular":[{"close":"2200","day":1,"open":"0600"},{"close":"2200","day":2,"open":"0600"},{"close":"2200","day":3,"open":"0600"},{"close":"2200","day":4,"open":"0600"},{"close":"2200","day":5,"open":"0600"},{"close":"2200","day":6,"open":"0600"},{"close":"2200","day":7,"open":"0600"}]},
+					"location":{"address":"Av. Beethoven 5800","country":"MX","formatted_address":"Av. Beethoven 5800 (Independencia), 45030 Zapopan, Jalisco","locality":"Zapopan","postcode":"45030","region":"Jalisco"},
+					"photos":[{"fsq_photo_id":"688f94560772643cc1362890","created_at":"2025-08-03T16:54:46.000Z","prefix":"https://fastly.4sqi.net/img/general/","suffix":"/32708939_rlsCgNiKrt2yI2TRx_9RptFv8eqDhIawYyZVegjSF28.jpg","width":1920,"height":1440},{"fsq_photo_id":"688e3bb569cb913c186e3940","created_at":"2025-08-02T16:24:21.000Z","prefix":"https://fastly.4sqi.net/img/general/","suffix":"/12209612_XpkWHjSqNr3kU3oUnIyiZPok4hy6I_Uv9P6vthp4fpA.jpg","width":1920,"height":1440},{"fsq_photo_id":"6857f1d52cfacf02ea8511bd","created_at":"2025-06-22T12:06:45.000Z","prefix":"https://fastly.4sqi.net/img/general/","suffix":"/42396929_W0zwQRj1lJeD6oykDZ1JPCANJa5mc2ohEuIcK4eA8X8.jpg","width":1920,"height":1440},{"fsq_photo_id":"66e4b418720864212035e71c","created_at":"2024-09-13T21:52:24.000Z","prefix":"https://fastly.4sqi.net/img/general/","suffix":"/132779284_CyAXIFyS8Yvjw9nfax-gPeyAxenMBVG4OBn0IcjsB6w.jpg","width":1440,"height":1920},{"fsq_photo_id":"66afadd3e88fc929850cad2b","created_at":"2024-08-04T16:35:31.000Z","prefix":"https://fastly.4sqi.net/img/general/","suffix":"/45079210_u2dtmJfx8di0CM18NfRpTwZ4wfjLXLcfdDVxWqqedZ4.jpg","width":1440,"height":1920}],
+					"stats":{"total_photos":4389,"total_ratings":3481,"total_tips":437}
+					}
+					 */
 					const searchResult = await fsqrService.placeSearch(searchParams);
 					const places = (searchResult.data.results || []) as any[];
 					// TODO: Remove when debugging is finished
@@ -551,10 +582,15 @@ export class ItineraryGeneratorService {
 					if (bestMatch && bestMatch.fsq_place_id) {
 						const placeDetailsResp = await fsqrService.placeDetails({
 							fsq_place_id: String(bestMatch.fsq_place_id),
-							fields: "fsq_place_id,name,categories,rating,price,photos,hours,description,latitude,longitude",
+							fields: "fsq_place_id,name,description,distance,rating,tel,website,social_media,latitude,longitude,categories,hours,location,stats,price,photos",
 							"X-Places-Api-Version": "2025-06-17",
 						});
 						const fsqrPlace = placeDetailsResp.data;
+
+						// Guardar la respuesta completa de FSQR en el mapa
+						// @ts-ignore
+						fsqrPlacesMap.set(fsqrPlace.fsq_place_id, fsqrPlace);
+
 						const category = (fsqrPlace.categories && fsqrPlace.categories.length > 0) ? fsqrPlace.categories[0] : { fsq_category_id: '', name: '' };
 						const hours = fsqrPlace.hours ? {
 							display: fsqrPlace.hours.display || '',
@@ -603,7 +639,7 @@ export class ItineraryGeneratorService {
 				time_window: {
 					start: calculations.timeConstraints.start,
 					end: calculations.timeConstraints.end
-				}
+				},
 			};
 
 			this.logger.log(`[${requestId}] Searching with params:`, {
@@ -616,6 +652,12 @@ export class ItineraryGeneratorService {
 
 			const rawPlaces = await this.placesSearchService.searchPlaces(searchParams, requestId);
 			this.logger.log(`[${requestId}] Found ${rawPlaces.length} raw places from PlacesSearchService`);
+
+			// Guardar todas las respuestas completas de FSQR en el mapa
+			for (const fsqrPlace of rawPlaces) {
+				// @ts-ignore
+				fsqrPlacesMap.set(fsqrPlace.fsq_place_id, fsqrPlace);
+			}
 
 			const processedPlaces = await this.placesProcessorService.processPlaces(rawPlaces, searchParams);
 			this.logger.log(`[${requestId}] Processed ${processedPlaces.length} valid places using PlacesProcessorService`);
@@ -642,7 +684,11 @@ export class ItineraryGeneratorService {
 				});
 			}
 
-			return [...candidates, ...processedPlaces];
+			this.logger.log(`[${requestId}] Built FSQR places map with ${fsqrPlacesMap.size} entries`);
+			return {
+				candidatePlaces: [...candidates, ...processedPlaces],
+				fsqrPlacesMap
+			};
 
 		} catch (error) {
 			this.logger.error(`[${requestId}] Error obtaining candidate places: ${error.message}`);
