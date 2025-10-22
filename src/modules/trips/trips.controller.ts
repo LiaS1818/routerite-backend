@@ -39,7 +39,7 @@ export class TripsController {
 		private sequelize: Sequelize,
 		private readonly supabaseStorageService: SupabaseStorageService,
 		private readonly configService: ConfigService,
-		private fsqDevelopersPlaces: FoursquareMockService
+		private readonly fsqDevelopersPlaces: FoursquareMockService
 	) {}
 
 	@Post()

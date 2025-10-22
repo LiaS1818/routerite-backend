@@ -3,6 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { FoursquareMockService } from '../../../common/services/foursquare/foursquare-mock.service';
 import { PlaceSearchParams } from '../dto/place-search.dto';
 import { FSQRPlace } from '../../../common/interfaces/FSQRPlace.interface';
+// import fsqDevelopersPlaces from '@api/fsq-developers-places';
 
 @Injectable()
 export class PlacesSearchService {
@@ -12,8 +13,7 @@ export class PlacesSearchService {
 
 	constructor(
 		private readonly configService: ConfigService,
-		private readonly foursquareMockService: FoursquareMockService,
-		// private readonly foursquareService: FoursquareService, // TODO: Implementar servicio real
+		private readonly fsqDevelopersPlaces: FoursquareMockService,
 	) {
 		// Determinar servicio a usar
 		this.useMock = this.configService.get<boolean>('USE_FOURSQUARE_MOCK', true);
@@ -139,10 +139,10 @@ export class PlacesSearchService {
 			this.logger.log(`${logPrefix} Using Foursquare MOCK service`);
 
 			// Asegurar autenticación del mock service
-			this.foursquareMockService.auth('mock_token');
+			this.fsqDevelopersPlaces.auth('mock_token');
 
 			// Llamar al método de búsqueda filtrada del mock
-			const response = await this.foursquareMockService.placeSearchFiltered({
+			const response = await this.fsqDevelopersPlaces.placeSearch({
 				ll: queryParams.ll,
 				limit: queryParams.limit,
 				categoryIds: queryParams.categoryIds,
@@ -174,7 +174,7 @@ export class PlacesSearchService {
 			this.logger.log(`${logPrefix} Using Foursquare REAL service`);
 
 			// TODO: Implementar integración con servicio real
-			// const response = await this.foursquareService.placeSearch({
+			// const response = await this.fsqDevelopersPlaces.placeSearch({
 			//   ll: queryParams.ll,
 			//   radius: queryParams.radius,
 			//   categories: queryParams.categories,
@@ -246,11 +246,11 @@ export class PlacesSearchService {
 		try {
 			if (this.useMock) {
 				// Para mock, verificar que podemos hacer auth
-				this.foursquareMockService.auth('health_check_token');
+				this.fsqDevelopersPlaces.auth('health_check_token');
 				return true;
 			} else {
 				// TODO: Implementar health check para servicio real
-				// return await this.foursquareService.healthCheck();
+				// return await this.fsqDevelopersPlaces.healthCheck();
 				return false; // Por ahora false hasta implementar servicio real
 			}
 		} catch (error) {

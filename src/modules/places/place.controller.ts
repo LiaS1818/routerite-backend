@@ -7,21 +7,16 @@ import {
 	ValidationPipe
 } from '@nestjs/common';
 import { PlacesService } from './places.service';
-import { FoursquareMockService } from 'src/common/services/foursquare/foursquare-mock.service';
 import { ConfigService } from '@nestjs/config';
 import { SearchPlacesDto } from './dto/filters-place.dto';
-
 import { Logger } from '@nestjs/common';
-import { Response } from 'express';
 
 @Controller('places')
 export class PlaceController {
 	private readonly logger = new Logger(PlaceController.name);
 
 	constructor(
-
 		private readonly svc: PlacesService,
-		private readonly foursquareService: FoursquareMockService,
 		private readonly configService: ConfigService
 	) {}
 

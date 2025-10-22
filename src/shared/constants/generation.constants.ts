@@ -1,7 +1,7 @@
 export const GenerationConstants = {
 	// Tiempo mínimo y máximo por actividad (en minutos)
-	MIN_ACTIVITY_DURATION: 90, // 60 visita + 30 viaje
-	IDEAL_ACTIVITY_DURATION: 180, // 3 horas ideal
+	MIN_ACTIVITY_DURATION: 45, // 60 visita + 30 viaje
+	IDEAL_ACTIVITY_DURATION: 120, // 3 horas ideal
 
 	// Límites de generación
 	MIN_ACTIVITIES: 3,
