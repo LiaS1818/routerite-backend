@@ -23,6 +23,7 @@ import { SupabaseStorageService } from '../../supabase/supabase-storage.service'
 import { ConfigService } from '@nestjs/config';
 import fsqDevelopersPlaces from '@api/fsq-developers-places';
 import { FSQRPlace } from '../../../common/interfaces/FSQRPlace.interface';
+import { FsqPlace } from '../../places/interfaces/fsq-place';
 
 interface ActivityLimits {
 	min: number;
@@ -542,58 +543,21 @@ export class ItineraryGeneratorService {
 					];
 					const latitude = latitudeMatch[1];
 					let searchParams: PlaceSearchMetadataParam = {
-						limit: 10,
+						limit: 1,
 						query: itinerary.starting_location.name,
 						ll: `${latitude},${longitude}`,
 						fields: "fsq_place_id,name,description,distance,rating,tel,website,social_media,latitude,longitude,categories,hours,location,stats",
 						radius: 2500,
-						sort: 'DISTANCE',
+						sort: 'RELEVANCE',
 						"X-Places-Api-Version": "2025-06-17",
 					};
 
 					// DEBUG: Log the exact parameters being sent
 					this.logger.debug(`[${requestId}] Calling fsqrService.placeSearch with params:`, JSON.stringify(searchParams, null, 2));
 					this.logger.debug(`[${requestId}] fsqrService type: ${fsqrService.constructor.name}`);
-					/*
-					{
-					"fsq_place_id":"4bc1ee90920eb713894e1b2c",
-					"name":"Parque Metropolitano",
-					"description":"",
-					"distance":9612,
-					"rating":9.5,
-					"tel":"33 3673 9489",
-					"website":"http://www.parquemetropolitano.com.mx",
-					"social_media":{"twitter":"parquemetro_gdl"},
-					"latitude":20.671264141548797,
-					"longitude":-103.44051178844823,
-					"categories":[{"fsq_category_id":"4bf58dd8d48988d163941735","name":"Park","short_name":"Park","plural_name":"Parks","icon":{"prefix":"https://ss3.4sqi.net/img/categories_v2/parks_outdoors/park_","suffix":".png"}},{"fsq_category_id":"4bf58dd8d48988d1e5941735","name":"Dog Park","short_name":"Dog Park","plural_name":"Dog Parks","icon":{"prefix":"https://ss3.4sqi.net/img/categories_v2/parks_outdoors/dogrun_","suffix":".png"}},{"fsq_category_id":"4bf58dd8d48988d1e7941735","name":"Playground","short_name":"Playground","plural_name":"Playgrounds","icon":{"prefix":"https://ss3.4sqi.net/img/categories_v2/parks_outdoors/playground_","suffix":".png"}}],
-					"hours":{"display":"Mon–Sun: 6:00 AM–10:00 PM","is_local_holiday":false,"open_now":true,"regular":[{"close":"2200","day":1,"open":"0600"},{"close":"2200","day":2,"open":"0600"},{"close":"2200","day":3,"open":"0600"},{"close":"2200","day":4,"open":"0600"},{"close":"2200","day":5,"open":"0600"},{"close":"2200","day":6,"open":"0600"},{"close":"2200","day":7,"open":"0600"}]},
-					"location":{"address":"Av. Beethoven 5800","country":"MX","formatted_address":"Av. Beethoven 5800 (Independencia), 45030 Zapopan, Jalisco","locality":"Zapopan","postcode":"45030","region":"Jalisco"},
-					"photos":[{"fsq_photo_id":"688f94560772643cc1362890","created_at":"2025-08-03T16:54:46.000Z","prefix":"https://fastly.4sqi.net/img/general/","suffix":"/32708939_rlsCgNiKrt2yI2TRx_9RptFv8eqDhIawYyZVegjSF28.jpg","width":1920,"height":1440},{"fsq_photo_id":"688e3bb569cb913c186e3940","created_at":"2025-08-02T16:24:21.000Z","prefix":"https://fastly.4sqi.net/img/general/","suffix":"/12209612_XpkWHjSqNr3kU3oUnIyiZPok4hy6I_Uv9P6vthp4fpA.jpg","width":1920,"height":1440},{"fsq_photo_id":"6857f1d52cfacf02ea8511bd","created_at":"2025-06-22T12:06:45.000Z","prefix":"https://fastly.4sqi.net/img/general/","suffix":"/42396929_W0zwQRj1lJeD6oykDZ1JPCANJa5mc2ohEuIcK4eA8X8.jpg","width":1920,"height":1440},{"fsq_photo_id":"66e4b418720864212035e71c","created_at":"2024-09-13T21:52:24.000Z","prefix":"https://fastly.4sqi.net/img/general/","suffix":"/132779284_CyAXIFyS8Yvjw9nfax-gPeyAxenMBVG4OBn0IcjsB6w.jpg","width":1440,"height":1920},{"fsq_photo_id":"66afadd3e88fc929850cad2b","created_at":"2024-08-04T16:35:31.000Z","prefix":"https://fastly.4sqi.net/img/general/","suffix":"/45079210_u2dtmJfx8di0CM18NfRpTwZ4wfjLXLcfdDVxWqqedZ4.jpg","width":1440,"height":1920}],
-					"stats":{"total_photos":4389,"total_ratings":3481,"total_tips":437}
-					}
-					 */
 					const searchResult = await fsqrService.placeSearch(searchParams);
 					const places = (searchResult.data.results || []) as any[];
-					// TODO: Remove when debugging is finished
 					let bestMatch: any = places[0];
-					let minDistance = Number.MAX_VALUE;
-					if (places.length > 0 && itinerary.starting_location.latLng) {
-						const [latStr, lngStr] = itinerary.starting_location.latLng.split(',');
-						const lat = parseFloat(latStr);
-						const lng = parseFloat(lngStr);
-						for (const place of places) {
-							const plat = place.latitude;
-							const plng = place.longitude;
-							const dist = Math.sqrt(Math.pow(plat - lat, 2) + Math.pow(plng - lng, 2));
-							if (dist < minDistance) {
-								minDistance = dist;
-								bestMatch = place;
-							}
-						}
-					} else if (places.length > 0) {
-						bestMatch = places[0];
-					}
 					if (bestMatch && bestMatch.fsq_place_id) {
 						const placeDetailsResp = await fsqrService.placeDetails({
 							fsq_place_id: String(bestMatch.fsq_place_id),
@@ -601,11 +565,8 @@ export class ItineraryGeneratorService {
 							"X-Places-Api-Version": "2025-06-17",
 						});
 						const fsqrPlace = placeDetailsResp.data;
-
-						// Guardar la respuesta completa de FSQR en el mapa
 						// @ts-ignore
 						fsqrPlacesMap.set(fsqrPlace.fsq_place_id, fsqrPlace);
-
 						const category = (fsqrPlace.categories && fsqrPlace.categories.length > 0) ? fsqrPlace.categories[0] : { fsq_category_id: '', name: '' };
 						const hours = fsqrPlace.hours ? {
 							display: fsqrPlace.hours.display || '',

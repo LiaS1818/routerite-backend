@@ -57,12 +57,6 @@ export class PlacesProcessorService {
 				continue;
 			}
 
-			// Filtrar por fotos
-			if (!this.hasPhotos(place)) {
-				this.logger.debug(`Discarding place ${place.fsq_place_id} - no photos available`);
-				continue;
-			}
-
 			// Filtrar por disponibilidad
 			if (!this.isAvailableForItinerary(place, searchParams)) {
 				this.logger.debug(`Discarding place ${place.fsq_place_id} - availability filter failed`);
