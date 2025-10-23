@@ -10,12 +10,14 @@ import {
 	Request,
 	Param,
 	Delete,
+	Patch,
 } from '@nestjs/common';
 import { ActivityService } from './activity.service';
 import { CreateActivityDto } from './dto/create-activity.dto';
 import { Activity } from 'src/database/models';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { ConfigService } from '@nestjs/config';
+import { UpdateActivityDto } from './dto/update-activity.dto';
 
 @Controller('activities')
 @UseGuards(JwtAuthGuard)
@@ -69,6 +71,16 @@ export class ActivityController {
 		console.log('Activities found:', activities);
 		return activities;
 
+	}
+
+	@Patch(':id')
+	async update(
+	@Param('id', ParseIntPipe) id: number,
+	@Body() dto: UpdateActivityDto,
+	@Request() req,
+	) {
+		const userId = req.user?.id; 
+		return this.activityService.update(id, dto, userId);
 	}
 
 }

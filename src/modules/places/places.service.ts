@@ -12,7 +12,7 @@ export class PlacesService {
   private places: FsqPlace[];
 
   constructor() {
-    const p = path.resolve(process.cwd(), 'assets/places_mock.json');
+    const p = path.resolve(process.cwd(), 'assets/places.json');
     const raw = JSON.parse(fs.readFileSync(p, 'utf8'));
     // el archivo tiene un objeto { results: [...] }
     this.places = Array.isArray(raw.results) ? raw.results : [];
