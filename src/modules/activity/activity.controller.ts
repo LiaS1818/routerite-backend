@@ -46,9 +46,6 @@ export class ActivityController {
 		}
 	}
 
-	// To get all activities of an itinerary by trip Id
-	
-
 	@Get(':id')
 	async findOne(@Param('id', ParseIntPipe) id: number, @Request() req) {
 		return this.activityService.findOne(id, req.user.id);

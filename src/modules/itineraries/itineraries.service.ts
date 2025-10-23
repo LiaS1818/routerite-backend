@@ -12,6 +12,7 @@ import { UpdateItineraryDto } from './dto/update-itinerary.dto';
 import { Logger } from '@nestjs/common';
 import { TripAccessValidatorService } from '../../common/services/trip-access-validator.service';
 import { ExperienceTypeDto } from './dto/experience_type.dto';
+import { ReorderActivitiesDto } from './dto/reorder-activities.dto';
 
 @Injectable()
 export class ItinerariesService {
@@ -196,5 +197,39 @@ export class ItinerariesService {
 
 		// Retornar el itinerario actualizado
 		return itinerary;
+	}
+
+	async reorderActivities(itineraryId: number, reorderActivitiesDto: ReorderActivitiesDto, userId: number) {
+		// Validar acceso del usuario al itinerario
+		await this.tripAccessValidator.validateTripOwnershipThroughItinerary(itineraryId, userId);
+
+		const { activities } = reorderActivitiesDto;
+		if (!activities || activities.length === 0) {
+			throw new BadRequestException('La lista de actividades no puede estar vacía');
+		}
+
+		// Validar que las secuencias sean consecutivas y sin duplicados
+		const sequences = activities.map(a => a.sequence).sort((a, b) => a - b);
+		for (let i = 0; i < sequences.length; i++) {
+			if (sequences[i] !== i + 1) {
+				throw new BadRequestException('Las secuencias deben ser consecutivas y empezar en 1, sin duplicados');
+			}
+		}
+
+		// Validar que todas las actividades pertenezcan al itinerario
+		const activityIds = activities.map(a => a.activity_id);
+		const dbActivities = await this.activityModel.findAll({
+			where: { id: activityIds, itinerary_id: itineraryId }
+		});
+		if (dbActivities.length !== activities.length) {
+			throw new BadRequestException('Algunas actividades no pertenecen al itinerario');
+		}
+
+		// Actualizar secuencias
+		const updatePromises = activities.map(({ activity_id, sequence }) =>
+			this.activityModel.update({ sequence }, { where: { id: activity_id } })
+		);
+		await Promise.all(updatePromises);
+		return { success: true };
 	}
 }

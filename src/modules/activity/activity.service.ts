@@ -39,13 +39,22 @@ export class ActivityService {
 
 		let { place, ...restOfActivity } = createActivityDto;
 		const photo = place.photos[0];
+
+		// Obtener el siguiente valor de sequence para el itinerary
+		const lastActivity = await this.activityModel.findOne({
+			where: { itinerary_id: createActivityDto.itinerary_id },
+			order: [['sequence', 'DESC']]
+		});
+		const nextSequence = lastActivity?.sequence ? lastActivity.sequence + 1 : 1;
+
 		let activity = {
 			...restOfActivity,
 			lat: place.latitude,
 			lng: place.longitude,
 			place,
 			distance_to_start: 0,
-			transportation_mode: "auto"
+			transportation_mode: "auto",
+			sequence: nextSequence
 		}
 
 		const createdAct = await this.activityModel.create(activity);
@@ -59,8 +68,11 @@ export class ActivityService {
 		return createdAct;
 	}
 
-	async findAll(): Promise<Activity[]> {
-		return this.activityModel.findAll();
+	async findAllByItinerary(itineraryId): Promise<Activity[]> {
+		return await this.activityModel.findAll({
+			where: { itinerary_id: itineraryId },
+			order: [['sequence', 'ASC']]
+		});
 	}
 
 	async findOne(id: number, userId?: number): Promise<Activity> {

@@ -27,6 +27,8 @@ import { GenerateItineraryDto } from './dto/generate-itinerary.dto';
 import { GenerationResponseDto } from './dto/generation-response.dto';
 import { ItineraryGeneratorService } from './services/itinerary-generator.service';
 import { ItineraryValidatorService } from './services/itinerary-validator.service';
+import { ReorderActivitiesDto } from './dto/reorder-activities.dto';
+import { ActivityService } from '../activity/activity.service';
 
 @Controller('itineraries')
 @UseGuards(JwtAuthGuard)
@@ -38,6 +40,7 @@ export class ItinerariesController {
 		private fsqDevelopersPlaces: FoursquareMockService,
 		private readonly itineraryGeneratorService: ItineraryGeneratorService,
 		private readonly itineraryValidatorService: ItineraryValidatorService,
+		private readonly activityService: ActivityService,
 	) {}
 
 	@Post()
@@ -63,6 +66,22 @@ export class ItinerariesController {
 		);
 	}
 
+	@Get(':id/place')
+	async getMockPlaceForTesting() {
+		this.fsqDevelopersPlaces.auth("token")
+		return this.fsqDevelopersPlaces.getRandomPlace()
+	}
+
+	@Get(':itineraryId/activities')
+	async getActivitiesByItinerary(
+		@Param('itineraryId', ParseIntPipe) itineraryId: number,
+		@Request() req
+	) {
+		const activities = await this.activityService.findAllByItinerary(itineraryId);
+		return {
+			activities
+		}
+	}
 	// To get a specific itinerary by ID
 	@Get(':id')
 	async getItinerary(@Param('id', ParseIntPipe) id: number, @Request() req) {
@@ -76,12 +95,6 @@ export class ItinerariesController {
 		} catch (error) {
 			return { statusCode: 404, message: 'Itinerary not found' };
 		}
-	}
-
-	@Get(':id/place')
-	async getMockPlaceForTesting() {
-		this.fsqDevelopersPlaces.auth("token")
-		return this.fsqDevelopersPlaces.getRandomPlace()
 	}
 
 	//delete itinerary
@@ -203,6 +216,18 @@ export class ItinerariesController {
 			updateItineraryDto,
 		);
 	}
+
+	@Patch(':itineraryId/activities/reorder')
+	async reorderActivities(
+		@Param('itineraryId', ParseIntPipe) itineraryId: number,
+		@Body() reorderActivitiesDto: ReorderActivitiesDto,
+		@Request() req
+	) {
+		const userId = req.user.id;
+		return this.itinerariesService.reorderActivities(itineraryId, reorderActivitiesDto, userId);
+	}
+
+
 
 
 }
