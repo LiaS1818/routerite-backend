@@ -1,3 +1,6 @@
+// DEBE SER EL PRIMER IMPORT - Registra tsconfig-paths para resolver módulos correctamente
+import './tsconfig-paths-bootstrap';
+
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { ValidationPipe } from '@nestjs/common';

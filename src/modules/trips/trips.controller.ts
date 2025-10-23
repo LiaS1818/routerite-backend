@@ -15,6 +15,7 @@ import {
 	Logger,
 } from '@nestjs/common';
 import { TripsService } from './trips.service';
+import { IcsGeneratorService } from './ics-generator.service';
 import { CreateTripDto, UpdateTripExtendedDto } from './dto';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { Sequelize } from 'sequelize-typescript';
@@ -28,6 +29,7 @@ import fsqDevelopersPlaces, {
 import { ConfigService } from '@nestjs/config';
 import { FSQRPlace } from '../../common/interfaces/FSQRPlace.interface';
 import { FoursquareMockService } from '../../common/services/foursquare/foursquare-mock.service';
+import { Itinerary, Activity } from '../../database/models';
 
 @Controller('trips')
 @UseGuards(JwtAuthGuard)
@@ -39,7 +41,8 @@ export class TripsController {
 		private sequelize: Sequelize,
 		private readonly supabaseStorageService: SupabaseStorageService,
 		private readonly configService: ConfigService,
-		private fsqDevelopersPlaces: FoursquareMockService
+		private readonly fsqDevelopersPlaces: FoursquareMockService,
+		private readonly icsGeneratorService: IcsGeneratorService
 	) {}
 
 	@Post()
@@ -106,11 +109,14 @@ export class TripsController {
 				radius: 100,
 				'X-Places-Api-Version': "2025-06-17",
 				sort: "RELEVANCE",
+				fields: "fsq_place_id,photos"
 			}
 
 			const fsqrApiKey = this.configService.get<string>('FSQR_API_KEY') || " ";
-			this.fsqDevelopersPlaces.auth(fsqrApiKey);
-			const placesResponse =  await this.fsqDevelopersPlaces.placeSearch(params)
+			const useFSQRMock = this.configService.get('USE_FSQR_MOCK', true);
+			const fsqrService =  useFSQRMock != "false"  ? this.fsqDevelopersPlaces : fsqDevelopersPlaces;
+			fsqrService.auth(fsqrApiKey);
+			const placesResponse =  await fsqrService.placeSearch(params)
 			const results = placesResponse.data.results || [];
 
 			let photoUrl, fsqId: unknown;
@@ -228,5 +234,90 @@ export class TripsController {
 			);
 		}
 		return this.tripsService.remove(id);
+	}
+
+	@Get(':id/export/ics')
+	async exportToIcs(@Param('id', ParseIntPipe) id: number, @Request() req) {
+		try {
+			this.logger.log(`Exporting trip ${id} to ICS for user ${req.user.id}`);
+
+			// Verificar acceso al trip
+			const trip = await this.tripsService.findByIdWithAccess(
+				id,
+				req.user.id
+			);
+
+			if (!trip) {
+				throw new HttpException('Trip not found', HttpStatus.NOT_FOUND);
+			}
+
+			// Obtener itinerarios con actividades
+			const itineraries = await Itinerary.findAll({
+				where: { trip_id: id },
+				include: [
+					{
+						model: Activity,
+						as: 'activities',
+					}
+				],
+				order: [['date', 'ASC']],
+			});
+
+			// Verificar que haya itinerarios con actividades
+			const itinerariesWithActivities = itineraries.filter(
+				itinerary => itinerary.activities && itinerary.activities.length > 0
+			);
+
+			if (itinerariesWithActivities.length === 0) {
+				throw new HttpException(
+					'This trip has no itineraries with activities to export',
+					HttpStatus.BAD_REQUEST
+				);
+			}
+
+			// Generar el contenido del archivo ICS
+			const icsContent = this.icsGeneratorService.generateIcsFromTrip(
+				trip,
+				itineraries
+			);
+
+			// Generar la ruta para el archivo en Supabase
+			const storagePath = this.supabaseStorageService.generateTripIcsPath(trip.id);
+
+			this.logger.debug(`Uploading ICS file to Supabase: ${storagePath}`);
+
+			// Subir el archivo a Supabase Storage
+			const publicUrl = await this.supabaseStorageService.uploadIcsFile(
+				icsContent,
+				storagePath
+			);
+
+			this.logger.log(`ICS file exported successfully for trip ${id}: ${publicUrl}`);
+
+			// Devolver la URL pública
+			return {
+				success: true,
+				url: publicUrl,
+				filename: `trip-${trip.destination}.ics`,
+				itineraries_count: itinerariesWithActivities.length,
+				activities_count: itinerariesWithActivities.reduce(
+					(sum, it) => sum + (it.activities?.length || 0),
+					0
+				)
+			};
+		} catch (error) {
+			if (error instanceof HttpException) {
+				throw error;
+			}
+
+			this.logger.error(
+				`Error exporting trip ${id} to ICS: ${error.message}`,
+				error.stack
+			);
+			throw new HttpException(
+				'Failed to export trip to ICS',
+				HttpStatus.INTERNAL_SERVER_ERROR
+			);
+		}
 	}
 }

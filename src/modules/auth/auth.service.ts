@@ -35,6 +35,7 @@ export class AuthService {
 					name: user.name,
 					email: user.email,
 					verified: user.verified,
+					is_premium: user.is_premium
 				},
 			};
 		} catch (error) {
@@ -71,6 +72,7 @@ export class AuthService {
 				name: user.name,
 				email: user.email,
 				verified: user.verified,
+				is_premium: user.is_premium
 			},
 		};
 	}

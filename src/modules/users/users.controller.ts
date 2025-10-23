@@ -16,6 +16,7 @@ import {
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { UpdatePremiumDto } from './dto/update-premium.dto';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 
 @Controller('users')
@@ -73,5 +74,22 @@ export class UsersController {
 		}
 		if (updateUserDto.password == null) delete updateUserDto.password;
 		return this.usersService.update(id, updateUserDto);
+	}
+
+	@Patch(':id/premium')
+	@UseGuards(JwtAuthGuard)
+	async updatePremiumStatus(
+		@Param('id', ParseIntPipe) id: number,
+		@Body() updatePremiumDto: UpdatePremiumDto,
+		@Request() req
+	) {
+		// Only allow users to update their own premium status
+		if (req.user.id !== id) {
+			throw new HttpException(
+				'Not authorized to update this user premium status',
+				HttpStatus.FORBIDDEN
+			);
+		}
+		return this.usersService.updatePremiumStatus(id, updatePremiumDto);
 	}
 }

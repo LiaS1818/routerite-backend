@@ -8,6 +8,7 @@ import * as path from 'path';
 import * as fs from 'fs';
 import {
 	PlaceDetailsMetadataParam,
+	PlacePhotosMetadataParam,
 	PlaceSearchMetadataParam,
 } from '../../../../.api/apis/fsq-developers-places';
 import type * as types from '../../../../.api/apis/fsq-developers-places/types';
@@ -72,6 +73,7 @@ export class FoursquareMockService {
 		// Generate n - non repeating random indexes
 		while (indexes.length < limit) {
 			const randomIndex = Math.floor(Math.random() * this.places.length);
+			console.log("Using random index: ", randomIndex )
 			if (!indexes.includes(randomIndex)) {
 				indexes.push(randomIndex);
 				places.push(this.places[randomIndex]);
@@ -112,6 +114,22 @@ export class FoursquareMockService {
 		}
 	}
 
+	async placePhotos(params: PlacePhotosMetadataParam): Promise<FetchResponse<200, types.PlacePhotosResponse200>> {
+		if (!this.places.length) throw new NotFoundException("Missing auth token, call auth first");
+
+		const { fsq_place_id } = params;
+		if (!fsq_place_id) throw new NotFoundException("Missing fsq_place_id");
+
+		const place = this.places.find(p => p.fsq_place_id === fsq_place_id);
+		if (!place) throw new NotFoundException("Place not found");
+
+		return {
+			// @ts-ignore
+			data: place.photos || [],
+			status: 200
+		};
+	}
+
 	async getRandomPlace(): Promise<FSQRPlace> {
 		if(!this.places.length) throw new NotFoundException("Missing auth token, call auth first")
 		const placesWithHours = this.places.filter(place => place.hours && place.hours.regular && place.hours.regular.length > 0);
@@ -123,4 +141,3 @@ export class FoursquareMockService {
 
 	
 }
-

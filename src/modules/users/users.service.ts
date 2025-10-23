@@ -8,6 +8,7 @@ import { InjectModel } from '@nestjs/sequelize';
 import { User } from '../../database/models/user.model';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { UpdatePremiumDto } from './dto/update-premium.dto';
 import * as bcrypt from 'bcrypt';
 
 @Injectable()
@@ -123,5 +124,52 @@ export class UsersService {
 		}
 
 		return user;
+	}
+
+	/**
+	 * Update user premium subscription status
+	 * @param userId User ID
+	 * @param updatePremiumDto Premium subscription data
+	 * @returns Updated user
+	 */
+	async updatePremiumStatus(
+		userId: number,
+		updatePremiumDto: UpdatePremiumDto
+	): Promise<User> {
+		const user = await this.userModel.findByPk(userId);
+
+		if (!user) {
+			throw new NotFoundException(`User with ID ${userId} not found`);
+		}
+
+		// Si is_premium es true, validar que se proporcionen las fechas
+		if (updatePremiumDto.is_premium) {
+			if (!updatePremiumDto.premium_start_date) {
+				throw new BadRequestException(
+					'premium_start_date and premium_end_date are required when activating premium'
+				);
+			}
+
+			const startDate = new Date(updatePremiumDto.premium_start_date);
+			const endDate = new Date(startDate);
+			endDate.setFullYear(startDate.getFullYear() + 1);
+
+			await user.update({
+				is_premium: true,
+				premium_start_date: startDate,
+				premium_end_date: endDate,
+			});
+		} else {
+			// Si is_premium es false, limpiar las fechas
+			await user.update({
+				is_premium: false,
+				premium_start_date: null,
+				premium_end_date: null
+			});
+		}
+
+		return this.userModel.findByPk(userId, {
+			attributes: { exclude: ['password'] },
+		}) as Promise<User>;
 	}
 }

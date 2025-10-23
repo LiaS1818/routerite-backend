@@ -4,7 +4,6 @@ import { Transaction } from 'sequelize';
 import { GenerateItineraryDto } from '../dto/generate-itinerary.dto';
 import { GenerationResponseDto, GenerationMetadataDto, ItineraryWithActivitiesDto } from '../dto/generation-response.dto';
 import { ItinerariesService } from '../itineraries.service';
-import { TripsService } from '../../trips/trips.service';
 import { ItineraryValidatorService } from './itinerary-validator.service';
 import { OptimizerClientService } from '../../optimizer/optimizer-client.service';
 import { OptimizationResponse, OptimizationSuccessResponse, OptimizationErrorResponse } from '../../optimizer/dto/optimization-response.dto';
@@ -19,7 +18,12 @@ import { Itinerary, Activity, Trip } from '../../../database/models';
 import { Sequelize } from 'sequelize-typescript';
 import { OptimizationPayload } from '../../optimizer/dto/optimization-payload.dto';
 import { FoursquareMockService } from '../../../common/services/foursquare/foursquare-mock.service';
-import { PlaceSearchMetadataParam } from '../../../../.api/apis/fsq-developers-places';
+import { PlaceSearchMetadataParam } from '@api/fsq-developers-places';
+import { SupabaseStorageService } from '../../supabase/supabase-storage.service';
+import { ConfigService } from '@nestjs/config';
+import fsqDevelopersPlaces from '@api/fsq-developers-places';
+import { FSQRPlace } from '../../../common/interfaces/FSQRPlace.interface';
+import { FsqPlace } from '../../places/interfaces/fsq-place';
 
 interface ActivityLimits {
 	min: number;
@@ -57,27 +61,6 @@ interface OptimizationPreferences {
 	balance_categories: boolean;
 }
 
-/*
-interface OptimizationPayload {
-	itinerary: {
-		id: number;
-		date: string;
-		origin: { lat: number; lng: number };
-		time_window: TimeConstraints;
-		budget: number;
-		constraints: OptimizationConstraints;
-		preferences: OptimizationPreferences;
-	};
-	candidate_places: ProcessedPlace[];
-	metadata: {
-		request_id: string;
-		destination: string;
-		travelers_count: number;
-		timestamp: string;
-	};
-}
-
-*/
 @Injectable()
 export class ItineraryGeneratorService {
 	private readonly logger = new Logger(ItineraryGeneratorService.name);
@@ -93,7 +76,9 @@ export class ItineraryGeneratorService {
 		private readonly optimizerClientService: OptimizerClientService,
 		private readonly placesSearchService: PlacesSearchService,
 		private readonly placesProcessorService: PlacesProcessorService,
-		private readonly fsqrMockService: FoursquareMockService,
+		private readonly fsqDevelopersPlaces: FoursquareMockService,
+		private readonly supabaseStorageService: SupabaseStorageService,
+		private readonly configService: ConfigService
 	) {}
 
 	async generateItinerary(
@@ -115,7 +100,7 @@ export class ItineraryGeneratorService {
 			const derivedCalculations = this.calculateDerivedParameters(itinerary, options, requestId);
 
 			// PASO 3: OBTENCIÓN DE LUGARES CANDIDATOS
-			const candidatePlaces = await this.obtainCandidatePlaces(itinerary, derivedCalculations, requestId, options);
+			const { candidatePlaces, fsqrPlacesMap } = await this.obtainCandidatePlaces(itinerary, derivedCalculations, requestId, options);
 
 			// PASO 4: PREPARACIÓN DE PAYLOAD PARA FLASK
 			const optimizationPayload = this.prepareOptimizationPayload(
@@ -131,7 +116,10 @@ export class ItineraryGeneratorService {
 
 			// PASO 6: PERSISTENCIA EN BASE DE DATOS
 			transaction = await this.sequelize.transaction();
-			await this.persistOptimizationResult(itinerary, optimizationResult, options, transaction, requestId);
+			await this.persistOptimizationResult(itinerary, optimizationResult, options, transaction, requestId, fsqrPlacesMap);
+
+			// PASO 6.5: OBTENER Y SUBIR FOTOS DE ACTIVIDADES
+			await this.populateActivityImages(itineraryId, requestId, transaction);
 			await transaction.commit();
 
 			// PASO 7: CONSTRUCCIÓN DE RESPUESTA
@@ -239,7 +227,8 @@ export class ItineraryGeneratorService {
 		optimizationResult: OptimizationResponse,
 		options: GenerateItineraryDto,
 		transaction: Transaction,
-		requestId: string
+		requestId: string,
+		fsqrPlacesMap: Map<string, FSQRPlace>
 	): Promise<void> {
 		this.logger.log(`[${requestId}] PASO 6: Persisting optimization result to database`);
 
@@ -264,13 +253,20 @@ export class ItineraryGeneratorService {
 			const newActivities: Activity[] = [];
 
 			for (const activity of successResponse.optimized_activities) {
+				// Recuperar la respuesta completa de FSQR usando el fsq_place_id
+				const fsqrPlace = fsqrPlacesMap.get(activity.place.fsq_place_id);
+
+				if (!fsqrPlace) {
+					this.logger.warn(`[${requestId}] No FSQR place found in map for fsq_place_id: ${activity.place.fsq_place_id}, using simplified version`);
+				}
+
 				const activityData = {
 					itinerary_id: itinerary.id,
 					name: activity.place.name,
 					description: activity.place.category.name, // Usando el nombre de la categoría como descripción por defecto
 					lat: activity.place.location.lat,
 					lng: activity.place.location.lng,
-					place: activity.place, // Guardar el objeto de lugar completo como JSON
+					place: fsqrPlace || activity.place, // Guardar la respuesta completa de FSQR si está disponible, sino la simplificada
 					sequence: activity.sequence,
 					start_time: activity.timing.arrival_time,
 					end_time: activity.timing.departure_time,
@@ -465,7 +461,7 @@ export class ItineraryGeneratorService {
 
 		const maxActivities = Math.min(options.max_activities || 5, maxActivitiesByTime);
 		const minActivities = Math.max(options.min_activities || 3, minActivitiesByTime);
-		const targetActivities = Math.max(minActivities, Math.min(maxActivities, 4));
+		const targetActivities = Math.round((maxActivities + minActivities) / 2)
 
 		const activities: ActivityLimits = {
 			min: minActivities,
@@ -518,54 +514,59 @@ export class ItineraryGeneratorService {
 	/**
 	 * PASO 3: Obtención de Lugares Candidatos usando PlacesSearchService y PlacesProcessorService
 	 */
-	private async obtainCandidatePlaces(itinerary: any, calculations: any, requestId: string, options: GenerateItineraryDto): Promise<ProcessedPlace[]> {
+	private async obtainCandidatePlaces(itinerary: any, calculations: any, requestId: string, options: GenerateItineraryDto): Promise<{ candidatePlaces: ProcessedPlace[], fsqrPlacesMap: Map<string, FSQRPlace> }> {
 		this.logger.log(`[${requestId}] PASO 3: Obtaining candidate places using PlacesSearchService and PlacesProcessorService`);
+
+		const fsqrApiKey = this.configService.get<string>('FSQR_API_KEY') || " ";
+		const useFSQRMock = this.configService.get('USE_FSQR_MOCK', true);
+		const fsqrService =  useFSQRMock != "false" ? this.fsqDevelopersPlaces : fsqDevelopersPlaces;
 
 		try {
 			const candidates: ProcessedPlace[] = [];
+			const fsqrPlacesMap = new Map<string, FSQRPlace>();
+
 			// 1. Si existe starting_location, buscar el mejor match en FSQR
 			if (itinerary.starting_location) {
 				this.logger.log(`[${requestId}] Searching FSQR place for starting_location: ${JSON.stringify(itinerary.starting_location)}`);
 				try {
-					this.fsqrMockService.auth('token');
+					fsqrService.auth(fsqrApiKey);
 					// Buscar por nombre si está disponible
+					const { latLng } = itinerary.starting_location;
+					const longitudeMatch = latLng.match(/lng:\s*([-+]?\d*\.\d+|\d+)/) || [
+						null,
+						'0.0',
+					];
+					const longitude = longitudeMatch[1];
+					const latitudeMatch = latLng.match(/lat:\s*([-+]?\d*\.\d+|\d+),/) || [
+						null,
+						'0.0',
+					];
+					const latitude = latitudeMatch[1];
 					let searchParams: PlaceSearchMetadataParam = {
-						limit: 10,
+						limit: 1,
 						query: itinerary.starting_location.name,
-						ll: `${itinerary.lat},${itinerary.lng}`,
-						radius: 1000,
-						sort: 'DISTANCE',
-						"X-Places-Api-Version": "2025-06-17"
+						ll: `${latitude},${longitude}`,
+						fields: "fsq_place_id,name,description,distance,rating,tel,website,social_media,latitude,longitude,categories,hours,location,stats",
+						radius: 2500,
+						sort: 'RELEVANCE',
+						"X-Places-Api-Version": "2025-06-17",
 					};
-					const searchResult = await this.fsqrMockService.placeSearch(searchParams);
+
+					// DEBUG: Log the exact parameters being sent
+					this.logger.debug(`[${requestId}] Calling fsqrService.placeSearch with params:`, JSON.stringify(searchParams, null, 2));
+					this.logger.debug(`[${requestId}] fsqrService type: ${fsqrService.constructor.name}`);
+					const searchResult = await fsqrService.placeSearch(searchParams);
 					const places = (searchResult.data.results || []) as any[];
-					// Si hay coordenadas, buscar el más cercano
-					let bestMatch: any = null;
-					let minDistance = Number.MAX_VALUE;
-					if (places.length > 0 && itinerary.starting_location.latLng) {
-						const [latStr, lngStr] = itinerary.starting_location.latLng.split(',');
-						const lat = parseFloat(latStr);
-						const lng = parseFloat(lngStr);
-						for (const place of places) {
-							const plat = place.geocodes && place.geocodes.main ? place.geocodes.main.latitude : 0;
-							const plng = place.geocodes && place.geocodes.main ? place.geocodes.main.longitude : 0;
-							const dist = Math.sqrt(Math.pow(plat - lat, 2) + Math.pow(plng - lng, 2));
-							if (dist < minDistance) {
-								minDistance = dist;
-								bestMatch = place;
-							}
-						}
-					} else if (places.length > 0) {
-						bestMatch = places[0];
-					}
+					let bestMatch: any = places[0];
 					if (bestMatch && bestMatch.fsq_place_id) {
-						// TODO: Reduce to only necessary fields (fsq_place_id)
-						const placeDetailsResp = await this.fsqrMockService.placeDetails({
+						const placeDetailsResp = await fsqrService.placeDetails({
 							fsq_place_id: String(bestMatch.fsq_place_id),
+							fields: "fsq_place_id,name,description,distance,rating,tel,website,social_media,latitude,longitude,categories,hours,location,stats,price,photos",
 							"X-Places-Api-Version": "2025-06-17",
-							fields: "fsq_place_id"
 						});
 						const fsqrPlace = placeDetailsResp.data;
+						// @ts-ignore
+						fsqrPlacesMap.set(fsqrPlace.fsq_place_id, fsqrPlace);
 						const category = (fsqrPlace.categories && fsqrPlace.categories.length > 0) ? fsqrPlace.categories[0] : { fsq_category_id: '', name: '' };
 						const hours = fsqrPlace.hours ? {
 							display: fsqrPlace.hours.display || '',
@@ -577,8 +578,8 @@ export class ItineraryGeneratorService {
 							fsq_place_id: fsqrPlace.fsq_place_id || '',
 							name: fsqrPlace.name || '',
 							location: {
-								lat: bestMatch.lat,
-								lng: bestMatch.lng,
+								lat: bestMatch.latitude,
+								lng: bestMatch.longitude
 							},
 							category: {
 								id: category.fsq_category_id || '',
@@ -614,7 +615,7 @@ export class ItineraryGeneratorService {
 				time_window: {
 					start: calculations.timeConstraints.start,
 					end: calculations.timeConstraints.end
-				}
+				},
 			};
 
 			this.logger.log(`[${requestId}] Searching with params:`, {
@@ -627,6 +628,12 @@ export class ItineraryGeneratorService {
 
 			const rawPlaces = await this.placesSearchService.searchPlaces(searchParams, requestId);
 			this.logger.log(`[${requestId}] Found ${rawPlaces.length} raw places from PlacesSearchService`);
+
+			// Guardar todas las respuestas completas de FSQR en el mapa
+			for (const fsqrPlace of rawPlaces) {
+				// @ts-ignore
+				fsqrPlacesMap.set(fsqrPlace.fsq_place_id, fsqrPlace);
+			}
 
 			const processedPlaces = await this.placesProcessorService.processPlaces(rawPlaces, searchParams);
 			this.logger.log(`[${requestId}] Processed ${processedPlaces.length} valid places using PlacesProcessorService`);
@@ -653,11 +660,96 @@ export class ItineraryGeneratorService {
 				});
 			}
 
-			return [...candidates, ...processedPlaces];
+			this.logger.log(`[${requestId}] Built FSQR places map with ${fsqrPlacesMap.size} entries`);
+			return {
+				candidatePlaces: [...candidates, ...processedPlaces],
+				fsqrPlacesMap
+			};
 
 		} catch (error) {
 			this.logger.error(`[${requestId}] Error obtaining candidate places: ${error.message}`);
 			throw error;
+		}
+	}
+
+	/**
+	 * PASO 6.5: Obtener y subir fotos de actividades desde Foursquare a Supabase
+	 */
+	private async populateActivityImages(itineraryId: number, requestId: string, transaction: Transaction): Promise<void> {
+		this.logger.log(`[${requestId}] PASO 6.5: Populating activity images from Foursquare`);
+
+		try {
+			// Obtener todas las actividades del itinerario
+			const activities = await this.activityModel.findAll({
+				where: { itinerary_id: itineraryId }
+			});
+
+			this.logger.log(`[${requestId}] Found ${activities.length} activities to process images`);
+
+			// Autenticar el servicio Foursquare
+			const fsqrApiKey = this.configService.get<string>('FSQR_API_KEY') || " ";
+			const useFSQRMock = this.configService.get('USE_FSQR_MOCK', true);
+			const fsqrService =  useFSQRMock != "false" ? this.fsqDevelopersPlaces : fsqDevelopersPlaces;
+			fsqrService.auth(fsqrApiKey);
+
+			// Procesar cada actividad en paralelo (con límite para no sobrecargar)
+			const imagePromises = activities.map(async (activity) => {
+				try {
+					// Obtener fsq_place_id del objeto place guardado
+					const fsqPlaceId = activity.place?.fsq_place_id;
+					
+					if (!fsqPlaceId) {
+						this.logger.warn(`[${requestId}] Activity ${activity.id} doesn't have fsq_place_id, skipping image`);
+						return;
+					}
+
+					this.logger.debug(`[${requestId}] Processing images for activity ${activity.id} (${activity.name})`);
+
+					// Obtener fotos del lugar desde Foursquare
+					const photosResponse = await fsqrService.placePhotos({
+						fsq_place_id: fsqPlaceId,
+						"X-Places-Api-Version": "2025-06-17"
+					});
+
+					const photos = photosResponse.data;
+					
+					if (!photos || photos.length === 0) {
+						this.logger.warn(`[${requestId}] No photos found for activity ${activity.id} (${fsqPlaceId})`);
+						return;
+					}
+
+					// Tomar la primera foto disponible
+					const firstPhoto = photos[0];
+					const photoUrl = `${firstPhoto.prefix}390x360${firstPhoto.suffix}`;
+					
+					this.logger.debug(`[${requestId}] Found photo for activity ${activity.id}: ${photoUrl}`);
+
+					// Generar ruta para Supabase usando el método del SupabaseStorageService
+					const activityImagePath = this.supabaseStorageService.generateActivityImagePath(activity.id, photoUrl);
+					
+					// Subir imagen a Supabase
+					const supabaseImageUrl = await this.supabaseStorageService.uploadImageFromUrl(photoUrl, activityImagePath);
+					
+					// Actualizar el campo img_url en la base de datos
+					await activity.update({ img_url: supabaseImageUrl }, { transaction });
+					
+					this.logger.debug(`[${requestId}] Successfully updated activity ${activity.id} with image: ${supabaseImageUrl}`);
+
+				} catch (error) {
+					// Log error but don't fail the entire process
+					this.logger.warn(`[${requestId}] Failed to process image for activity ${activity.id}: ${error.message}`);
+				}
+			});
+
+			// Esperar que todas las imágenes se procesen
+			await Promise.all(imagePromises);
+			
+			this.logger.log(`[${requestId}] Completed image population for ${activities.length} activities`);
+
+		} catch (error) {
+			// Log error but don't fail the entire generation process
+			this.logger.error(`[${requestId}] Error populating activity images: ${error.message}`);
+			// No re-lanzamos el error para que la generación continúe
 		}
 	}
 

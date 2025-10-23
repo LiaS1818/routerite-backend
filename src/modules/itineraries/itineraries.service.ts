@@ -175,11 +175,11 @@ export class ItinerariesService {
 		}
 
 		// Actualizar los campos del itinerario con los valores del DTO
-		if (updateItineraryDto.start_time)
+		if (updateItineraryDto.start_time != "" && updateItineraryDto.start_time != undefined)
 			itinerary.start_time = updateItineraryDto.start_time;
-		if (updateItineraryDto.end_time)
+		if (updateItineraryDto.end_time != "" && updateItineraryDto.end_time != undefined)
 			itinerary.end_time = updateItineraryDto.end_time;
-		if (updateItineraryDto.budget !== undefined)
+		if (updateItineraryDto.budget !== null && updateItineraryDto.budget !== undefined)
 			itinerary.budget = updateItineraryDto.budget;
 		if (updateItineraryDto.lat !== undefined)
 			itinerary.lat = updateItineraryDto.lat;
@@ -188,8 +188,8 @@ export class ItinerariesService {
 		if (updateItineraryDto.experience_type_ids)
 			itinerary.experience_type_ids =
 				updateItineraryDto.experience_type_ids.join(',');
-		if (updateItineraryDto.is_configured !== undefined)
-			itinerary.configured = updateItineraryDto.is_configured;
+		if(updateItineraryDto.starting_location && updateItineraryDto.starting_location.name != "" && updateItineraryDto.starting_location.name != undefined)
+			itinerary.starting_location = updateItineraryDto.starting_location;
 
 		// Guardar los cambios en el itinerario
 		await itinerary.save();

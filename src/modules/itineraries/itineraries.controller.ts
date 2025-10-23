@@ -23,7 +23,6 @@ import { CreateItineraryDto } from './dto/create-itinerary.dto';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { UpdateItineraryDto } from './dto/update-itinerary.dto';
 import { FoursquareMockService } from '../../common/services/foursquare/foursquare-mock.service';
-import { ActivityService } from '../activity/activity.service';
 import { GenerateItineraryDto } from './dto/generate-itinerary.dto';
 import { GenerationResponseDto } from './dto/generation-response.dto';
 import { ItineraryGeneratorService } from './services/itinerary-generator.service';

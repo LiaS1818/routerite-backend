@@ -25,6 +25,9 @@ export interface UserAttributes {
 	profile_picture?: string;
 	verified: boolean;
 	active: boolean;
+	is_premium: boolean;
+	premium_start_date?: Date | null;
+	premium_end_date?: Date | null;
 	created_at: Date;
 	updated_at: Date;
 	deleted_at?: Date;
@@ -37,6 +40,9 @@ export interface UserCreationAttributes
 		| 'verified'
 		| 'active'
 		| 'profile_picture'
+		| 'is_premium'
+		| 'premium_start_date'
+		| 'premium_end_date'
 		| 'created_at'
 		| 'updated_at'
 		| 'deleted_at'
@@ -85,6 +91,19 @@ export class User extends Model<UserAttributes, UserCreationAttributes> {
 	@Default('https://lvuodwyfoqekoeadpcyi.supabase.co/storage/v1/object/public/routerite/defaults/profile-pictures/default-profile-picture.png')
 	@Column(DataType.STRING(255))
 	declare profile_picture?: string;
+
+	@AllowNull(false)
+	@Default(false)
+	@Column(DataType.BOOLEAN)
+	declare is_premium: boolean;
+
+	@AllowNull(true)
+	@Column(DataType.DATE)
+	declare premium_start_date?: Date | null;
+
+	@AllowNull(true)
+	@Column(DataType.DATE)
+	declare premium_end_date?: Date | null;
 
 	@CreatedAt
 	declare created_at: Date;

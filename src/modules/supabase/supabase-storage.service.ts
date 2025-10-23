@@ -120,4 +120,62 @@ export class SupabaseStorageService {
 		const extension = urlParts[urlParts.length - 1]?.split('?')[0] || 'jpg';
 		return `activities/${activityId}/cover.${extension}`;
 	}
+
+	/**
+	 * Sube un archivo .ics a Supabase Storage
+	 * @param icsContent Contenido del archivo .ics como string
+	 * @param path Ruta donde guardar el archivo en Supabase
+	 * @returns URL pública del archivo en Supabase
+	 */
+	async uploadIcsFile(icsContent: string, path: string): Promise<string> {
+		try {
+			this.logger.debug(`Subiendo archivo ICS a: ${path}`);
+
+			const icsBuffer = Buffer.from(icsContent, 'utf-8');
+
+			// Subir a Supabase Storage
+			const { error } = await this.supabase.storage
+				.from(this.bucketName)
+				.upload(path, icsBuffer, {
+					contentType: 'text/calendar',
+					upsert: true, // Sobrescribir si ya existe
+				});
+
+			if (error) {
+				this.logger.error(`Error subiendo archivo ICS a Supabase: ${error.message}`);
+				throw new HttpException(
+					'Error uploading ICS file to storage',
+					HttpStatus.INTERNAL_SERVER_ERROR
+				);
+			}
+
+			// Obtener URL pública
+			const { data: publicUrlData } = this.supabase.storage
+				.from(this.bucketName)
+				.getPublicUrl(path);
+
+			this.logger.debug(`Archivo ICS subido exitosamente a: ${publicUrlData.publicUrl}`);
+			return publicUrlData.publicUrl;
+
+		} catch (error) {
+			if (error instanceof HttpException) {
+				throw error;
+			}
+
+			this.logger.error(`Error procesando archivo ICS: ${error.message}`);
+			throw new HttpException(
+				'Failed to process ICS file upload',
+				HttpStatus.INTERNAL_SERVER_ERROR
+			);
+		}
+	}
+
+	/**
+	 * Genera la ruta para guardar el archivo .ics de un viaje
+	 * @param tripId ID del viaje
+	 * @returns Ruta para el archivo
+	 */
+	generateTripIcsPath(tripId: number): string {
+		return `trips/${tripId}/itinerary.ics`;
+	}
 }

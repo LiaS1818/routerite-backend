@@ -5,6 +5,7 @@ import { PlaceController } from './place.controller';
 import { PlacesSearchService } from './services/places-search.service';
 import { PlacesProcessorService } from './services/places-processor.service';
 import { FoursquareMockModule } from '../../common/services/foursquare/foursquare-mock.module';
+import { PlacesService } from './places.service';
 
 @Module({
 	imports: [

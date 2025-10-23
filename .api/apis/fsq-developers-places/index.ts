@@ -3,7 +3,11 @@ import type { ConfigOptions, FetchResponse } from 'api/dist/core'
 import Oas from 'oas';
 import APICore from 'api/dist/core';
 // @ts-ignore
-import definition from './openapi.json';
+import * as definitionModule from './openapi.json';
+
+// Fix for CommonJS: JSON imports don't have .default in CommonJS
+// When compiled to CommonJS, this ensures we use the module itself, not .default
+const definition = (definitionModule as any).default || definitionModule;
 
 class SDK {
   spec: Oas;
