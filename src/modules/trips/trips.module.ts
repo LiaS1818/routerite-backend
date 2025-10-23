@@ -3,6 +3,7 @@ import { Module } from '@nestjs/common';
 import { SequelizeModule } from '@nestjs/sequelize';
 import { TripsController } from './trips.controller';
 import { TripsService } from './trips.service';
+import { IcsGeneratorService } from './ics-generator.service';
 import { Trip, User, Itinerary, TripInvitation } from '../../database/models';
 import { TripAccessValidatorModule } from '../../common/services/trip-access-validator.module';
 import { HttpModule } from '@nestjs/axios';
@@ -18,7 +19,7 @@ import { SupabaseModule } from '../supabase/supabase.module';
 		SupabaseModule,
 	],
 	controllers: [TripsController],
-	providers: [TripsService],
+	providers: [TripsService, IcsGeneratorService],
 	exports: [TripsService],
 })
 export class TripsModule {}
