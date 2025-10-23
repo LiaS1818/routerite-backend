@@ -3,36 +3,23 @@ import { ConfigService } from '@nestjs/config';
 import { FoursquareMockService } from '../../../common/services/foursquare/foursquare-mock.service';
 import { PlaceSearchParams } from '../dto/place-search.dto';
 import { FSQRPlace } from '../../../common/interfaces/FSQRPlace.interface';
+import fsqDevelopersPlaces from '@api/fsq-developers-places';
 
 @Injectable()
 export class PlacesSearchService {
 	private readonly logger = new Logger(PlacesSearchService.name);
 	private readonly useMock: boolean;
-	private readonly defaultFields: string[];
+	private readonly defaultFields: string;
 
 	constructor(
 		private readonly configService: ConfigService,
-		private readonly foursquareMockService: FoursquareMockService,
-		// private readonly foursquareService: FoursquareService, // TODO: Implementar servicio real
+		private readonly fsqDevelopersPlaces: FoursquareMockService,
 	) {
 		// Determinar servicio a usar
 		this.useMock = this.configService.get<boolean>('USE_FOURSQUARE_MOCK', true);
 
 		// Lista completa de campos necesarios
-		this.defaultFields = [
-			'fsq_place_id',
-			'name',
-			'geocodes',
-			'categories',
-			'rating',
-			'price',
-			'hours',
-			'photos',
-			'distance',
-			'description',
-			'location',
-			'stats'
-		];
+		this.defaultFields = "fsq_place_id,name,description,distance,rating,tel,website,social_media,latitude,longitude,categories,hours,location,stats"
 
 		this.logger.log(`Initialized with ${this.useMock ? 'MOCK' : 'REAL'} Foursquare service`);
 	}
@@ -57,13 +44,7 @@ export class PlacesSearchService {
 			const queryParams = this.buildQueryParameters(params);
 
 			// Ejecutar búsqueda según configuración
-			let rawPlaces: FSQRPlace[];
-
-			if (this.useMock) {
-				rawPlaces = await this.searchWithMockService(queryParams, requestId);
-			} else {
-				rawPlaces = await this.searchWithRealService(queryParams, requestId);
-			}
+			let rawPlaces: FSQRPlace[] = await this.searchWithService(queryParams, requestId);
 
 			// Validar respuesta
 			this.validateResponse(rawPlaces, requestId);
@@ -99,96 +80,48 @@ export class PlacesSearchService {
 		return {
 			// Coordenadas en formato requerido
 			ll: `${params.lat},${params.lng}`,
-
 			// Radio de búsqueda
 			radius: params.radius,
-
 			// Categorías como string separado por comas
-			categories: params.categories.join(','),
-			categoryIds: params.categories, // Para compatibilidad con mock
-
+			fsq_category_ids: params.categories.join(','),
 			// Límite de resultados
 			limit: params.limit,
-
 			// Ordenamiento (configurable)
 			sort: this.configService.get<string>('FOURSQUARE_SORT', 'RELEVANCE'),
-
 			// Campos a incluir
-			fields: this.defaultFields.join(','),
-
-			// Parámetros adicionales para filtros temporales
-			date: params.date.toISOString().split('T')[0], // YYYY-MM-DD
-			time_start: params.time_window.start,
-			time_end: params.time_window.end,
-
-			// Rating mínimo (si está configurado)
-			minRating: this.configService.get<number>('MIN_PLACE_RATING', 6.0),
-
-			// Filtrar solo lugares abiertos
-			open_now: true
+			fields: this.defaultFields
 		};
 	}
 
 	/**
 	 * Ejecuta búsqueda usando el servicio mock
 	 */
-	private async searchWithMockService(queryParams: any, requestId?: string): Promise<FSQRPlace[]> {
+	private async searchWithService(queryParams: any, requestId?: string): Promise<FSQRPlace[]> {
 		const logPrefix = requestId ? `[${requestId}]` : '';
 
 		try {
-			this.logger.log(`${logPrefix} Using Foursquare MOCK service`);
+			this.logger.log(`${logPrefix} Using Foursquare service`);
 
 			// Asegurar autenticación del mock service
-			this.foursquareMockService.auth('mock_token');
+			const fsqrApiKey = this.configService.get<string>('FSQR_API_KEY') || " ";
+			const useFSQRMock = this.configService.get('USE_FSQR_MOCK', true);
+			const fsqrService =  useFSQRMock != "false"  ? this.fsqDevelopersPlaces : fsqDevelopersPlaces;
 
-			// Llamar al método de búsqueda filtrada del mock
-			const response = await this.foursquareMockService.placeSearchFiltered({
-				ll: queryParams.ll,
-				limit: queryParams.limit,
-				categoryIds: queryParams.categoryIds,
-				minRating: queryParams.minRating,
-				sortByRatingDesc: true,
+			fsqrService.auth(fsqrApiKey);
+			const response = await fsqrService.placeSearch({
+				...queryParams,
 				'X-Places-Api-Version': '2025-06-17'
 			});
 
 			// Extraer lugares de la respuesta
 			const places = response.data?.results || [];
 
-			this.logger.log(`${logPrefix} Mock service returned ${places.length} places`);
+			this.logger.log(`${logPrefix} service returned ${places.length} places`);
 			// @ts-ignore
 			return places;
 
 		} catch (error) {
-			this.logger.error(`${logPrefix} Mock service error: ${error.message}`);
-			throw error;
-		}
-	}
-
-	/**
-	 * Ejecuta búsqueda usando el servicio real de Foursquare
-	 */
-	private async searchWithRealService(queryParams: any, requestId?: string): Promise<FSQRPlace[]> {
-		const logPrefix = requestId ? `[${requestId}]` : '';
-
-		try {
-			this.logger.log(`${logPrefix} Using Foursquare REAL service`);
-
-			// TODO: Implementar integración con servicio real
-			// const response = await this.foursquareService.placeSearch({
-			//   ll: queryParams.ll,
-			//   radius: queryParams.radius,
-			//   categories: queryParams.categories,
-			//   limit: queryParams.limit,
-			//   sort: queryParams.sort,
-			//   fields: queryParams.fields,
-			//   open_now: queryParams.open_now
-			// });
-
-			// Por ahora, lanzar error indicando que no está implementado
-			throw new Error('Real Foursquare service not yet implemented. Please use mock service.');
-
-		} catch (error) {
-			this.logger.error(`${logPrefix} Real service error: ${error.message}`);
+			this.logger.error(`${logPrefix} service error: ${error.message}`);
 			throw error;
 		}
 	}
@@ -246,11 +179,10 @@ export class PlacesSearchService {
 		try {
 			if (this.useMock) {
 				// Para mock, verificar que podemos hacer auth
-				this.foursquareMockService.auth('health_check_token');
 				return true;
 			} else {
 				// TODO: Implementar health check para servicio real
-				// return await this.foursquareService.healthCheck();
+				// return await this.fsqDevelopersPlaces.healthCheck();
 				return false; // Por ahora false hasta implementar servicio real
 			}
 		} catch (error) {
