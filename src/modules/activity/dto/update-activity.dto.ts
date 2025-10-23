@@ -1,55 +1,42 @@
 // src/modules/activities/dto/update-activity.dto.ts
 import {
   IsInt,
-  IsOptional,
   IsString,
   IsNumber,
   IsObject,
   IsMilitaryTime,
-  IsUrl,
+  IsOptional,
 } from 'class-validator';
-import { Type } from 'class-transformer';
+import { Transform, Type } from 'class-transformer';
 import { FSQRPlace } from '../../../common/interfaces/FSQRPlace.interface';
 
 export class UpdateActivityDto {
-  @IsOptional() @IsString()
+  @IsOptional()
+  @IsString({ message: 'Name must be a string' })
+  @Transform(({ value }) => value?.trim())
   name?: string;
 
-  @IsOptional() @IsString()
+  @IsOptional()
+  @IsString({ message: 'Description must be a string' })
+  @Transform(({ value }) => value?.trim())
   description?: string;
 
-  @IsOptional() @IsMilitaryTime({ message: 'start_time must be HH:MM' })
+  @IsOptional()
+  @IsMilitaryTime({ message: 'start_time must be in HH:MM format' })
   start_time?: string;
 
-  @IsOptional() @IsMilitaryTime({ message: 'end_time must be HH:MM' })
+  @IsOptional()
+  @IsMilitaryTime({ message: 'end_time must be in HH:MM format' })
   end_time?: string;
 
-  @IsOptional() @Type(() => Number) @IsNumber()
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber({}, { message: 'Budget must be a number' })
   budget?: number;
 
-  @IsOptional() @Type(() => Number) @IsNumber()
-  lat?: number;
+  // NO exponemos itinerary_id (no se puede mover de itinerario desde update)
 
-  @IsOptional() @Type(() => Number) @IsNumber()
-  lng?: number;
-
-  @IsOptional() @IsObject()
+  @IsOptional()
+  @IsObject({ message: 'Location must be an object' })
   place?: FSQRPlace;
-
-  @IsOptional() @IsString()
-  transportation_mode?: string;
-
-  @IsOptional() @Type(() => Number) @IsInt()
-  sequence?: number | null;
-
-  @IsOptional() @Type(() => Number) @IsInt()
-  transportation_duration?: number | null;
-
-  @IsOptional() @IsString()
-  notes?: string | null;
-
-  @IsOptional() @IsUrl()
-  img_url?: string | null;
-
-  // Intencionalmente NO exponemos itinerary_id para evitar mover la actividad.
 }
