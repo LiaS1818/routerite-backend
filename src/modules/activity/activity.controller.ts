@@ -66,7 +66,8 @@ export class ActivityController {
 		@Request() req,
 	) {
 
-		const activities = await this.activityService.findByTripDate(11, '2025-09-29', req.user.id);
+		console.log("Date recibida: ", date)
+		const activities = await this.activityService.findByTripDate(tripId, '2025-10-30', req.user.id);
 		// imprimir respuesta
 		console.log('Activities found:', activities);
 		return activities;

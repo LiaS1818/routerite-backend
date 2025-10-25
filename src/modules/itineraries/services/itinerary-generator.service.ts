@@ -117,10 +117,10 @@ export class ItineraryGeneratorService {
 			// PASO 6: PERSISTENCIA EN BASE DE DATOS
 			transaction = await this.sequelize.transaction();
 			await this.persistOptimizationResult(itinerary, optimizationResult, options, transaction, requestId, fsqrPlacesMap);
+			await transaction.commit();
 
 			// PASO 6.5: OBTENER Y SUBIR FOTOS DE ACTIVIDADES
-			await this.populateActivityImages(itineraryId, requestId, transaction);
-			await transaction.commit();
+			await this.populateActivityImages(itineraryId, requestId);
 
 			// PASO 7: CONSTRUCCIÓN DE RESPUESTA
 			const finalResponse = await this.buildFinalResponse(itineraryId, optimizationResult, startTime, requestId);
@@ -675,13 +675,13 @@ export class ItineraryGeneratorService {
 	/**
 	 * PASO 6.5: Obtener y subir fotos de actividades desde Foursquare a Supabase
 	 */
-	private async populateActivityImages(itineraryId: number, requestId: string, transaction: Transaction): Promise<void> {
+	private async populateActivityImages(itineraryId: number, requestId: string): Promise<void> {
 		this.logger.log(`[${requestId}] PASO 6.5: Populating activity images from Foursquare`);
 
 		try {
 			// Obtener todas las actividades del itinerario
 			const activities = await this.activityModel.findAll({
-				where: { itinerary_id: itineraryId }
+				where: { itinerary_id: itineraryId },
 			});
 
 			this.logger.log(`[${requestId}] Found ${activities.length} activities to process images`);
@@ -731,7 +731,7 @@ export class ItineraryGeneratorService {
 					const supabaseImageUrl = await this.supabaseStorageService.uploadImageFromUrl(photoUrl, activityImagePath);
 					
 					// Actualizar el campo img_url en la base de datos
-					await activity.update({ img_url: supabaseImageUrl }, { transaction });
+					await activity.update({ img_url: supabaseImageUrl });
 					
 					this.logger.debug(`[${requestId}] Successfully updated activity ${activity.id} with image: ${supabaseImageUrl}`);
 
