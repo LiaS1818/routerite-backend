@@ -95,7 +95,7 @@ export class ItinerariesService {
 					['date', 'ASC'],
 					[
 						{ model: Activity, as: 'activities' },
-						'created_at',
+						'sequence',
 						'ASC',
 					],
 				],
@@ -203,7 +203,7 @@ export class ItinerariesService {
 		// Validar acceso del usuario al itinerario
 		await this.tripAccessValidator.validateTripOwnershipThroughItinerary(itineraryId, userId);
 
-		const { activities } = reorderActivitiesDto;
+		const { activities, deletedActivities } = reorderActivitiesDto;
 		if (!activities || activities.length === 0) {
 			throw new BadRequestException('La lista de actividades no puede estar vacía');
 		}
@@ -211,13 +211,13 @@ export class ItinerariesService {
 		// Validar que las secuencias sean consecutivas y sin duplicados
 		const sequences = activities.map(a => a.sequence).sort((a, b) => a - b);
 		for (let i = 0; i < sequences.length; i++) {
-			if (sequences[i] !== i + 1) {
+			if (sequences[i] !== i) {
 				throw new BadRequestException('Las secuencias deben ser consecutivas y empezar en 1, sin duplicados');
 			}
 		}
 
 		// Validar que todas las actividades pertenezcan al itinerario
-		const activityIds = activities.map(a => a.activity_id);
+		const activityIds = activities.map(a => a.id);
 		const dbActivities = await this.activityModel.findAll({
 			where: { id: activityIds, itinerary_id: itineraryId }
 		});
@@ -226,10 +226,13 @@ export class ItinerariesService {
 		}
 
 		// Actualizar secuencias
-		const updatePromises = activities.map(({ activity_id, sequence }) =>
-			this.activityModel.update({ sequence }, { where: { id: activity_id } })
+		const updatePromises = activities.map(({ id, sequence, start_time, end_time }) =>
+			this.activityModel.update({ sequence, start_time, end_time }, { where: { id } })
 		);
 		await Promise.all(updatePromises);
+
+		// Borrar las actividades eliminadas
+		await this.activityModel.destroy({ where: { id: deletedActivities } });
 		return { success: true };
 	}
 }
