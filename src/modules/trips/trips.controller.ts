@@ -176,7 +176,7 @@ export class TripsController {
 
 	@Get()
 	async findAll(@Request() req) {
-		return await this.tripsService.findByUserId(req.user.id);
+		return await this.tripsService.findAllByUserId(req.user.id);
 	}
 
 	@Get('upcoming')

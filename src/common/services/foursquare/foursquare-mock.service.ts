@@ -13,6 +13,7 @@ import {
 } from '../../../../.api/apis/fsq-developers-places';
 import type * as types from '../../../../.api/apis/fsq-developers-places/types';
 import { FSQRPlace } from '../../interfaces/FSQRPlace.interface';
+import { SortEnum } from '../../../modules/places/enums/sort.enums';
 
 
 type FilterParams = {
@@ -56,7 +57,15 @@ export class FoursquareMockService {
 		if (!this.places.length)
 			throw new NotFoundException('Missing auth token, call auth first');
 
-		let { limit = 10, query } = params;
+		let {
+			ll,
+			radius,
+			query,
+			categories,
+			sort = SortEnum.RELEVANCE,
+			open_at,
+			limit = 10
+		} = params;
 
 		const places: FSQRPlace[] = [];
 		const indexes: number[] = [];

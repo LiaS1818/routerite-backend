@@ -73,3 +73,5 @@ export interface FSQRPlace {
 	longitude: number;
 
 }
+
+export const FSQRPlaceFields = "fsq_place_id,description,distance,name,rating,website,tel,price,hours,location,photos,categories,social_media,related_places,stats,latitude,longitude,related_places"

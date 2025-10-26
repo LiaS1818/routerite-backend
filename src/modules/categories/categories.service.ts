@@ -48,7 +48,6 @@ export class CategoriesService {
 			order: [[sort, order]],
 			limit,
 			offset,
-			// ⬇⬇⬇ IMPORTANTE: trae name y label
 			attributes: ['id', 'name', 'label'],
 			raw: true,
 		});

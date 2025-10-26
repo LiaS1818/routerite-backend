@@ -19,7 +19,7 @@ export class PlacesSearchService {
 		this.useMock = this.configService.get<boolean>('USE_FOURSQUARE_MOCK', true);
 
 		// Lista completa de campos necesarios
-		this.defaultFields = "fsq_place_id,name,description,distance,rating,tel,website,social_media,latitude,longitude,categories,hours,location,stats"
+		this.defaultFields = "fsq_place_id,name,description,distance,price,rating,tel,website,social_media,latitude,longitude,categories,hours,location,stats"
 
 		this.logger.log(`Initialized with ${this.useMock ? 'MOCK' : 'REAL'} Foursquare service`);
 	}

@@ -74,7 +74,7 @@ export class TripsService {
 	/**
 	 * Get all trips for a user (both owned and invited)
 	 */
-	async findByUserId(
+	async findAllByUserId(
 		userId: number,
 		options: FindOptions = {}
 	): Promise<Trip[]> {

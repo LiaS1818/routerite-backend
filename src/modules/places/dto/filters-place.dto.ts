@@ -1,7 +1,21 @@
-import { IsEnum, IsNumberString, IsOptional, IsString, Matches } from 'class-validator';
+import {
+	IsEnum,
+	IsInt,
+	IsNumberString,
+	IsOptional,
+	IsString,
+	Matches,
+} from 'class-validator';
 import { SortEnum } from '../enums/sort.enums';
 
 export class SearchPlacesDto {
+
+	@IsNumberString()
+	tripId:number;
+
+	@IsNumberString()
+	itineraryId: number;
+
 	/** Ej: "20.6736,-103.344" */
 	@IsOptional() @Matches(/^-?\d+(\.\d+)?,-?\d+(\.\d+)?$/)
 	ll?: string;
