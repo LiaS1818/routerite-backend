@@ -6,6 +6,8 @@ import { firstValueFrom, timeout, catchError } from 'rxjs';
 import { of, throwError } from 'rxjs';
 import { OptimizationPayload } from './dto/optimization-payload.dto';
 import { OptimizationResponse, OptimizedActivity } from './dto/optimization-response.dto';
+import { ActivityOptimizationPayload } from './dto/activity-optimization-payload.dto';
+import { ActivityOptimizationResponse } from './dto/activity-optimization-response.dto';
 
 @Injectable()
 export class OptimizerClientService {
@@ -418,6 +420,222 @@ export class OptimizerClientService {
 				'Intenta nuevamente en unos momentos',
 				'Si el problema persiste, contacta al soporte técnico'
 			]
+		});
+	}
+
+	/**
+	 * Optimizar orden y duración de actividades existentes
+	 */
+	async optimizeActivities(payload: ActivityOptimizationPayload): Promise<ActivityOptimizationResponse> {
+		const startTime = Date.now();
+		let attemptCount = 0;
+		let lastError: any;
+
+		// PASO 1: Preparación del Request
+		const requestId = this.generateUuid();
+		const validatedPayload = {
+			...payload,
+			metadata: {
+				...payload.metadata,
+				request_id: requestId
+			}
+		};
+
+		const headers = {
+			'Content-Type': 'application/json',
+			'X-API-Key': this.apiKey,
+			'X-Request-ID': requestId,
+			'User-Agent': 'RouteRite-NestJS/1.0'
+		};
+
+		const fullUrl = `${this.flaskUrl}/api/v1/optimization/optimize-activities`;
+
+		this.logger.debug(`[${requestId}] Starting activity optimization request`, {
+			itinerary_id: payload.itinerary.id,
+			activities_count: payload.activities.length,
+			url: fullUrl
+		});
+
+		// Validar payload
+		if (!payload.activities || payload.activities.length < 2) {
+			throw new Error(`Insufficient activities: ${payload.activities?.length || 0}, minimum 2 required`);
+		}
+
+		// Loop de retry
+		while (attemptCount <= this.maxRetries) {
+			try {
+				attemptCount++;
+				this.logger.debug(`[${requestId}] Attempt ${attemptCount}/${this.maxRetries + 1}`);
+
+				// PASO 2: Ejecución del Request
+				const response$ = this.httpService.post(fullUrl, validatedPayload, {
+					headers,
+					timeout: this.optimizerTimeout
+				}).pipe(
+					timeout(this.optimizerTimeout),
+					catchError((error) => {
+						this.logger.error(`[${requestId}] HTTP request failed: ${error.message}`);
+						return throwError(() => error);
+					})
+				);
+
+				const response = await firstValueFrom(response$);
+
+				// PASO 3: Manejo de Respuesta
+				if (response.status === 200) {
+					const result = this.handleActivityOptimizationSuccess(response.data, requestId);
+					this.logger.log(`[${requestId}] Activity optimization completed successfully in ${(Date.now() - startTime) / 1000}s`);
+					return result;
+				}
+
+				if (response.status === 422) {
+					return this.handleActivityOptimizationError(response.data, requestId);
+				}
+
+				throw new Error(`Unexpected status code ${response.status}`);
+
+			} catch (error) {
+				lastError = error;
+
+				// PASO 4: Manejo de Errores y Reintentos
+				if (this.shouldRetry(error, attemptCount)) {
+					const delayMs = this.calculateRetryDelay(attemptCount);
+					this.logger.warn(`[${requestId}] Attempt ${attemptCount} failed, retrying in ${delayMs}ms: ${error.message}`);
+					await this.delay(delayMs);
+					continue;
+				} else {
+					break;
+				}
+			}
+		}
+
+		// Si llegamos aquí, todos los intentos fallaron
+		this.logger.error(`[${requestId}] All activity optimization attempts failed after ${attemptCount} tries`);
+		throw this.handleActivityOptimizationFinalError(lastError, requestId, payload);
+	}
+
+	/**
+	 * Manejar respuesta exitosa de optimización de actividades
+	 */
+	private handleActivityOptimizationSuccess(data: any, requestId: string): ActivityOptimizationResponse {
+		if (!data || typeof data.success !== 'boolean') {
+			throw new Error('Invalid response structure: missing success field');
+		}
+
+		if (!data.optimized_activities || !Array.isArray(data.optimized_activities)) {
+			throw new Error('Invalid response structure: missing or invalid optimized_activities');
+		}
+
+		const result: ActivityOptimizationResponse = {
+			success: true,
+			request_id: requestId,
+			itinerary_id: data.itinerary_id,
+			optimized_activities: data.optimized_activities,
+			summary: data.summary || {
+				activities_count: data.optimized_activities.length,
+				time_stats: {
+					first_start: '08:00',
+					last_end: '19:00',
+					total_duration_minutes: 0,
+					total_visit_time_minutes: 0,
+					total_travel_time_minutes: 0,
+					time_utilization: 0
+				},
+				travel_stats: {
+					total_distance_meters: 0,
+					average_travel_time_minutes: 0,
+					max_travel_time_minutes: 0
+				}
+			},
+			optimization_info: data.optimization_info || {
+				solution_status: 'solved',
+				objective_value: 0,
+				solve_time_seconds: 0,
+				algorithm: 'TSP',
+				improvements: {
+					travel_time_reduction: 0,
+					time_utilization_improvement: 0
+				}
+			},
+			metadata: data.metadata || {
+				generated_at: new Date().toISOString(),
+				processor: 'RouteRite Optimizer',
+				optimization_model: 'Activity Sequence Optimizer'
+			}
+		};
+
+		this.logger.log(`[${requestId}] Activity optimization SUCCESS: ${result.optimized_activities.length} activities optimized`);
+		return result;
+	}
+
+	/**
+	 * Manejar respuesta de error de optimización de actividades
+	 */
+	private handleActivityOptimizationError(data: any, requestId: string): ActivityOptimizationResponse {
+		const result: ActivityOptimizationResponse = {
+			success: false,
+			request_id: requestId,
+			itinerary_id: data.itinerary_id || null,
+			error: data.error || {
+				code: 'OPTIMIZATION_FAILED',
+				message: 'No se pudo optimizar las actividades',
+				details: 'Error desconocido durante la optimización',
+				suggestions: [
+					'Verifica que las actividades tengan coordenadas válidas',
+					'Asegúrate de que la ventana de tiempo sea suficiente',
+					'Intenta nuevamente en unos momentos'
+				]
+			}
+		};
+
+		this.logger.warn(`[${requestId}] Activity optimization NOT FEASIBLE: ${result.error.code}`);
+		return result;
+	}
+
+	/**
+	 * Manejar error final de optimización de actividades
+	 */
+	private handleActivityOptimizationFinalError(error: any, requestId: string, payload: ActivityOptimizationPayload): Error {
+		this.logger.error(`[${requestId}] Final activity optimization error`, {
+			itinerary_id: payload.itinerary.id,
+			activities_count: payload.activities.length,
+			error_type: error.constructor.name,
+			error_message: error.message,
+			error_code: error.code
+		});
+
+		if (error.code === 'ECONNREFUSED') {
+			return new ServiceUnavailableException({
+				success: false,
+				message: 'Servicio de optimización no disponible',
+				error: {
+					code: 'OPTIMIZER_UNAVAILABLE',
+					type: 'CONNECTION_ERROR',
+					details: 'No se pudo conectar con el servicio de optimización Flask'
+				}
+			});
+		}
+
+		if (error.message?.includes('timeout')) {
+			return new ServiceUnavailableException({
+				success: false,
+				message: 'Tiempo de espera agotado para la optimización',
+				error: {
+					code: 'OPTIMIZATION_TIMEOUT',
+					type: 'TIMEOUT_ERROR',
+					details: `La optimización no se completó en ${this.optimizerTimeout / 1000} segundos`
+				}
+			});
+		}
+
+		return new ServiceUnavailableException({
+			success: false,
+			message: 'Error en el servicio de optimización de actividades',
+			error: {
+				code: 'OPTIMIZATION_SERVICE_ERROR',
+				type: 'SERVICE_ERROR',
+				details: error.message || 'Error desconocido en el servicio de optimización'
+			}
 		});
 	}
 

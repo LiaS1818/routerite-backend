@@ -227,7 +227,63 @@ export class ItinerariesController {
 		return this.itinerariesService.reorderActivities(itineraryId, reorderActivitiesDto, userId);
 	}
 
+	@Get(':id/activities/optimize')
+	async optimizeActivities(
+		@Param('id', ParseIntPipe) itineraryId: number,
+		@Request() req
+	) {
+		const userId = req.user.id;
 
+		try {
+			this.logger.log(`Starting activity optimization for itinerary ${itineraryId} by user ${userId}`);
+
+			const result = await this.itinerariesService.optimizeActivities(itineraryId, userId);
+
+			this.logger.log(`Activity optimization completed for itinerary ${itineraryId}`);
+			return result;
+
+		} catch (error) {
+			this.logger.error(`Error optimizing activities for itinerary ${itineraryId}: ${error.message}`, error.stack);
+
+			if (error instanceof NotFoundException) {
+				throw new NotFoundException({
+					success: false,
+					message: 'Itinerario no encontrado o no tienes permisos para acceder a él',
+					error: {
+						code: 'ITINERARY_NOT_FOUND',
+						type: 'RESOURCE_ERROR',
+						details: error.message,
+					},
+				});
+			}
+
+			if (error instanceof BadRequestException) {
+				throw new BadRequestException({
+					success: false,
+					message: 'Solicitud inválida',
+					error: {
+						code: 'INVALID_REQUEST',
+						type: 'VALIDATION_ERROR',
+						details: error.message,
+					},
+				});
+			}
+
+			if (error instanceof ServiceUnavailableException) {
+				throw error;
+			}
+
+			throw new ServiceUnavailableException({
+				success: false,
+				message: 'Error al optimizar las actividades',
+				error: {
+					code: 'OPTIMIZATION_ERROR',
+					type: 'SERVICE_ERROR',
+					details: error.message || 'Error desconocido durante la optimización',
+				},
+			});
+		}
+	}
 
 
 }

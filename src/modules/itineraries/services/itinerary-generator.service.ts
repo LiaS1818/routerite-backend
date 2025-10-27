@@ -251,6 +251,8 @@ export class ItineraryGeneratorService {
 
 			// 6.3. Crear nuevas actividades
 			const newActivities: Activity[] = [];
+			const optimizedActivities = successResponse.optimized_activities;
+			optimizedActivities.pop()
 
 			for (const activity of successResponse.optimized_activities) {
 				// Recuperar la respuesta completa de FSQR usando el fsq_place_id

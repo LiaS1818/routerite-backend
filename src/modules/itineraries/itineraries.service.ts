@@ -13,6 +13,9 @@ import { Logger } from '@nestjs/common';
 import { TripAccessValidatorService } from '../../common/services/trip-access-validator.service';
 import { ExperienceTypeDto } from './dto/experience_type.dto';
 import { ReorderActivitiesDto } from './dto/reorder-activities.dto';
+import { OptimizerClientService } from '../optimizer/optimizer-client.service';
+import { ActivityOptimizationPayload, ActivityToOptimize } from '../optimizer/dto/activity-optimization-payload.dto';
+import { ActivityOptimizationResponse } from '../optimizer/dto/activity-optimization-response.dto';
 
 @Injectable()
 export class ItinerariesService {
@@ -23,7 +26,8 @@ export class ItinerariesService {
 		private readonly itineraryModel: typeof Itinerary,
 		@InjectModel(Activity)
 		private readonly activityModel: typeof Activity,
-		private readonly tripAccessValidator: TripAccessValidatorService
+		private readonly tripAccessValidator: TripAccessValidatorService,
+		private readonly optimizerClientService: OptimizerClientService
 	) {}
 
 	async create(createItineraryDto: CreateItineraryDto): Promise<void> {
@@ -124,6 +128,7 @@ export class ItinerariesService {
 						required: false,
 					},
 				],
+				order: [[{ model: Activity, as: 'activities' }, 'sequence', 'ASC']],
 			});
 
 			if (!itinerary) {
@@ -234,5 +239,102 @@ export class ItinerariesService {
 		// Borrar las actividades eliminadas
 		await this.activityModel.destroy({ where: { id: deletedActivities } });
 		return { success: true };
+	}
+
+	async optimizeActivities(itineraryId: number, userId: number): Promise<ActivityOptimizationResponse> {
+		// Validar acceso del usuario al itinerario
+		await this.tripAccessValidator.validateTripOwnershipThroughItinerary(itineraryId, userId);
+
+		// Obtener itinerario con sus actividades
+		const itinerary = await this.getItineraryWithActivities(itineraryId, userId);
+
+		if (!itinerary.activities || itinerary.activities.length < 2) {
+			throw new BadRequestException('El itinerario debe tener al menos 2 actividades para optimizar');
+		}
+
+		// Validar que el itinerario esté configurado
+		if (!itinerary.start_time || !itinerary.end_time || !itinerary.budget) {
+			throw new BadRequestException('El itinerario debe tener configurado start_time, end_time y budget');
+		}
+
+		// Construir el payload para el optimizer
+		const activities: ActivityToOptimize[] = itinerary.activities.map((activity) => ({
+			id: activity.id,
+			name: activity.name,
+			description: activity.description,
+			location: {
+				lat: activity.lat,
+				lng: activity.lng,
+			},
+			category: {
+				id: activity.place?.categories?.[0]?.fsq_category_id || 'unknown',
+				name: activity.place?.categories?.[0]?.name || 'Unknown',
+			},
+			estimated_duration: 90, // Default 90 minutos
+			estimated_cost: activity.budget,
+			rating: activity.place?.rating || null,
+			current_sequence: activity.sequence,
+			place_data: activity.place,
+		}));
+
+		// Calcular ventana de tiempo
+		const [startHour, startMinute] = itinerary.start_time.split(':').map(Number);
+		const [endHour, endMinute] = itinerary.end_time.split(':').map(Number);
+		const totalMinutes = (endHour * 60 + endMinute) - (startHour * 60 + startMinute);
+
+		const payload: ActivityOptimizationPayload = {
+			itinerary: {
+				id: itinerary.id,
+				date: itinerary.date.toISOString().split('T')[0],
+				origin: {
+					lat: itinerary.lat,
+					lng: itinerary.lng,
+				},
+				time_window: {
+					start: itinerary.start_time,
+					end: itinerary.end_time,
+					total_minutes: totalMinutes,
+				},
+				budget: {
+					total: itinerary.budget,
+					avg_per_activity: itinerary.budget / itinerary.activities.length,
+				},
+			},
+			activities: activities,
+			options: {
+				preserve_order: false,
+				minimize_travel_time: true,
+				balance_timing: true,
+			},
+			metadata: {
+				request_id: '', // Se generará en el optimizer-client
+				timestamp: new Date().toISOString(),
+			},
+		};
+
+		// Llamar al optimizer
+		const result = await this.optimizerClientService.optimizeActivities(payload);
+
+		// Si fue exitoso, actualizar las actividades en la base de datos
+		if (result.success) {
+			const updatePromises = result.optimized_activities.map((optimizedActivity) =>
+				this.activityModel.update(
+					{
+						sequence: optimizedActivity.sequence,
+						start_time: optimizedActivity.timing.start_time,
+						end_time: optimizedActivity.timing.end_time,
+						transportation_duration: optimizedActivity.timing.travel_time_from_previous,
+						distance_to_start: optimizedActivity.timing.travel_distance_from_previous,
+					},
+					{ where: { id: optimizedActivity.id } }
+				)
+			);
+
+			await Promise.all(updatePromises);
+
+			this.logger.log(`Activities optimized for itinerary ${itineraryId}`);
+		}
+
+		return result;
 	}
 }

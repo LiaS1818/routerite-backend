@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { SequelizeModule } from '@nestjs/sequelize';
 import { ItinerariesService } from './itineraries.service';
 import { ItinerariesController } from './itineraries.controller';
@@ -20,7 +20,7 @@ import { SupabaseModule } from '../supabase/supabase.module';
 		TripAccessValidatorModule,
 		FoursquareMockModule,
 		OptimizerModule,
-		PlacesModule,
+		forwardRef(() => PlacesModule),
 		ActivityModule,
 		SupabaseModule
 	],

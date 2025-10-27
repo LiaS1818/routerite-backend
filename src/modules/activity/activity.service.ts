@@ -54,7 +54,7 @@ export class ActivityService {
 			lat: place.latitude,
 			lng: place.longitude,
 			place,
-			distance_to_start: 0,
+			distance_to_start: place.distance,
 			transportation_mode: "auto",
 			sequence: nextSequence
 		}
