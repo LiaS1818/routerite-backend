@@ -702,4 +702,30 @@ export class TripsService {
 			throw error;
 		}
 	}
+
+	/**
+	 * Rate a trip (1-5 stars)
+	 */
+	async rateTrip(tripId: number, rating: number): Promise<Trip> {
+		try {
+			this.logger.log(`Rating trip ${tripId} with ${rating} stars`);
+
+			const trip = await this.tripModel.findByPk(tripId);
+
+			if (!trip) {
+				throw new NotFoundException(`Trip with ID ${tripId} not found`);
+			}
+
+			await trip.update({ rating });
+
+			this.logger.log(`Trip ${tripId} rated successfully with ${rating} stars`);
+			return trip;
+		} catch (error) {
+			this.logger.error(
+				`Error rating trip ${tripId}: ${error.message}`,
+				error.stack
+			);
+			throw error;
+		}
+	}
 }

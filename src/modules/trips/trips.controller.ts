@@ -16,7 +16,7 @@ import {
 } from '@nestjs/common';
 import { TripsService } from './trips.service';
 import { IcsGeneratorService } from './ics-generator.service';
-import { CreateTripDto, UpdateTripExtendedDto } from './dto';
+import { CreateTripDto, UpdateTripExtendedDto, RateTripDto } from './dto';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { Sequelize } from 'sequelize-typescript';
 import { literal } from 'sequelize';
@@ -234,6 +234,52 @@ export class TripsController {
 			);
 		}
 		return this.tripsService.remove(id);
+	}
+
+	@Post(':id/rate')
+	async rateTrip(
+		@Param('id', ParseIntPipe) id: number,
+		@Body() rateTripDto: RateTripDto,
+		@Request() req
+	) {
+		try {
+			this.logger.log(`User ${req.user.id} rating trip ${id} with ${rateTripDto.rating} stars`);
+
+			// Verify user has access to the trip (owner or guest)
+			const trip = await this.tripsService.findByIdWithAccess(id, req.user.id);
+
+			if (!trip) {
+				throw new HttpException('Trip not found', HttpStatus.NOT_FOUND);
+			}
+
+			// Verify trip is completed
+			// if (trip.status !== 'completed') {
+			// 	throw new BadRequestException('Only completed trips can be rated');
+			// }
+
+			// Save the rating
+			const updatedTrip = await this.tripsService.rateTrip(id, rateTripDto.rating);
+
+			this.logger.log(`Trip ${id} rated successfully`);
+
+			return {
+				success: true,
+				trip: updatedTrip,
+			};
+		} catch (error) {
+			if (error instanceof HttpException) {
+				throw error;
+			}
+
+			this.logger.error(
+				`Error rating trip ${id}: ${error.message}`,
+				error.stack
+			);
+			throw new HttpException(
+				'Failed to rate trip',
+				HttpStatus.INTERNAL_SERVER_ERROR
+			);
+		}
 	}
 
 	@Get(':id/export/ics')
