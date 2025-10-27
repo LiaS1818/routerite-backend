@@ -84,4 +84,10 @@ export class ActivityController {
 		return this.activityService.update(id, dto, userId);
 	}
 
+	@Delete(':id')
+	async delete(@Param('id', ParseIntPipe) id: number, @Request() req) {
+		await this.activityService.remove(id, req.user.id);
+		return { message: 'Activity deleted successfully' };
+	}
+
 }
