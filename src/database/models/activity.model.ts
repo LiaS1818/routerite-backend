@@ -15,6 +15,7 @@ import {
 } from 'sequelize-typescript';
 import { Optional } from 'sequelize';
 import { Itinerary} from './index';
+import { FSQRPlace } from '../../common/interfaces/FSQRPlace.interface';
 
 export interface ActivityAttributes {
 	id: number;
@@ -97,7 +98,7 @@ export class Activity extends Model<
 
 	@AllowNull(false)
 	@Column(DataType.JSON())
-	declare place: any;
+	declare place: FSQRPlace;
 
 	@AllowNull(false)
 	@Column(DataType.STRING)

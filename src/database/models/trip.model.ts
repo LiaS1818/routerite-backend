@@ -33,7 +33,6 @@ export interface TripAttributes {
 	status: 'draft' | 'planned' | 'active' | 'completed' | 'cancelled';
 	rating?: number | null; // Rating from 1 to 5
 	location: any; // Representa la interfaz LocationInterface como JSON
-	// location_point: any;
 	created_at: Date;
 	updated_at: Date;
 	deleted_at?: Date | null; // Added null type for nullable field

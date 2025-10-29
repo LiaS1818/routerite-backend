@@ -12,6 +12,10 @@ import { TripAccessValidatorService } from '../../common/services/trip-access-va
 import { ActivityAttributes } from '../../database/models/activity.model';
 import { SupabaseStorageService } from '../supabase/supabase-storage.service';
 import { UpdateActivityDto } from './dto/update-activity.dto';
+import { FoursquareMockService } from '../../common/services/foursquare/foursquare-mock.service';
+import { FSQRPlace } from '../../common/interfaces/FSQRPlace.interface';
+import { ConfigService } from '@nestjs/config';
+import fsqDevelopersPlaces from '@api/fsq-developers-places';
 
 @Injectable()
 export class ActivityService {
@@ -24,7 +28,9 @@ export class ActivityService {
 		private readonly itineraryModel: typeof Itinerary,
 
 		private readonly tripAccessValidator: TripAccessValidatorService,
-		private readonly supabaseStorageService: SupabaseStorageService
+		private readonly supabaseStorageService: SupabaseStorageService,
+		private readonly foursquareMockService: FoursquareMockService,
+		private readonly configService: ConfigService,
 	) {}	
 
 	async create(
@@ -239,6 +245,127 @@ export class ActivityService {
     return activity;
   }
 
+	/**
+	 * Obtiene candidatos para reemplazar una actividad
+	 * Busca lugares cercanos usando Foursquare con las mismas categorías (si existen)
+	 */
+	async getReplacementCandidates(
+		activityId: number,
+		userId?: number,
+	): Promise<FSQRPlace[]> {
+		// Obtener la actividad y validar acceso
+		const activity = await this.findOne(activityId, userId);
 
+		// Extraer coordenadas
+		const { lat, lng, place } = activity;
+
+		// Extraer categorías si existen
+		const categories = place?.categories?.map(cat => cat.fsq_category_id) || [];
+
+		// Determinar qué servicio usar (mock o real)
+		const fsqrApiKey = this.configService.get<string>('FSQR_API_KEY') || ' ';
+		const useFSQRMock = this.configService.get('USE_FSQR_MOCK', true);
+		const fsqrService = useFSQRMock !== 'false' ? this.foursquareMockService : fsqDevelopersPlaces;
+
+		// Autenticar
+		fsqrService.auth(fsqrApiKey);
+
+		// Construir parámetros de búsqueda
+		const searchParams: any = {
+			ll: `${lat},${lng}`,
+			radius: 3000, // 3 km en metros
+			limit: 20, // Traer hasta 20 candidatos
+			fields: 'fsq_place_id,name,description,distance,price,rating,tel,website,social_media,latitude,longitude,categories,hours,location,stats,photos',
+			sort: 'DISTANCE', // Ordenar por distancia
+			'X-Places-Api-Version': '2025-06-17',
+		};
+
+		// Agregar categorías si existen
+		if (categories.length > 0) {
+			searchParams.fsq_category_ids = categories.join(',');
+		}
+
+		// Buscar lugares cercanos
+		const response = await fsqrService.placeSearch(searchParams);
+		//@ts-ignore
+		const candidates: FSQRPlace[] = response.data?.results || [];
+		// Filtrar lugares que estén abiertos actualmente si aplica
+		const openCandidates = candidates.filter(
+			candidate => candidate.hours?.open_now === true
+		);
+
+		// Si hay lugares abiertos, devolverlos; si no, devolver todos los candidatos
+		return openCandidates.length > 0 ? openCandidates : candidates;
+	}
+
+	/**
+	 * Reemplaza el lugar de una actividad con un nuevo lugar de Foursquare
+	 */
+	async replacePlace(
+		activityId: number,
+		fsqPlaceId: string,
+		userId?: number,
+	): Promise<Activity> {
+		// Obtener la actividad y validar ownership
+		const activity = await this.findOne(activityId, userId);
+
+		if (userId) {
+			await this.tripAccessValidator.validateTripOwnershipThroughItinerary(
+				activity.itinerary_id,
+				userId,
+			);
+		}
+
+		// Obtener detalles del nuevo lugar desde Foursquare
+		const fsqrApiKey = this.configService.get<string>('FSQR_API_KEY') || ' ';
+		const useFSQRMock = this.configService.get('USE_FSQR_MOCK', true);
+		const fsqrService = useFSQRMock !== 'false' ? this.foursquareMockService : fsqDevelopersPlaces;
+
+		fsqrService.auth(fsqrApiKey);
+		const response = await fsqrService.placeDetails({
+			fsq_place_id: fsqPlaceId,
+			'X-Places-Api-Version': '2025-06-17',
+		});
+
+		if (!response.data) {
+			throw new NotFoundException(`Place with ID ${fsqPlaceId} not found`);
+		}
+
+		const newPlace: FSQRPlace = response.data as unknown as FSQRPlace;
+
+		// Preparar datos de actualización
+		const updatePayload: Partial<ActivityAttributes> = {
+			name: newPlace.name,
+			description: newPlace.description,
+			place: newPlace,
+			lat: newPlace.latitude,
+			lng: newPlace.longitude,
+		};
+
+		// Actualizar actividad con los nuevos datos
+		await activity.update(updatePayload);
+
+		// Actualizar imagen si el nuevo lugar tiene fotos
+		const photo = newPlace.photos?.[0];
+		if (photo?.prefix && photo?.suffix) {
+			try {
+				const photoUrl = photo.prefix + '390x360' + photo.suffix;
+				const activityImagePath = this.supabaseStorageService.generateActivityImagePath(
+					activity.id,
+					photoUrl,
+				);
+				const generatedPhotoURL = await this.supabaseStorageService.uploadImageFromUrl(
+					photoUrl,
+					activityImagePath,
+				);
+				await activity.update({ img_url: generatedPhotoURL });
+			} catch (error) {
+				// Si falla la imagen, no rompemos la actualización
+				console.error('Error uploading new activity image:', error);
+			}
+		}
+
+		return activity;
+	}
 
 }

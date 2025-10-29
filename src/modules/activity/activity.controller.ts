@@ -18,6 +18,8 @@ import { Activity } from 'src/database/models';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { ConfigService } from '@nestjs/config';
 import { UpdateActivityDto } from './dto/update-activity.dto';
+import { ReplacePlaceDto } from './dto/replace-place.dto';
+import { FSQRPlace } from '../../common/interfaces/FSQRPlace.interface';
 
 @Controller('activities')
 @UseGuards(JwtAuthGuard)
@@ -88,6 +90,23 @@ export class ActivityController {
 	async delete(@Param('id', ParseIntPipe) id: number, @Request() req) {
 		await this.activityService.remove(id, req.user.id);
 		return { message: 'Activity deleted successfully' };
+	}
+
+	@Get(':id/replacement-candidates')
+	async getReplacementCandidates(
+		@Param('id', ParseIntPipe) id: number,
+		@Request() req,
+	): Promise<FSQRPlace[]> {
+		return this.activityService.getReplacementCandidates(id, req.user.id);
+	}
+
+	@Patch(':id/replace-place')
+	async replacePlace(
+		@Param('id', ParseIntPipe) id: number,
+		@Body() dto: ReplacePlaceDto,
+		@Request() req,
+	): Promise<Activity> {
+		return this.activityService.replacePlace(id, dto.fsq_place_id, req.user.id);
 	}
 
 }

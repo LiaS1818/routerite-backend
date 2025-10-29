@@ -168,12 +168,12 @@ export class IcsGeneratorService {
 			parts.push('');
 			parts.push('--- Información del lugar ---');
 
-			if (activity.place.address) {
-				parts.push(`Dirección: ${activity.place.address}`);
+			if (activity.place.location.formatted_address) {
+				parts.push(`Dirección: ${activity.place.location.formatted_address}`);
 			}
 
-			if (activity.place.phone) {
-				parts.push(`Teléfono: ${activity.place.phone}`);
+			if (activity.place.tel) {
+				parts.push(`Teléfono: ${activity.place.tel}`);
 			}
 		}
 
