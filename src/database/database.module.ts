@@ -13,34 +13,40 @@ import { FoursquareCategory } from './models/foursquare-categories.model';
 	imports: [
 		SequelizeModule.forRootAsync({
 			imports: [ConfigModule],
-			useFactory: async (configService: ConfigService) => ({
-				dialect: 'postgres',
-				host: configService.get('DB_HOST') || 'localhost',
-				port: configService.get('DB_PORT') || 5432,
-				username: configService.get('DB_USERNAME') || 'postgres',
-				password: configService.get('DB_PASSWORD') || '1234',
-				database: configService.get('DB_NAME') || 'routerite',
-				autoLoadModels: true,
-				// synchronize: true,
-				// define: {
-				// 	schema: 'routerite',
-				// 	timestamps: true,
-				// 	underscored: true,
-				// },
-				alter: true,
-				models: [
-					User,
-					Trip,
-					Itinerary,
-					Activity,
-					TripInvitation,
-					FoursquareCategory,
-				],
-				logging:
-					configService.get('NODE_ENV') === 'development'
-						? console.log
-						: false,
-			}),
+			useFactory: async (configService: ConfigService) => {
+				const isProduction = configService.get('NODE_ENV') == 'production';
+				let dbConnection = {};
+				if (isProduction) {
+					dbConnection = {
+						uri: configService.get<string>('DATABASE_URL'),
+						// ssl: true
+					};
+				} else {
+					dbConnection = {
+						host: configService.get('DB_HOST') || 'localhost',
+						port: configService.get('DB_PORT') || 5432,
+						username:
+							configService.get('DB_USERNAME') || 'postgres',
+						password: configService.get('DB_PASSWORD') || '1234',
+						database: configService.get('DB_NAME') || 'routerite',
+						alter: true,
+					};
+				}
+				return {
+					dialect: 'postgres',
+					autoLoadModels: true,
+					...dbConnection,
+					models: [
+						User,
+						Trip,
+						Itinerary,
+						Activity,
+						TripInvitation,
+						FoursquareCategory,
+					],
+					logging: console.log,
+				};
+			},
 			inject: [ConfigService],
 		}),
 		SequelizeModule.forFeature([
