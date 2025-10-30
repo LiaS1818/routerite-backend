@@ -29,7 +29,7 @@ import { FoursquareCategory } from './models/foursquare-categories.model';
 							configService.get('DB_USERNAME') || 'postgres',
 						password: configService.get('DB_PASSWORD') || '1234',
 						database: configService.get('DB_NAME') || 'routerite',
-						alter: true,
+						// alter: true,
 					};
 				}
 				return {

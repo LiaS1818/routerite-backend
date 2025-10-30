@@ -64,14 +64,14 @@ export class ActivityController {
 	@Get()
 	async itineraryActivities(
 		@Query('trip_id', ParseIntPipe) tripId: number,
-		@Query('date') date: string,
+		@Query('current_date') date: string,
 		@Request() req,
 	) {
 
-		console.log("Date recibida: ", date)
-		const activities = await this.activityService.findByTripDate(tripId, '2025-10-30', req.user.id);
+		date = '2025-10-30'
+		const activities = await this.activityService.findByTripDate(tripId, date, req.user.id);
 		// imprimir respuesta
-		console.log('Activities found:', activities);
+		console.log('Activities found:', activities.length);
 		return activities;
 
 	}

@@ -9,6 +9,7 @@ import { TripAccessValidatorModule } from '../../common/services/trip-access-val
 import { HttpModule } from '@nestjs/axios';
 import { ConfigModule } from '@nestjs/config';
 import { SupabaseModule } from '../supabase/supabase.module';
+import { AuthModule } from '../auth/auth.module';
 
 @Module({
 	imports: [
@@ -17,6 +18,7 @@ import { SupabaseModule } from '../supabase/supabase.module';
 		HttpModule,
 		ConfigModule,
 		SupabaseModule,
+		AuthModule,
 	],
 	controllers: [TripsController],
 	providers: [TripsService, IcsGeneratorService],

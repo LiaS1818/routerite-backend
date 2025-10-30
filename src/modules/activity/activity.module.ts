@@ -6,6 +6,7 @@ import { Activity, Itinerary, Trip, User } from 'src/database/models';
 import { TripAccessValidatorModule } from '../../common/services/trip-access-validator.module';
 import { SupabaseModule } from '../supabase/supabase.module';
 import { FoursquareMockModule } from '../../common/services/foursquare/foursquare-mock.module';
+import { AuthModule } from '../auth/auth.module';
 
 @Module({
 	imports: [
@@ -13,6 +14,7 @@ import { FoursquareMockModule } from '../../common/services/foursquare/foursquar
 		TripAccessValidatorModule,
 		SupabaseModule,
 		FoursquareMockModule,
+		AuthModule,
 	],
 	controllers: [ActivityController],
 	providers: [ActivityService],

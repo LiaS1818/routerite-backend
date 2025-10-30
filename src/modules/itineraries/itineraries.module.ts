@@ -12,6 +12,7 @@ import { OptimizerModule } from '../optimizer/optimizer.module';
 import { PlacesModule } from '../places/places.module';
 import { ActivityModule } from '../activity/activity.module';
 import { SupabaseModule } from '../supabase/supabase.module';
+import { AuthModule } from '../auth/auth.module';
 
 @Module({
 	imports: [
@@ -22,7 +23,8 @@ import { SupabaseModule } from '../supabase/supabase.module';
 		OptimizerModule,
 		forwardRef(() => PlacesModule),
 		ActivityModule,
-		SupabaseModule
+		SupabaseModule,
+		AuthModule,
 	],
 	providers: [
 		ItinerariesService,

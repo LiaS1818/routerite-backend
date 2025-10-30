@@ -18,7 +18,7 @@ import { FoursquareMockModule } from './common/services/foursquare/foursquare-mo
 	imports: [
 		ConfigModule.forRoot({
 			isGlobal: true,
-			envFilePath: ['environments/.env.production', 'environments/.env'],
+			envFilePath: ['environments/.env'],
 		}),
 		DatabaseModule,
 		AuthModule,
