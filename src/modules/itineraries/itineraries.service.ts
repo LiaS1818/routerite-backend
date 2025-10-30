@@ -16,6 +16,7 @@ import { ReorderActivitiesDto } from './dto/reorder-activities.dto';
 import { OptimizerClientService } from '../optimizer/optimizer-client.service';
 import { ActivityOptimizationPayload, ActivityToOptimize } from '../optimizer/dto/activity-optimization-payload.dto';
 import { ActivityOptimizationResponse } from '../optimizer/dto/activity-optimization-response.dto';
+import { calculateMinutesDifference } from '../../shared/utils/time.utils';
 
 @Injectable()
 export class ItinerariesService {
@@ -270,7 +271,7 @@ export class ItinerariesService {
 				id: activity.place?.categories?.[0]?.fsq_category_id || 'unknown',
 				name: activity.place?.categories?.[0]?.name || 'Unknown',
 			},
-			estimated_duration: 90, // Default 90 minutos
+			estimated_duration: calculateMinutesDifference(activity.start_time, activity.end_time),
 			estimated_cost: activity.budget,
 			rating: activity.place?.rating || null,
 			current_sequence: activity.sequence,
