@@ -67,8 +67,6 @@ export class ActivityController {
 		@Query('current_date') date: string,
 		@Request() req,
 	) {
-
-		date = '2025-10-30'
 		const activities = await this.activityService.findByTripDate(tripId, date, req.user.id);
 		// imprimir respuesta
 		console.log('Activities found:', activities.length);
