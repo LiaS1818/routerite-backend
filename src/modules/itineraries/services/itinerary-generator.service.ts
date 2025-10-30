@@ -180,6 +180,7 @@ export class ItineraryGeneratorService {
 	 */
 	private async callFlaskOptimizer(payload: OptimizationPayload, requestId: string): Promise<OptimizationResponse> {
 		this.logger.log(`[${requestId}] PASO 5: Calling Flask microservice for optimization`);
+		console.log("Using payload: ", payload.itinerary.constraints)
 
 		try {
 			const optimizationResult = await this.optimizerClientService.optimizeItinerary(payload);
@@ -462,7 +463,7 @@ export class ItineraryGeneratorService {
 		);
 
 		const maxActivities = Math.min(options.max_activities || 5, maxActivitiesByTime);
-		const minActivities = Math.max(options.min_activities || 3, minActivitiesByTime);
+		const minActivities = Math.min(options.min_activities || 3, minActivitiesByTime);
 		const targetActivities = Math.round((maxActivities + minActivities) / 2)
 
 		const activities: ActivityLimits = {

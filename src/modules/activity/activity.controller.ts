@@ -106,7 +106,7 @@ export class ActivityController {
 		@Body() dto: ReplacePlaceDto,
 		@Request() req,
 	): Promise<Activity> {
-		return this.activityService.replacePlace(id, dto.fsq_place_id, req.user.id);
+		return this.activityService.replacePlace(id, dto.place, req.user.id);
 	}
 
 }

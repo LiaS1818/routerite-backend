@@ -303,7 +303,7 @@ export class ActivityService {
 	 */
 	async replacePlace(
 		activityId: number,
-		fsqPlaceId: string,
+		newPlace: FSQRPlace,
 		userId?: number,
 	): Promise<Activity> {
 		// Obtener la actividad y validar ownership
@@ -315,23 +315,6 @@ export class ActivityService {
 				userId,
 			);
 		}
-
-		// Obtener detalles del nuevo lugar desde Foursquare
-		const fsqrApiKey = this.configService.get<string>('FSQR_API_KEY') || ' ';
-		const useFSQRMock = this.configService.get('USE_FSQR_MOCK', true);
-		const fsqrService = useFSQRMock !== 'false' ? this.foursquareMockService : fsqDevelopersPlaces;
-
-		fsqrService.auth(fsqrApiKey);
-		const response = await fsqrService.placeDetails({
-			fsq_place_id: fsqPlaceId,
-			'X-Places-Api-Version': '2025-06-17',
-		});
-
-		if (!response.data) {
-			throw new NotFoundException(`Place with ID ${fsqPlaceId} not found`);
-		}
-
-		const newPlace: FSQRPlace = response.data as unknown as FSQRPlace;
 
 		// Preparar datos de actualización
 		const updatePayload: Partial<ActivityAttributes> = {
