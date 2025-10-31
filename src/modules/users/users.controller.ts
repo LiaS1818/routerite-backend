@@ -94,8 +94,9 @@ export class UsersController {
 		return this.usersService.updatePremiumStatus(id, updatePremiumDto);
 	}
 
+	
 	@Get('privacy')
-	@Render('view/privacy.hbs') 
+	@Render('privacy.hbs') 
 	getPrivacyView() {
 	  // aquí pasas las variables/flags que usa el HBS
 	  return {
