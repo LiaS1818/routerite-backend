@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <title>Política de Privacidad — {{appName}}</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="Política de privacidad de {{appName}}." />
+  <meta name="robots" content="noindex,nofollow" />
+  <meta property="og:title" content="Política de Privacidad — {{appName}}" />
+  <meta property="og:description" content="Conoce cómo {{companyName}} trata tus datos en {{appName}}." />
+  <meta property="og:type" content="website" />
+  {{#if websiteUrl}}<meta property="og:url" content="{{websiteUrl}}" />{{/if}}
+  <style>
+    :root { --c:#0f172a; --g:#334155; --muted:#64748b; --bg:#f8fafc; --card:#ffffff; }
+    html,body{margin:0;padding:0;background:var(--bg);color:var(--c);font:16px/1.6 system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,"Helvetica Neue",Arial}
+    .wrap{max-width:900px;margin:40px auto;padding:24px}
+    .card{background:var(--card);border-radius:16px;box-shadow:0 2px 10px rgba(2,8,23,.06);padding:28px}
+    h1{font-size:1.8rem;margin:.3rem 0 1rem}
+    h2{font-size:1.2rem;margin:2rem 0 .6rem}
+    h3{font-size:1rem;margin:1.4rem 0 .4rem}
+    .muted{color:var(--muted)}
+    .badge{display:inline-block;background:#eef2ff;color:#3730a3;font-weight:600;border-radius:999px;padding:.2rem .6rem;font-size:.8rem;margin-left:.4rem}
+    ul{padding-left:1.2rem}
+    a{color:#2563eb;text-decoration:none} a:hover{text-decoration:underline}
+    .footer{margin-top:2rem;font-size:.9rem;color:var(--muted)}
+    .grid{display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(260px,1fr))}
+    .pill{background:#f1f5f9;border-radius:12px;padding:10px 12px}
+    .kv{display:grid;grid-template-columns:180px 1fr;gap:10px}
+    code{background:#f1f5f9;border-radius:6px;padding:2px 6px}
+  </style>
+
+  <!-- JSON-LD (opcional para SEO/Transparencia) -->
+  <script type="application/ld+json">
+  {
+    "@context":"https://schema.org",
+    "@type":"PrivacyPolicy",
+    "name":"Política de Privacidad — {{appName}}",
+    "url":"{{websiteUrl}}",
+    "publisher":{
+      "@type":"Organization",
+      "name":"{{companyName}}"
+    },
+    "inLanguage":"es"
+  }
+  </script>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <header>
+        <h1>Política de Privacidad <span class="badge">{{appName}}</span></h1>
+        <p class="muted">Última actualización: {{lastUpdated}}</p>
+        <div class="kv" style="margin-top:10px">
+          <div>Responsable:</div><div>{{companyName}}{{#if legalEntity}} ({{legalEntity}}){{/if}}</div>
+          {{#if address}}<div>Domicilio:</div><div>{{address}}</div>{{/if}}
+          {{#if contactEmail}}<div>Contacto:</div><div><a href="mailto:{{contactEmail}}">{{contactEmail}}</a></div>{{/if}}
+          {{#if websiteUrl}}<div>Sitio web:</div><div><a href="{{websiteUrl}}">{{websiteUrl}}</a></div>{{/if}}
+        </div>
+      </header>
+
+      <h2>Resumen</h2>
+      <div class="grid">
+        <div class="pill"><strong>Finalidad principal:</strong> {{#if purpose}}{{purpose}}{{else}}Proveer y mejorar las funcionalidades de la aplicación.{{/if}}</div>
+        <div class="pill"><strong>Datos sensibles:</strong> {{#if processesSensitiveData}}Podrían tratarse{{else}}No se tratan{{/if}}.</div>
+        <div class="pill"><strong>Compartición:</strong> {{#if sharesData}}Sí, con terceros listados{{else}}No compartimos datos con terceros{{/if}}.</div>
+        <div class="pill"><strong>Retención:</strong> {{#if retention}}{{retention}}{{else}}Solo por el tiempo necesario para las finalidades indicadas.{{/if}}</div>
+      </div>
+
+      <h2>Datos que Podemos Tratar</h2>
+      <ul>
+        {{#if accountRegistration}}<li><strong>Cuenta y perfil:</strong> nombre, email, identificadores de cuenta.</li>{{/if}}
+        {{#if camera}}
+          <li><strong>Cámara (android.permission.CAMERA):</strong> acceso para {{cameraPurpose}}.
+            {{#if cameraSaves}}
+              Las capturas pueden almacenarse {{cameraStorage}}.
+            {{else}}
+              Las imágenes no se almacenan ni transmiten sin acción explícita del usuario.
+            {{/if}}
+          </li>
+        {{/if}}
+        {{#if photos}}<li><strong>Fotos/Videos del dispositivo:</strong> solo cuando el usuario selecciona archivos explícitamente.</li>{{/if}}
+        {{#if location}}<li><strong>Ubicación:</strong> {{locationPrecision}} para {{locationPurpose}}.</li>{{/if}}
+        {{#if analytics}}<li><strong>Analítica de uso:</strong> eventos, dispositivo, rendimiento (para mejorar estabilidad y experiencia).</li>{{/if}}
+        {{#if crashReports}}<li><strong>Reportes de fallos:</strong> información técnica para diagnóstico.</li>{{/if}}
+        {{#if payments}}<li><strong>Pagos:</strong> identificadores de transacción y metadatos (el procesamiento se realiza por el proveedor de pagos).</li>{{/if}}
+      </ul>
+
+      {{#if thirdParties.length}}
+        <h2>Terceros y Encargados de Tratamiento</h2>
+        <p>Podemos compartir datos con los siguientes proveedores/servicios, exclusivamente para las finalidades indicadas:</p>
+        <ul>
+          {{#each thirdParties}}
+            <li><strong>{{this.name}}</strong> — {{this.purpose}}. 
+              {{#if this.data}}Datos: {{this.data}}.{{/if}}
+              {{#if this.policyUrl}} <a href="{{this.policyUrl}}" target="_blank" rel="noopener">Política</a>{{/if}}
+            </li>
+          {{/each}}
+        </ul>
+      {{/if}}
+
+      <h2>Base Legal y Consentimiento</h2>
+      <p>Tratamos datos con base en {{#if legalBasis}}{{legalBasis}}{{else}}el consentimiento del usuario, la ejecución del contrato (términos de uso) y el interés legítimo para seguridad y mejora del servicio{{/if}}. 
+      Puedes retirar tu consentimiento en cualquier momento desde los ajustes del dispositivo o dentro de la app cuando corresponda.</p>
+
+      <h2>Permisos de Android</h2>
+      <ul>
+        {{#if camera}}
+          <li><code>android.permission.CAMERA</code> — Se solicita en tiempo de uso para {{cameraPurpose}}. 
+            {{#if cameraOptional}}La app puede funcionar sin este permiso en funcionalidades básicas.{{/if}}
+          </li>
+        {{/if}}
+        {{#if photos}}<li><code>READ_MEDIA_IMAGES/VIDEO</code> (Android 13+) — Solo al elegir archivos multimedia.</li>{{/if}}
+        {{#if location}}<li><code>ACCESS_COARSE/FINE_LOCATION</code> — Solo si habilitas funciones basadas en ubicación.</li>{{/if}}
+      </ul>
+
+      <h2>Seguridad</h2>
+      <ul>
+        <li>Cifrado en tránsito (TLS) para comunicaciones con el servidor.</li>
+        <li>Controles de acceso y registros de auditoría en servicios administrados.</li>
+        {{#if extraSecurity}}<li>{{extraSecurity}}</li>{{/if}}
+      </ul>
+
+      <h2>Retención</h2>
+      <p>{{#if retention}}{{retention}}{{else}}Conservamos los datos estrictamente el tiempo necesario para cumplir las finalidades declaradas, y luego los eliminamos o anonimizamos.{{/if}}</p>
+
+      <h2>Tus Derechos</h2>
+      <p>Puedes ejercer derechos de acceso, rectificación, eliminación, oposición y portabilidad, según aplique. Escríbenos a {{#if contactEmail}}<a href="mailto:{{contactEmail}}">{{contactEmail}}</a>{{else}}nuestro correo de soporte{{/if}} con el asunto “Derechos de privacidad”.</p>
+
+      <h2>Niños y Adolescentes</h2>
+      <p>{{#if childPolicy}}{{childPolicy}}{{else}}La aplicación no está dirigida a menores de edad. Si crees que un menor nos ha proporcionado datos, contáctanos para eliminarlos.{{/if}}</p>
+
+      <h2>Cambios a Esta Política</h2>
+      <p>Podemos actualizar esta política para reflejar cambios legales o funcionales. Publicaremos la versión vigente en esta página con su fecha de actualización.</p>
+
+      <footer class="footer">
+        <div>© {{year}} {{companyName}}. Todos los derechos reservados.</div>
+        {{#if termsUrl}}<div>Consulta también nuestros <a href="{{termsUrl}}">Términos y Condiciones</a>.</div>{{/if}}
+      </footer>
+    </div>
+  </div>
+</body>
+</html>

@@ -12,6 +12,7 @@ import {
 	HttpException,
 	HttpStatus,
 	Query,
+	Render
 } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
@@ -91,5 +92,50 @@ export class UsersController {
 			);
 		}
 		return this.usersService.updatePremiumStatus(id, updatePremiumDto);
+	}
+
+	@Get('privacy')
+	@Render('view/privacy.hbs') 
+	getPrivacyView() {
+	  // aquí pasas las variables/flags que usa el HBS
+	  return {
+		layout: false,                 // si no usas layout.hbs
+		appName: 'RouteRite',
+		companyName: 'Tu Empresa S.A. de C.V.',
+		legalEntity: 'RFC/ID fiscal',
+		websiteUrl: 'https://tu-dominio.com',
+		contactEmail: 'soporte@tu-dominio.com',
+		lastUpdated: '30 de octubre de 2025',
+		year: new Date().getFullYear(),
+  
+		// Flags/condiciones según tu app:
+		accountRegistration: true,
+		camera: true,
+		cameraPurpose: 'escanear códigos QR de actividades',
+		cameraSaves: false,
+		cameraStorage: 'en el dispositivo/localmente',
+		cameraOptional: true,
+  
+		photos: false,
+		location: false,
+		locationPrecision: 'aproximada',
+		locationPurpose: 'mostrar lugares cercanos',
+  
+		analytics: true,
+		crashReports: true,
+		payments: false,
+		sharesData: false,
+		processesSensitiveData: false,
+		retention: 'Conservamos registros analíticos agregados por 12 meses.',
+  
+		thirdParties: [
+		  // { name: 'Sentry', purpose: 'monitoreo de errores', data: 'crash logs, metadatos técnicos', policyUrl: 'https://sentry.io/privacy/' }
+		],
+  
+		legalBasis: 'consentimiento del usuario y ejecución del contrato (uso de la app)',
+		extraSecurity: 'Controles de roles y mínimos privilegios en el backend.',
+		childPolicy: null,
+		termsUrl: 'https://tu-dominio.com/terminos',
+	  };
 	}
 }
