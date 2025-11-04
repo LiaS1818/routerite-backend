@@ -9,6 +9,11 @@
 				"include": "../.api/**/*.json",
 				"outDir": "dist/.api",
 				"watchAssets": true
+			},
+			{
+				"include": "../views/**/*.hbs",
+				"outDir": "dist/views/",
+				"watchAssets": true
 			}
 		]
 	}

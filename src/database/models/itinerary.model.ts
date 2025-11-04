@@ -78,7 +78,17 @@ export class Itinerary extends Model<ItineraryCreationAttributes> {
 	declare trip_id: number;
 
 	@AllowNull(false)
-	@Column(DataType.DATE)
+	@Column({
+		type: DataType.DATE,
+		get() {
+			const rawValue = this.getDataValue('date');
+			if(!rawValue) return null;
+			const date = new Date(rawValue);
+			const offsetHours = date.getTimezoneOffset() / 60;
+			date.setHours(date.getHours() + offsetHours);
+			return date;
+		},
+	})
 	declare date: Date;
 
 	@AllowNull(true)

@@ -51,7 +51,10 @@ export class TripsController {
 
 		// Validate that dates are coherent
 		const startDate = new Date(createTripDto.start_date);
+		const offsetHours = startDate.getTimezoneOffset() / 60;
+		startDate.setHours(startDate.getHours() + offsetHours);
 		const endDate = new Date(createTripDto.end_date);
+		endDate.setHours(endDate.getHours() + offsetHours);
 
 		if (endDate < startDate) {
 			throw new BadRequestException(
