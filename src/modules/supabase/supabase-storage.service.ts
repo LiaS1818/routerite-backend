@@ -35,7 +35,15 @@ export class SupabaseStorageService {
 			const imageBuffer = Buffer.from(response.data);
 			const contentType = response.headers['content-type'] || 'image/jpeg';
 
-			this.logger.debug(`Imagen descargada, tamaño: ${imageBuffer.length} bytes`);
+			this.logger.debug(`Imagen descargada, tamaño: ${imageBuffer.length} bytes, content-type: ${contentType}`);
+
+			// Defensive: if the downloaded resource looks like HTML (some servers return an HTML
+			// error page instead of an image) avoid uploading it and give a clear error.
+			const sampleStart = imageBuffer.slice(0, 64).toString('utf8').trim();
+			if (contentType.includes('text/html') || /^<!doctype|^<html|^<\?xml|^<!--/i.test(sampleStart)) {
+				this.logger.error(`Downloaded resource is HTML or not an image. content-type=${contentType} start="${sampleStart.slice(0,40)}"`);
+				throw new HttpException('Downloaded resource is not an image', HttpStatus.BAD_REQUEST);
+			}
 
 			// Subir a Supabase Storage
 			const { error } = await this.supabase.storage
@@ -46,7 +54,13 @@ export class SupabaseStorageService {
 				});
 
 			if (error) {
-				this.logger.error(`Error subiendo imagen a Supabase: ${error.message}`);
+				// Log the full error object (useful because some responses from the network
+				// or proxy may be HTML and cause JSON parsing errors inside the client).
+				try {
+					this.logger.error(`Error subiendo imagen a Supabase: ${JSON.stringify(error, Object.getOwnPropertyNames(error))}`);
+				} catch (e) {
+					this.logger.error(`Error subiendo imagen a Supabase: ${error && error.message ? error.message : String(error)}`);
+				}
 				throw new HttpException(
 					'Error uploading image to storage',
 					HttpStatus.INTERNAL_SERVER_ERROR
@@ -66,7 +80,14 @@ export class SupabaseStorageService {
 				throw error;
 			}
 
-			this.logger.error(`Error procesando imagen: ${error.message}`);
+			// Provide more diagnostic information in the logs when unexpected data is
+			// encountered (for example HTML error pages returned by proxies or the
+			// origin server).
+			try {
+				this.logger.error(`Error procesando imagen: ${JSON.stringify(error, Object.getOwnPropertyNames(error))}`);
+			} catch (e) {
+				this.logger.error(`Error procesando imagen: ${error && error.message ? error.message : String(error)}`);
+			}
 			throw new HttpException(
 				'Failed to process image upload',
 				HttpStatus.INTERNAL_SERVER_ERROR

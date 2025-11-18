@@ -154,6 +154,11 @@ export class Trip extends Model<TripAttributes, TripCreationAttributes> {
 	@HasMany(() => Itinerary, { foreignKey: 'trip_id', as: 'itineraries' })
 	declare itineraries?: Itinerary[];
 
-	@BelongsToMany(() => User, () => TripInvitation, 'trip_id', 'user_id')
-	declare guests: User[];
+	@BelongsToMany(
+		() => User,
+		() => TripInvitation,
+		//opciones explícitas:
+		{ as: 'guests', foreignKey: 'trip_id', otherKey: 'user_id' } as any
+	  )
+	  declare guests: User[];
 }

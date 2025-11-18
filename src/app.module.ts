@@ -13,6 +13,8 @@ import { HttpModule } from '@nestjs/axios';
 import { CategoriesModule } from './modules/categories/categories.module';
 import { PlacesModule } from './modules/places/places.module';
 import { FoursquareMockModule } from './common/services/foursquare/foursquare-mock.module';
+import { NotificationsModule } from './common/services/notifications/notifications.module';
+import { RouteriteDownloadController } from './download/routerite-download.controller';
 
 @Module({
 	imports: [
@@ -33,9 +35,10 @@ import { FoursquareMockModule } from './common/services/foursquare/foursquare-mo
 		}),
 		CategoriesModule,
 		PlacesModule,
-		FoursquareMockModule
+		FoursquareMockModule,
+		NotificationsModule,
 	],
-	controllers: [AppController],
+	controllers: [AppController, RouteriteDownloadController],
 	providers: [AppService],
 })
 export class AppModule {}

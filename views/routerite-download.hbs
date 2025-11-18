@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>{{appName}} - Descargar APK</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="/css/routerite-download.css" />
+</head>
+<body>
+  <div class="page">
+    <header class="top-bar">
+      <div class="logo-text">RouteRite Store</div>
+    </header>
+
+    <main class="content">
+      <section class="app-header">
+        <img class="app-icon" src="{{iconUrl}}" alt="{{appName}} icon" />
+
+        <div class="app-main-info">
+          <h1 class="app-name">{{appName}}</h1>
+          <p class="app-short-description">{{shortDescription}}</p>
+          <div class="app-meta">
+            <div class="meta-item">
+              <div class="meta-title">{{rating}}</div>
+              <div class="meta-subtitle">★ · {{reviewsCount}} reseñas</div>
+            </div>
+            <div class="meta-separator"></div>
+            <div class="meta-item">
+              <div class="meta-title">0</div>
+              <div class="meta-subtitle">Descargas</div>
+            </div>
+            <div class="meta-separator"></div>
+            <div class="meta-item">
+              <div class="meta-title">E</div>
+              <div class="meta-subtitle">Todos</div>
+            </div>
+          </div>
+
+          <a class="btn-install" href="{{apkUrl}}" download>
+            Descargar APK
+          </a>
+          <p class="small-note">Descarga directa del APK para instalación manual en Android.</p>
+        </div>
+      </section>
+
+      <section class="screenshots-section">
+        <h2>Imágenes de la app</h2>
+        <div class="screenshots-row">
+          {{#each screenshotUrls}}
+            <img class="screenshot" src="{{this}}" alt="Captura RouteRite" />
+          {{/each}}
+        </div>
+      </section>
+
+      <section class="about-section">
+        <h2>Acerca de esta app</h2>
+        <p>
+          RouteRite te ayuda a crear itinerarios turísticos inteligentes en la Zona Metropolitana de Guadalajara,
+          ajustando actividades, tiempos de traslado y recomendaciones según tus preferencias y condiciones del entorno.
+        </p>
+      </section>
+
+      <section class="info-section">
+        <h2>Información de la app</h2>
+        <div class="info-grid">
+          <div class="info-item">
+            <span class="label">Versión</span>
+            <span class="value">{{version}}</span>
+          </div>
+          <div class="info-item">
+            <span class="label">Actualizada</span>
+            <span class="value">{{updatedAt}}</span>
+          </div>
+          <div class="info-item">
+            <span class="label">Tamaño</span>
+            <span class="value">{{size}}</span>
+          </div>
+          <div class="info-item">
+            <span class="label">Requiere Android</span>
+            <span class="value">{{requiresAndroid}}</span>
+          </div>
+          <div class="info-item">
+            <span class="label">Descargas</span>
+            {{!-- <span class="value">{{downloads}}</span> --}}
+            <span class="value">0</span>
+          </div>
+          <div class="info-item">
+            <span class="label">Desarrollador</span>
+            <span class="value">{{developer}}</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="developer-section">
+        <h2>Contacto del desarrollador</h2>
+        <p>Email: <a href="mailto:{{developerEmail}}">{{developerEmail}}</a></p>
+        <p><a href="{{privacyPolicyUrl}}">Política de privacidad</a></p>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <span>© {{developer}} - {{appName}}</span>
+    </footer>
+  </div>
+</body>
+</html>

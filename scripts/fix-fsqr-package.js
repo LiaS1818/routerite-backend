@@ -42,7 +42,18 @@ try {
 // Fix 2: index.js openapi import
 try {
   if (!fs.existsSync(indexJsPath)) {
-    console.log('[fix-fsqr-package] index.js not found, skipping...');
+    console.log('[fix-fsqr-package] index.js not found in dist, attempting to copy from source .api if available...');
+    const sourceIndex = path.join(__dirname, '..', '.api', 'apis', 'fsq-developers-places', 'index.js');
+    if (fs.existsSync(sourceIndex)) {
+      try {
+        fs.copyFileSync(sourceIndex, indexJsPath);
+        fixesApplied.push('copied index.js from source .api to dist');
+      } catch (copyErr) {
+        errors.push(`copy index.js: ${copyErr.message}`);
+      }
+    } else {
+      console.log('[fix-fsqr-package] source index.js not found, skipping copy');
+    }
   } else {
     let indexJs = fs.readFileSync(indexJsPath, 'utf8');
 

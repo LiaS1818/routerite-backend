@@ -14,9 +14,18 @@ async function bootstrap() {
 	const app = await NestFactory.create<NestExpressApplication>(AppModule);
 
 	// Configure Handlebars
-	console.log("Dirname is ", __dirname)
-	app.setBaseViewsDir(join(__dirname, '..', 'views'));
+	// Use process.cwd() so views are resolved from the project root (works both
+	// in development and when running compiled JS under `dist`).
+	console.log('Dirname is', __dirname);
+	app.setBaseViewsDir(join(process.cwd(), 'views'));
 	app.setViewEngine('hbs');
+
+	const staticPath = join(process.cwd(), 'public');
+	console.log('Serving static files from:', staticPath);
+
+	app.useStaticAssets(staticPath, {
+	prefix: '/', // los sirve en /css, /images, /apk, etc.
+	});
 
 	// Register Handlebars helpers
 	hbs.registerHelper('formatDate', function (date) {
