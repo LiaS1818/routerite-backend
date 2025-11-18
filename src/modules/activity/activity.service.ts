@@ -115,7 +115,6 @@ export class ActivityService {
 	}
 
 	async findByTripDate(tripId: number, date: string, userId: number) {
-		const tz = 'America/Mexico_City';
 	return this.activityModel.findAll({
 		attributes: { exclude: ['itinerary_id'] },
 		include: [
@@ -124,8 +123,8 @@ export class ActivityService {
 				as: 'itinerary',
 				required: true,                 // INNER JOIN
 				where: {
-				trip_id: tripId,
-				[Op.and]: literal(`(itinerary.date AT TIME ZONE 'America/Mexico_City')::date = DATE '${date}'`)
+					trip_id: tripId,
+					date: new Date()
 				},
 				attributes: ['id', 'date', 'trip_id'],
 				include: [

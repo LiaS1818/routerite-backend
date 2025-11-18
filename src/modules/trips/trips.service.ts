@@ -44,11 +44,12 @@ export class TripsService {
 			);
 			console.log('Trip duration: ', tripDuration);
 			for (let i = 0; i < tripDuration; i++) {
+				const offsetedNewDate = new Date( trip.start_date.getTime() + (i * 24 * 60 * 60 * 1000))
+				const offset = new Date().getTimezoneOffset() / 60;
+				offsetedNewDate.setHours(offsetedNewDate.getHours() + offset);
 				const itinerary: ItineraryCreationAttributes = {
 					trip_id: trip.id,
-					date: new Date(
-						trip.start_date.getTime() + i * 24 * 60 * 60 * 1000
-					),
+					date: offsetedNewDate,
 					start_time: null,
 					end_time: null,
 					lat: parseFloat(trip.lat), // Convert string to number
@@ -119,8 +120,8 @@ export class TripsService {
 			);
 			return uniqueTrips.sort(
 				(a, b) =>
-					new Date(a.start_date).getTime() -
-					new Date(b.start_date).getTime()
+					new Date(b.start_date).getTime() -
+					new Date(a.start_date).getTime()
 			);
 		} catch (error) {
 			this.logger.error(

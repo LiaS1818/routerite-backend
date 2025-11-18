@@ -78,7 +78,11 @@ export class Trip extends Model<TripAttributes, TripCreationAttributes> {
 		type: DataType.DATEONLY,
 		get() {
 			const rawValue = this.getDataValue('start_date');
-			return rawValue ? new Date(rawValue) : null;
+			if(!rawValue) return null;
+			const date = new Date(rawValue);
+			const offsetHours = date.getTimezoneOffset() / 60;
+			date.setHours(date.getHours() + offsetHours);
+			return date;
 		},
 	})
 	declare start_date: Date;
@@ -88,7 +92,11 @@ export class Trip extends Model<TripAttributes, TripCreationAttributes> {
 		type: DataType.DATEONLY,
 		get() {
 			const rawValue = this.getDataValue('end_date');
-			return rawValue ? new Date(rawValue) : null;
+			if(!rawValue) return null;
+			const date = new Date(rawValue);
+			const offsetHours = date.getTimezoneOffset() / 60;
+			date.setHours(date.getHours() + offsetHours);
+			return date;
 		},
 	})
 	declare end_date: Date;

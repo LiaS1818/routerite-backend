@@ -32,10 +32,10 @@ COPY package*.json ./
 RUN npm ci --only=production
 
 # Copiar el código compilado desde la etapa de build
+# Nota: views/ ahora se copia dentro de dist/ durante el build gracias a nest-cli.json
 COPY --from=builder /app/dist ./dist
 
 # Copiar archivos necesarios para runtime
-COPY --from=builder /app/views ./views
 COPY --from=builder /app/environments/.env.production ./environments/.env
 
 # Puerto de la aplicación
