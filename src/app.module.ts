@@ -20,7 +20,7 @@ import { RouteriteDownloadController } from './download/routerite-download.contr
 	imports: [
 		ConfigModule.forRoot({
 			isGlobal: true,
-			envFilePath: ['environments/.env.production'],
+			envFilePath: ['environments/.env'],
 		}),
 		DatabaseModule,
 		AuthModule,

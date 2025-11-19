@@ -200,12 +200,7 @@ export class TripsService {
 							where: { status: 'accepted' },
 							attributes: [],
 						},
-					},
-					{
-						model: this.userModel,
-						as: 'user',
-						attributes: ['id', 'name', 'email'],
-					},
+					}
 				],
 			});
 

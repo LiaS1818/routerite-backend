@@ -14,9 +14,7 @@ import { FoursquareCategory } from './models/foursquare-categories.model';
 		SequelizeModule.forRootAsync({
 			imports: [ConfigModule],
 			useFactory: async (configService: ConfigService) => {
-				console.log("DATABASE URL", configService.get<string>('DATABASE_URL'))
-				const isProduction = configService.get('NODE_ENV') == 'production' || true;
-				console.log("Is proudction", isProduction)
+				const isProduction = configService.get('NODE_ENV') == 'production';
 				let dbConnection = {};
 				if (isProduction) {
 					dbConnection = {

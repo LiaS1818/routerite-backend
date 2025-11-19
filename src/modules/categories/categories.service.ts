@@ -66,11 +66,16 @@ export class CategoriesService {
 					: null;
 
 			// retornar solo breadcrumbs en la posicion 1 y 2
+			// si hay solo 1 elemento, devolver ese elemento para evitar array vacío
+			const resultBreadcrumbs = breadcrumbs.length === 1
+				? [breadcrumbs[0]]
+				: breadcrumbs.slice(1, 3);
+
 			return {
 				id: r.id,
 				name: r.name,
 				label: r.label,
-				breadcrumbs: breadcrumbs.slice(1, 3),
+				breadcrumbs: resultBreadcrumbs,
 				level,
 				parent,
 			};
