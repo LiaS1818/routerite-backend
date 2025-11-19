@@ -41,7 +41,7 @@ export class TripsService {
 			const tripDuration = Math.ceil(
 				(trip.end_date.getTime() - trip.start_date.getTime()) /
 					(1000 * 60 * 60 * 24)
-			);
+			) + 1;
 			console.log('Trip duration: ', tripDuration);
 			for (let i = 0; i < tripDuration; i++) {
 				const offsetedNewDate = new Date( trip.start_date.getTime() + (i * 24 * 60 * 60 * 1000))
@@ -57,6 +57,7 @@ export class TripsService {
 					budget: trip.total_budget / tripDuration,
 					experience_type_ids: '',
 					experience_types: '',
+					starting_location: createData.location
 				};
 				await this.itineraryModel.create(itinerary, { transaction });
 				this.logger.log(`Itinerary created for trip ${trip.id}`);

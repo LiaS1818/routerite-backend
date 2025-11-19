@@ -62,18 +62,6 @@ export class TripsController {
 			);
 		}
 
-		// Check for date conflicts
-		const conflictingTrips = await this.tripsService.findByDateRange(
-			req.user.id,
-			startDate,
-			endDate
-		);
-
-		if (conflictingTrips.length > 0) {
-			throw new BadRequestException(
-				'You already have trips planned that overlap with these dates'
-			);
-		}
 		const { latLng } = createTripDto.location;
 		const longitudeMatch = latLng.match(/lng:\s*([-+]?\d*\.\d+|\d+)/) || [
 			null,

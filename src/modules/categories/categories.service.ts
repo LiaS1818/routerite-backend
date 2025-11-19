@@ -89,4 +89,12 @@ export class CategoriesService {
 			},
 		};
 	}
+
+	async findById(id: string) {
+		return await FoursquareCategory.findOne({
+			where: {
+				id
+			}
+		})
+	}
 }

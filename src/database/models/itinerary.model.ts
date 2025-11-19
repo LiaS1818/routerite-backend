@@ -79,15 +79,7 @@ export class Itinerary extends Model<ItineraryCreationAttributes> {
 
 	@AllowNull(false)
 	@Column({
-		type: DataType.DATE,
-		get() {
-			const rawValue = this.getDataValue('date');
-			if(!rawValue) return null;
-			const date = new Date(rawValue);
-			const offsetHours = date.getTimezoneOffset() / 60;
-			date.setHours(date.getHours() + offsetHours);
-			return date;
-		},
+		type: DataType.DATEONLY
 	})
 	declare date: Date;
 
@@ -113,7 +105,7 @@ export class Itinerary extends Model<ItineraryCreationAttributes> {
 
 	@AllowNull(true)
 	@Column({
-		type: DataType.STRING(255),
+		type: DataType.TEXT
 	})
 	declare experience_type_ids: string; // 52e928d0bcbc57f1066b7e9b,52e928d0bcbc57f1066b7e9b
 

@@ -256,49 +256,49 @@ export class ItineraryValidatorService {
 				});
 			}
 
-			// Normalizar fechas a solo la parte de fecha (sin hora) para comparación
-			const itineraryDateOnly = new Date(itineraryDate.getFullYear(), itineraryDate.getMonth(), itineraryDate.getDate());
-			const tripStartDateOnly = new Date(tripStartDate.getFullYear(), tripStartDate.getMonth(), tripStartDate.getDate());
-			const tripEndDateOnly = new Date(tripEndDate.getFullYear(), tripEndDate.getMonth(), tripEndDate.getDate());
-
-			// Verificar que itinerary.date >= trip.start_date
-			if (itineraryDateOnly < tripStartDateOnly) {
-				this.logger.warn(
-					`Itinerary date ${itineraryDateOnly.toISOString().split('T')[0]} is before trip start ${tripStartDateOnly.toISOString().split('T')[0]}`
-				);
-
-				throw new BadRequestException({
-					message: 'La fecha del itinerario debe estar dentro del rango del viaje',
-					details: {
-						itinerary_date: itineraryDateOnly.toISOString().split('T')[0],
-						trip_start_date: tripStartDateOnly.toISOString().split('T')[0],
-						trip_end_date: tripEndDateOnly.toISOString().split('T')[0],
-						error: 'La fecha del itinerario es anterior al inicio del viaje',
-						code: GenerationConstants.ERROR_CODES.INVALID_PARAMETERS,
-						type: GenerationConstants.ERROR_TYPES.VALIDATION_ERROR
-					}
-				});
-			}
-
-			// Verificar que itinerary.date <= trip.end_date
-			if (itineraryDateOnly > tripEndDateOnly) {
-				this.logger.warn(
-					`Itinerary date ${itineraryDateOnly.toISOString().split('T')[0]} is after trip end ${tripEndDateOnly.toISOString().split('T')[0]}`
-				);
-
-				throw new BadRequestException({
-					message: 'La fecha del itinerario debe estar dentro del rango del viaje',
-					details: {
-						itinerary_date: itineraryDateOnly.toISOString().split('T')[0],
-						trip_start_date: tripStartDateOnly.toISOString().split('T')[0],
-						trip_end_date: tripEndDateOnly.toISOString().split('T')[0],
-						error: 'La fecha del itinerario es posterior al final del viaje',
-						code: GenerationConstants.ERROR_CODES.INVALID_PARAMETERS,
-						type: GenerationConstants.ERROR_TYPES.VALIDATION_ERROR
-					}
-				});
-			}
-
+			// // Normalizar fechas a solo la parte de fecha (sin hora) para comparación
+			// const itineraryDateOnly = new Date(itineraryDate.getFullYear(), itineraryDate.getMonth(), itineraryDate.getDate());
+			// const tripStartDateOnly = new Date(tripStartDate.getFullYear(), tripStartDate.getMonth(), tripStartDate.getDate());
+			// const tripEndDateOnly = new Date(tripEndDate.getFullYear(), tripEndDate.getMonth(), tripEndDate.getDate());
+			//
+			// // Verificar que itinerary.date >= trip.start_date
+			// if (itineraryDateOnly < tripStartDateOnly) {
+			// 	this.logger.warn(
+			// 		`Itinerary date ${itineraryDateOnly.toISOString().split('T')[0]} is before trip start ${tripStartDateOnly.toISOString().split('T')[0]}`
+			// 	);
+			//
+			// 	throw new BadRequestException({
+			// 		message: 'La fecha del itinerario debe estar dentro del rango del viaje',
+			// 		details: {
+			// 			itinerary_date: itineraryDateOnly.toISOString().split('T')[0],
+			// 			trip_start_date: tripStartDateOnly.toISOString().split('T')[0],
+			// 			trip_end_date: tripEndDateOnly.toISOString().split('T')[0],
+			// 			error: 'La fecha del itinerario es anterior al inicio del viaje',
+			// 			code: GenerationConstants.ERROR_CODES.INVALID_PARAMETERS,
+			// 			type: GenerationConstants.ERROR_TYPES.VALIDATION_ERROR
+			// 		}
+			// 	});
+			// }
+			//
+			// // Verificar que itinerary.date <= trip.end_date
+			// if (itineraryDateOnly > tripEndDateOnly) {
+			// 	this.logger.warn(
+			// 		`Itinerary date ${itineraryDateOnly.toISOString().split('T')[0]} is after trip end ${tripEndDateOnly.toISOString().split('T')[0]}`
+			// 	);
+			//
+			// 	throw new BadRequestException({
+			// 		message: 'La fecha del itinerario debe estar dentro del rango del viaje',
+			// 		details: {
+			// 			itinerary_date: itineraryDateOnly.toISOString().split('T')[0],
+			// 			trip_start_date: tripStartDateOnly.toISOString().split('T')[0],
+			// 			trip_end_date: tripEndDateOnly.toISOString().split('T')[0],
+			// 			error: 'La fecha del itinerario es posterior al final del viaje',
+			// 			code: GenerationConstants.ERROR_CODES.INVALID_PARAMETERS,
+			// 			type: GenerationConstants.ERROR_TYPES.VALIDATION_ERROR
+			// 		}
+			// 	});
+			// }
+			//
 			this.logger.log(`Itinerary ${itinerary.id} date is within trip ${trip.id} range`);
 
 		} catch (error) {

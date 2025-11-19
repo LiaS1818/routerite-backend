@@ -115,31 +115,25 @@ export class ActivityService {
 	}
 
 	async findByTripDate(tripId: number, date: string, userId: number) {
-	return this.activityModel.findAll({
-		attributes: { exclude: ['itinerary_id'] },
-		include: [
-			{
-				model: this.itineraryModel,
-				as: 'itinerary',
-				required: true,                 // INNER JOIN
-				where: {
-					trip_id: tripId,
-					date: new Date()
-				},
-				attributes: ['id', 'date', 'trip_id'],
-				include: [
+		return this.activityModel.findAll({
+			include: [
 				{
-					model: this.tripModel,
-					as: 'trip',
-					required: true,             // INNER JOIN
-					where: { user_id: userId },
-					attributes: ['id', 'user_id', 'destination'],
-				},
-				],
-			},
-			],
+					model: this.itineraryModel,
+					as: 'itinerary',
+					where: {
+						trip_id: tripId,
+						date
+					},
+					attributes: ['id', 'date', 'trip_id'],
+					include: [
+						{
+							model: this.tripModel,
+							as: 'trip',
+							attributes: ['id', 'user_id', 'destination'],
+						}
+					],
+			}],
 			order: [['start_time', 'ASC']],
-			subQuery: false,                    // fuerza JOIN directo (evita subconsulta)
 		});
 	}
 

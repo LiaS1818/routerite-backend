@@ -151,7 +151,6 @@ export class ItinerariesService {
 		}
 	}
 
-	// Método adicional para encontrar un itinerario por ID
 	async findOne(id: number): Promise<Itinerary> {
 		const itinerary = await this.itineraryModel.findByPk(id);
 		if (!itinerary) {
@@ -192,9 +191,9 @@ export class ItinerariesService {
 			itinerary.lat = updateItineraryDto.lat;
 		if (updateItineraryDto.lng !== undefined)
 			itinerary.lng = updateItineraryDto.lng;
-		if (updateItineraryDto.experience_type_ids)
-			itinerary.experience_type_ids =
-				updateItineraryDto.experience_type_ids.join(',');
+		if (updateItineraryDto.experience_type_ids) {
+			itinerary.experience_type_ids = updateItineraryDto.experience_type_ids.join(',');
+		}
 		if(updateItineraryDto.starting_location && updateItineraryDto.starting_location.name != "" && updateItineraryDto.starting_location.name != undefined)
 			itinerary.starting_location = updateItineraryDto.starting_location;
 

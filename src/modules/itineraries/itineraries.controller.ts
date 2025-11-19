@@ -29,6 +29,8 @@ import { ItineraryGeneratorService } from './services/itinerary-generator.servic
 import { ItineraryValidatorService } from './services/itinerary-validator.service';
 import { ReorderActivitiesDto } from './dto/reorder-activities.dto';
 import { ActivityService } from '../activity/activity.service';
+import { CategoriesService } from '../categories/categories.service';
+import { FoursquareCategory } from '../../database/models/foursquare-categories.model';
 
 @Controller('itineraries')
 @UseGuards(JwtAuthGuard)
@@ -41,6 +43,7 @@ export class ItinerariesController {
 		private readonly itineraryGeneratorService: ItineraryGeneratorService,
 		private readonly itineraryValidatorService: ItineraryValidatorService,
 		private readonly activityService: ActivityService,
+		private readonly foursquareCategoryService: CategoriesService
 	) {}
 
 	@Post()
@@ -64,6 +67,44 @@ export class ItinerariesController {
 			tripId,
 			req.user.id
 		);
+	}
+
+	@Get(':id')
+	async findOne(
+		@Param('id', ParseIntPipe) id: number,
+		@Request() req
+	) {
+		const itinerary = await this.itinerariesService.findOne(id);
+		let response: any = {
+			...itinerary.toJSON()
+		}
+		if(itinerary.experience_type_ids == "")
+			delete response.experience_type_ids
+
+		if(itinerary.experience_type_ids != null && itinerary.experience_type_ids != "") {
+			const ids = itinerary.experience_type_ids.split(',');
+			const labels: string[] = []
+			const categories: FoursquareCategory[] = []
+			// Find the label in the FSQRCategories table
+			for(let i = 0; i < ids.length; i++) {
+				const cat = await this.foursquareCategoryService.findById(ids[i]);
+				if (cat instanceof FoursquareCategory) {
+					categories.push(cat);
+					labels.push(cat.name);
+				} else {
+					// Remove from list
+					ids.splice(i, 1);
+					i--;
+				}
+			}
+			response = {
+				...response,
+				experience_type_ids: ids,
+				experience_type_labels: labels,
+				experience_types: categories
+			}
+		}
+		return response;
 	}
 
 	@Get(':id/place')

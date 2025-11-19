@@ -13,6 +13,7 @@ import { PlacesModule } from '../places/places.module';
 import { ActivityModule } from '../activity/activity.module';
 import { SupabaseModule } from '../supabase/supabase.module';
 import { AuthModule } from '../auth/auth.module';
+import { CategoriesService } from '../categories/categories.service';
 
 @Module({
 	imports: [
@@ -30,6 +31,7 @@ import { AuthModule } from '../auth/auth.module';
 		ItinerariesService,
 		ItineraryGeneratorService,
 		ItineraryValidatorService,
+		CategoriesService
 	],
 	controllers: [ItinerariesController],
 	exports: [ItinerariesService, ItineraryGeneratorService, ItineraryValidatorService],

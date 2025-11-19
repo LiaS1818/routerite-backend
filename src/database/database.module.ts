@@ -14,7 +14,9 @@ import { FoursquareCategory } from './models/foursquare-categories.model';
 		SequelizeModule.forRootAsync({
 			imports: [ConfigModule],
 			useFactory: async (configService: ConfigService) => {
-				const isProduction = configService.get('NODE_ENV') == 'production';
+				console.log("DATABASE URL", configService.get<string>('DATABASE_URL'))
+				const isProduction = configService.get('NODE_ENV') == 'production' || true;
+				console.log("Is proudction", isProduction)
 				let dbConnection = {};
 				if (isProduction) {
 					dbConnection = {
@@ -29,7 +31,6 @@ import { FoursquareCategory } from './models/foursquare-categories.model';
 							configService.get('DB_USERNAME') || 'postgres',
 						password: configService.get('DB_PASSWORD') || '1234',
 						database: configService.get('DB_NAME') || 'routerite',
-						// alter: true,
 					};
 				}
 				return {
